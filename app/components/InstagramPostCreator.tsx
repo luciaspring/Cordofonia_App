@@ -284,7 +284,7 @@ export default function InstagramPostCreator() {
 
   const drawLines = (ctx: CanvasRenderingContext2D, framelines: Line[]) => {
     ctx.lineWidth = lineThickness
-    ctx.lineCap = 'round'
+    ctx.lineCap = 'butt'
     ctx.lineJoin = 'round'
     ctx.strokeStyle = '#0000FF'
     framelines.forEach(line => {
@@ -309,7 +309,7 @@ export default function InstagramPostCreator() {
     animationType: 'grow' | 'shrink'
   ) => {
     ctx.lineWidth = lineThickness
-    ctx.lineCap = 'round'
+    ctx.lineCap = 'butt'
     ctx.lineJoin = 'round'
     ctx.strokeStyle = '#000000'
 
