@@ -25,22 +25,22 @@ const colorOptions = [
 ]
 
 export default function InstagramPostCreator() {
-  // Text content states
+  // Text content
   const [titles, setTitles] = useState<string[]>(['John', 'Doe'])
   const [subtitle, setSubtitle] = useState('Instrumento: Kora')
   const [backgroundColor, setBackgroundColor] = useState('#E0B0FF')
 
-  // Animation / playback states
+  // Frame / play states
   const [currentFrame, setCurrentFrame] = useState(1)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isLooping, setIsLooping] = useState(false)
 
-  // Lines drawn by user
+  // Lines
   const [lines, setLines] = useState<Line[]>([])
   const [currentLine, setCurrentLine] = useState<Line | null>(null)
   const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null)
 
-  // Text position & style states for Frame 1 and Frame 2
+  // Text positions for Frame 1 and Frame 2
   const [titlePositionsFrame1, setTitlePositionsFrame1] = useState<TextPosition[]>([
     { x: 40, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 },
     { x: 40, y: 550, width: 1000, height: 200, rotation: 0, fontSize: 180 }
@@ -52,28 +52,34 @@ export default function InstagramPostCreator() {
   const [subtitlePositionFrame1, setSubtitlePositionFrame1] = useState<TextPosition>({ x: 40, y: 1000, width: 1000, height: 30, rotation: 0, fontSize: 36 })
   const [subtitlePositionFrame2, setSubtitlePositionFrame2] = useState<TextPosition>({ x: 40, y: 1000, width: 1000, height: 30, rotation: 0, fontSize: 36 })
 
-  // Selected text blocks (for dragging/rotating/resizing)
+  // Selection / transform states
   const [selectedTexts, setSelectedTexts] = useState<('title1' | 'title2' | 'subtitle')[]>([])
   const [isResizing, setIsResizing] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [isRotating, setIsRotating] = useState(false)
   const [resizeHandle, setResizeHandle] = useState<string | null>(null)
 
-  // Modal for direct numeric editing
+  // Position‐editing modal
   const [positionModalOpen, setPositionModalOpen] = useState(false)
   const [editingPosition, setEditingPosition] = useState<TextPosition | null>(null)
 
-  // Settings states
+  // ********** <— Add this line to fix the “settingsOpen is not defined” error **********
+  const [settingsOpen, setSettingsOpen] = useState(false)
+
+  // Settings
   const [lineThickness, setLineThickness] = useState(2)
   const [tremblingIntensity, setTremblingIntensity] = useState(5)
-  const [animationSpeed, setAnimationSpeed] = useState(0.00025) // base “speed” multiplier
-  const [frameRate, setFrameRate] = useState(60) // frames per second for stop-motion effect
+  const [animationSpeed, setAnimationSpeed] = useState(0.00025) // base speed multiplier
+  const [frameRate, setFrameRate] = useState(60) // 50–120 FPS slider
 
-  // Rotation group tracking
+  // Rotation / grouping helpers
   const [groupRotation, setGroupRotation] = useState(0)
   const [initialGroupBox, setInitialGroupBox] = useState<GroupBoundingBox | null>(null)
+  const [lastKnownRotations, setLastKnownRotations] = useState<{ [k: string]: number }>({
+    title1: 0, title2: 0, subtitle: 0, group: 0
+  })
 
-  // Refs for animation timing and interactions
+  // Canvas refs, timing refs
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<number | null>(null)
   const startTimeRef = useRef<number | null>(null)
@@ -81,33 +87,19 @@ export default function InstagramPostCreator() {
   const lastMousePosition = useRef<Point | null>(null)
   const isShiftPressed = useRef(false)
 
-  // Track last known rotations for each text block (so multi-selection preserves rotation)
-  const [lastKnownRotations, setLastKnownRotations] = useState<{
-    [key: string]: number
-  }>({
-    title1: 0,
-    title2: 0,
-    subtitle: 0,
-    group: 0
-  })
-
-  // --- Setup keyboard listeners to detect Shift for multi-select ---
+  // --- Detect Shift for multi‐select ---
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Shift') isShiftPressed.current = true
-    }
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === 'Shift') isShiftPressed.current = false
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    window.addEventListener('keyup', handleKeyUp)
+    const onDown = (e: KeyboardEvent) => { if (e.key === 'Shift') isShiftPressed.current = true }
+    const onUp   = (e: KeyboardEvent) => { if (e.key === 'Shift') isShiftPressed.current = false }
+    window.addEventListener('keydown', onDown)
+    window.addEventListener('keyup', onUp)
     return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      window.removeEventListener('keyup', handleKeyUp)
+      window.removeEventListener('keydown', onDown)
+      window.removeEventListener('keyup', onUp)
     }
   }, [])
 
-  // --- Whenever text content, positions, background, or interaction states change, redraw the canvas ---
+  // --- Redraw whenever relevant state changes ---
   useEffect(() => {
     const canvas = canvasRef.current
     if (canvas) {
@@ -118,21 +110,14 @@ export default function InstagramPostCreator() {
       }
     }
   }, [
-    titles,
-    subtitle,
-    backgroundColor,
-    currentFrame,
-    lines,
-    lineThickness,
-    tremblingIntensity,
-    titlePositionsFrame1,
-    titlePositionsFrame2,
-    subtitlePositionFrame1,
-    subtitlePositionFrame2,
+    titles, subtitle, backgroundColor, currentFrame,
+    lines, lineThickness, tremblingIntensity,
+    titlePositionsFrame1, titlePositionsFrame2,
+    subtitlePositionFrame1, subtitlePositionFrame2,
     groupRotation
   ])
 
-  // --- Trigger animation loop when isPlaying changes ---
+  // --- Start/stop animation loop when isPlaying toggles ---
   useEffect(() => {
     if (isPlaying) {
       startTimeRef.current = null
@@ -147,46 +132,45 @@ export default function InstagramPostCreator() {
     }
   }, [isPlaying, frameRate, animationSpeed, isLooping])
 
-  // --- Measure text widths/heights to update bounding boxes dynamically ---
+  // --- Measure text widths/heights to keep bounding boxes correct ---
   const updateTextDimensions = (ctx: CanvasRenderingContext2D) => {
-    const measureText = (text: string, fontSize: number) => {
-      ctx.font = `bold ${fontSize}px Arial`
-      const metrics = ctx.measureText(text)
+    const measureText = (txt: string, fz: number) => {
+      ctx.font = `bold ${fz}px Arial`
+      const m = ctx.measureText(txt)
       return {
-        width: metrics.width,
-        height: metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent || fontSize * 0.8
+        width: m.width,
+        height: m.actualBoundingBoxAscent + m.actualBoundingBoxDescent || fz * 0.8
       }
     }
 
-    // Titles Frame 1
+    // Titles, Frame 1:
     setTitlePositionsFrame1(prev =>
       prev.map((pos, i) => {
         const { width, height } = measureText(titles[i], pos.fontSize)
         return { ...pos, width, height, aspectRatio: width / height }
       })
     )
-    // Titles Frame 2
+    // Titles, Frame 2:
     setTitlePositionsFrame2(prev =>
       prev.map((pos, i) => {
         const { width, height } = measureText(titles[i], pos.fontSize)
         return { ...pos, width, height, aspectRatio: width / height }
       })
     )
-
-    // Subtitle both frames
-    const { width: subW, height: subH } = measureText(subtitle, subtitlePositionFrame2.fontSize)
-    setSubtitlePositionFrame1(prev => ({ ...prev, width: subW, height: subH, aspectRatio: subW / subH }))
-    setSubtitlePositionFrame2(prev => ({ ...prev, width: subW, height: subH, aspectRatio: subW / subH }))
+    // Subtitle (both frames)
+    const { width: sw, height: sh } = measureText(subtitle, subtitlePositionFrame2.fontSize)
+    setSubtitlePositionFrame1(prev => ({ ...prev, width: sw, height: sh, aspectRatio: sw / sh }))
+    setSubtitlePositionFrame2(prev => ({ ...prev, width: sw, height: sh, aspectRatio: sw / sh }))
   }
 
-  // --- Main drawing routine: draws static or animated content depending on play state ---
+  // --- Main drawing routine ---
   const drawCanvas = (progress: number = 0) => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    // Clear background
+    // Fill background
     ctx.fillStyle = backgroundColor
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
 
@@ -195,9 +179,10 @@ export default function InstagramPostCreator() {
     const frame2Lines = lines.filter(l => l.frame === 2)
 
     if (isPlaying) {
-      // Animation timeline: 0–0.3 grow frame1, 0.3–0.6 shrink frame1,
-      // 0.6–0.7 text transition to frame2, 0.7–1.0 grow frame2, 1.0–1.3 shrink frame2,
-      // 1.3–1.4 text transition back to frame1.
+      // 0–0.3: grow frame 1, 0.3–0.6: shrink frame 1,
+      // 0.6–0.7: text transition 1→2,
+      // 0.7–1.0: grow frame 2, 1.0–1.3: shrink frame 2,
+      // 1.3–1.4: text transition 2→1
       if (progress <= 0.3) {
         drawStaticText(ctx, 1)
         drawAnimatedLines(ctx, progress / 0.3, frame1Lines, [], 'grow')
@@ -218,7 +203,7 @@ export default function InstagramPostCreator() {
         drawAnimatedText(ctx, t, 2, 1)
       }
     } else {
-      // Static view: current frame's lines + text + bounding box if selected
+      // Static: draw current frame's lines, then text, then any bounding box
       drawLines(ctx, currentFrame === 1 ? frame1Lines : frame2Lines)
       drawStaticText(ctx, currentFrame)
 
@@ -226,7 +211,6 @@ export default function InstagramPostCreator() {
         const groupBox = calculateGroupBoundingBox()
         if (groupBox) drawGroupBoundingBox(ctx, groupBox)
         else {
-          // Draw individual bounding boxes for single selection
           const positions = titlePositionsFrame2
           selectedTexts.forEach(sel => {
             if (sel === 'title1') drawBoundingBox(ctx, positions[0])
@@ -238,7 +222,17 @@ export default function InstagramPostCreator() {
     }
   }
 
-  // --- Interpolate text positions during transition (1→2 or 2→1) ---
+  // --- Draw “static” text for a given frame (no interpolation) ---
+  const drawStaticText = (ctx: CanvasRenderingContext2D, frame: number) => {
+    const positions = frame === 1 ? titlePositionsFrame1 : titlePositionsFrame2
+    titles.forEach((t, i) => {
+      drawRotatedText(ctx, positions[i], t)
+    })
+    const subPos = frame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
+    drawRotatedText(ctx, subPos, subtitle)
+  }
+
+  // --- Draw interpolated text during frame transitions ---
   const drawAnimatedText = (
     ctx: CanvasRenderingContext2D,
     progress: number,
@@ -252,7 +246,7 @@ export default function InstagramPostCreator() {
     }
     const t = ease(progress)
 
-    titles.forEach((title, i) => {
+    titles.forEach((tText, i) => {
       const pos1 = fromFrame === 1 ? titlePositionsFrame1[i] : titlePositionsFrame2[i]
       const pos2 = toFrame === 1 ? titlePositionsFrame1[i] : titlePositionsFrame2[i]
       const interp: TextPosition = {
@@ -263,7 +257,7 @@ export default function InstagramPostCreator() {
         rotation: lerp(pos1.rotation, pos2.rotation, t),
         fontSize: lerp(pos1.fontSize, pos2.fontSize, t)
       }
-      drawRotatedText(ctx, interp, title)
+      drawRotatedText(ctx, interp, tText)
     })
 
     const sub1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
@@ -279,37 +273,25 @@ export default function InstagramPostCreator() {
     drawRotatedText(ctx, interpSub, subtitle)
   }
 
-  // --- Draw static text blocks (no animation) for a given frame ---
-  const drawStaticText = (ctx: CanvasRenderingContext2D, frame: number) => {
-    const positions = frame === 1 ? titlePositionsFrame1 : titlePositionsFrame2
-    titles.forEach((title, i) => {
-      drawRotatedText(ctx, positions[i], title)
-    })
-    const subPos = frame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
-    drawRotatedText(ctx, subPos, subtitle)
-  }
-
-  // --- Core routine to draw a single piece of rotated (and trembling) text ---
-  const drawRotatedText = (ctx: CanvasRenderingContext2D, position: TextPosition, text: string) => {
+  // --- Draw a single rotated text block with “trembling” jitter ---
+  const drawRotatedText = (ctx: CanvasRenderingContext2D, pos: TextPosition, txt: string) => {
     ctx.save()
-    // Translate to the center of the bounding box
-    ctx.translate(position.x + position.width / 2, position.y + position.height / 2)
-    ctx.rotate(position.rotation)
-    ctx.font = `bold ${position.fontSize}px Arial`
+    ctx.translate(pos.x + pos.width / 2, pos.y + pos.height / 2)
+    ctx.rotate(pos.rotation)
+    ctx.font = `bold ${pos.fontSize}px Arial`
     ctx.fillStyle = getContrastColor(backgroundColor)
     ctx.textBaseline = 'middle'
     ctx.textAlign = 'center'
 
-    // Tremble effect for text (same as lines)
+    // Tremble offset (applies to both lines and text)
     const trembleX = (Math.random() - 0.5) * tremblingIntensity
     const trembleY = (Math.random() - 0.5) * tremblingIntensity
+    ctx.fillText(txt, trembleX, trembleY)
 
-    // Draw text at a tiny random offset
-    ctx.fillText(text, trembleX, trembleY)
     ctx.restore()
   }
 
-  // --- Draw all static lines for a frame ---
+  // --- Draw static lines for the current frame ---
   const drawLines = (ctx: CanvasRenderingContext2D, frameLines: Line[]) => {
     ctx.lineWidth = lineThickness
     ctx.lineCap = 'round'
@@ -330,7 +312,7 @@ export default function InstagramPostCreator() {
     }
   }
 
-  // --- Draw animated lines (grow/shrink) with trembling ---
+  // --- Draw animated “grow/shrink” lines with trembling jitter ---
   const drawAnimatedLines = (
     ctx: CanvasRenderingContext2D,
     progress: number,
@@ -345,38 +327,37 @@ export default function InstagramPostCreator() {
 
     const duration = 0.3
     const maxStagger = 0.2
-    const drawFrameSet = (linesArr: Line[], p: number) => {
-      const stagger = linesArr.length > 1 ? maxStagger / (linesArr.length - 1) : 0
-      linesArr.forEach((line, idx) => {
+    const drawSet = (arr: Line[], p: number) => {
+      const stagger = arr.length > 1 ? maxStagger / (arr.length - 1) : 0
+      arr.forEach((ln, idx) => {
         let t = Math.max(0, Math.min(1, (p - idx * stagger) / duration))
-        // Use same ultra-fast ease as text
         t = t < 0.5 ? Math.pow(2 * t, 16) / 2 : 1 - Math.pow(-2 * t + 2, 16) / 2
 
-        const { start, end } = line
-        const currentEnd = {
+        const { start, end } = ln
+        const curEnd = {
           x: start.x + (end.x - start.x) * (mode === 'grow' ? t : 1 - t),
           y: start.y + (end.y - start.y) * (mode === 'grow' ? t : 1 - t)
         }
-        const tremX = (Math.random() - 0.5) * tremblingIntensity
-        const tremY = (Math.random() - 0.5) * tremblingIntensity
+        const trembleX = (Math.random() - 0.5) * tremblingIntensity
+        const trembleY = (Math.random() - 0.5) * tremblingIntensity
 
         ctx.beginPath()
-        ctx.moveTo(start.x + tremX, start.y + tremY)
-        ctx.lineTo(currentEnd.x + tremX, currentEnd.y + tremY)
+        ctx.moveTo(start.x + trembleX, start.y + trembleY)
+        ctx.lineTo(curEnd.x + trembleX, curEnd.y + trembleY)
         ctx.stroke()
       })
     }
 
-    if (frame1Lines.length > 0) drawFrameSet(frame1Lines, progress)
-    if (frame2Lines.length > 0) drawFrameSet(frame2Lines, progress)
+    if (frame1Lines.length > 0) drawSet(frame1Lines, progress)
+    if (frame2Lines.length > 0) drawSet(frame2Lines, progress)
   }
 
   // --- Draw bounding box around a single text block ---
   const drawBoundingBox = (ctx: CanvasRenderingContext2D, pos: TextPosition) => {
-    const centerX = pos.x + pos.width / 2
-    const centerY = pos.y + pos.height / 2
+    const cx = pos.x + pos.width / 2
+    const cy = pos.y + pos.height / 2
     ctx.save()
-    ctx.translate(centerX, centerY)
+    ctx.translate(cx, cy)
     ctx.rotate(pos.rotation)
 
     const halfW = pos.width / 2
@@ -388,13 +369,13 @@ export default function InstagramPostCreator() {
     const handleSize = 10
     const corners = [
       { x: -halfW, y: -halfH },
-      { x: halfW, y: -halfH },
-      { x: halfW, y: halfH },
+      { x: halfW,  y: -halfH },
+      { x: halfW,  y: halfH },
       { x: -halfW, y: halfH }
     ]
     corners.forEach(corner => {
       ctx.beginPath()
-      ctx.rect(corner.x - handleSize / 2, corner.y - handleSize / 2, handleSize, handleSize)
+      ctx.rect(corner.x - handleSize/2, corner.y - handleSize/2, handleSize, handleSize)
       ctx.fillStyle = 'white'
       ctx.fill()
       ctx.strokeStyle = 'rgba(0,120,255,0.8)'
@@ -407,10 +388,10 @@ export default function InstagramPostCreator() {
 
   // --- Draw bounding box around a group of selected text blocks ---
   const drawGroupBoundingBox = (ctx: CanvasRenderingContext2D, box: GroupBoundingBox) => {
-    const centerX = box.x + box.width / 2
-    const centerY = box.y + box.height / 2
+    const cx = box.x + box.width / 2
+    const cy = box.y + box.height / 2
     ctx.save()
-    ctx.translate(centerX, centerY)
+    ctx.translate(cx, cy)
     ctx.rotate(box.rotation)
 
     const halfW = box.width / 2
@@ -422,13 +403,13 @@ export default function InstagramPostCreator() {
     const handleSize = 10
     const corners = [
       { x: -halfW, y: -halfH },
-      { x: halfW, y: -halfH },
-      { x: halfW, y: halfH },
+      { x: halfW,  y: -halfH },
+      { x: halfW,  y: halfH },
       { x: -halfW, y: halfH }
     ]
     corners.forEach(corner => {
       ctx.beginPath()
-      ctx.rect(corner.x - handleSize / 2, corner.y - handleSize / 2, handleSize, handleSize)
+      ctx.rect(corner.x - handleSize/2, corner.y - handleSize/2, handleSize, handleSize)
       ctx.fillStyle = 'white'
       ctx.fill()
       ctx.strokeStyle = 'rgba(0,120,255,0.8)'
@@ -439,10 +420,9 @@ export default function InstagramPostCreator() {
     ctx.restore()
   }
 
-  // --- Calculate bounding box that contains all selected text blocks (for group transforms) ---
+  // --- Compute a group bounding box around all selected text blocks ---
   const calculateGroupBoundingBox = (): GroupBoundingBox | null => {
     if (selectedTexts.length === 0) return null
-    // Collect all relevant positions for Frame 2
     const selectedPositions: TextPosition[] = []
     selectedTexts.forEach(sel => {
       if (sel === 'title1') selectedPositions.push(titlePositionsFrame2[0])
@@ -467,14 +447,14 @@ export default function InstagramPostCreator() {
     }
   }
 
-  // --- Mouse coordinate utilities ---
-  const isPointNear = (pt: Point, target: Point | Line, threshold = 10): boolean => {
-    if ('x' in target && 'y' in target) {
-      const dx = pt.x - target.x
-      const dy = pt.y - target.y
-      return Math.sqrt(dx * dx + dy * dy) < threshold
+  // --- Geometry helpers ---
+  const isPointNear = (pt: Point, tg: Point | Line, thresh = 10): boolean => {
+    if ('x' in tg && 'y' in tg) {
+      const dx = pt.x - tg.x
+      const dy = pt.y - tg.y
+      return Math.sqrt(dx*dx + dy*dy) < thresh
     } else {
-      return pointToLineDistance(pt, target.start, target.end) < threshold
+      return pointToLineDistance(pt, tg.start, tg.end) < thresh
     }
   }
 
@@ -483,123 +463,95 @@ export default function InstagramPostCreator() {
     const B = pt.y - a.y
     const C = b.x - a.x
     const D = b.y - a.y
-    const dot = A * C + B * D
-    const lenSq = C * C + D * D
+    const dot = A*C + B*D
+    const lenSq = C*C + D*D
     let param = -1
     if (lenSq !== 0) param = dot / lenSq
 
     let xx: number, yy: number
-    if (param < 0) {
-      xx = a.x
-      yy = a.y
-    } else if (param > 1) {
-      xx = b.x
-      yy = b.y
-    } else {
-      xx = a.x + param * C
-      yy = a.y + param * D
+    if (param < 0)      { xx = a.x; yy = a.y }
+    else if (param > 1) { xx = b.x; yy = b.y }
+    else {
+      xx = a.x + param*C
+      yy = a.y + param*D
     }
     const dx = pt.x - xx
     const dy = pt.y - yy
-    return Math.sqrt(dx * dx + dy * dy)
+    return Math.sqrt(dx*dx + dy*dy)
   }
 
-  // --- Check if a point lies within a rotated polygon (text bounding box or group box) ---
   const isPointInRotatedBox = (x: number, y: number, corners: Point[]): boolean => {
     let inside = false
     for (let i = 0, j = corners.length - 1; i < corners.length; j = i++) {
       const xi = corners[i].x, yi = corners[i].y
       const xj = corners[j].x, yj = corners[j].y
       const intersect = ((yi > y) !== (yj > y)) &&
-        (x < ((xj - xi) * (y - yi)) / (yj - yi) + xi)
+        (x < ((xj - xi)*(y - yi))/(yj - yi) + xi)
       if (intersect) inside = !inside
     }
     return inside
   }
 
-  // --- Given a TextPosition, return its rotated-corner coordinates ---
   const getRotatedBoundingBox = (pos: TextPosition): Point[] => {
-    const cx = pos.x + pos.width / 2
-    const cy = pos.y + pos.height / 2
+    const cx = pos.x + pos.width/2
+    const cy = pos.y + pos.height/2
     const w = pos.width
     const h = pos.height
-    const angle = pos.rotation
+    const a = pos.rotation
     const corners = [
-      { x: -w / 2, y: -h / 2 },
-      { x: w / 2, y: -h / 2 },
-      { x: w / 2, y: h / 2 },
-      { x: -w / 2, y: h / 2 }
+      { x: -w/2, y: -h/2 },
+      { x:  w/2, y: -h/2 },
+      { x:  w/2, y:  h/2 },
+      { x: -w/2, y:  h/2 }
     ]
     return corners.map(c => ({
-      x: c.x * Math.cos(angle) - c.y * Math.sin(angle) + cx,
-      y: c.x * Math.sin(angle) + c.y * Math.cos(angle) + cy
+      x: c.x * Math.cos(a) - c.y * Math.sin(a) + cx,
+      y: c.x * Math.sin(a) + c.y * Math.cos(a) + cy
     }))
   }
 
-  // --- Given a GroupBoundingBox, return its rotated-corner coordinates ---
   const getRotatedGroupBoundingBox = (box: GroupBoundingBox): Point[] => {
-    const cx = box.x + box.width / 2
-    const cy = box.y + box.height / 2
+    const cx = box.x + box.width/2
+    const cy = box.y + box.height/2
     const w = box.width
     const h = box.height
-    const angle = box.rotation
+    const a = box.rotation
     const corners = [
-      { x: -w / 2, y: -h / 2 },
-      { x: w / 2, y: -h / 2 },
-      { x: w / 2, y: h / 2 },
-      { x: -w / 2, y: h / 2 }
+      { x: -w/2, y: -h/2 },
+      { x:  w/2, y: -h/2 },
+      { x:  w/2, y:  h/2 },
+      { x: -w/2, y:  h/2 }
     ]
     return corners.map(c => ({
-      x: c.x * Math.cos(angle) - c.y * Math.sin(angle) + cx,
-      y: c.x * Math.sin(angle) + c.y * Math.cos(angle) + cy
+      x: c.x * Math.cos(a) - c.y * Math.sin(a) + cx,
+      y: c.x * Math.sin(a) + c.y * Math.cos(a) + cy
     }))
   }
 
-  // --- Determine which resize handle (if any) the mouse is over for a box or group ---
   const getResizeHandle = (
     x: number,
     y: number,
     box: TextPosition | GroupBoundingBox
   ): string | null => {
     const handleSize = 20
-    const cx = box.x + box.width / 2
-    const cy = box.y + box.height / 2
+    const cx = box.x + box.width/2
+    const cy = box.y + box.height/2
     const angle = box.rotation
     const dx = x - cx
     const dy = y - cy
     const rx = dx * Math.cos(-angle) - dy * Math.sin(-angle)
     const ry = dx * Math.sin(-angle) + dy * Math.cos(-angle)
 
-    const halfW = box.width / 2
-    const halfH = box.height / 2
-    // corners: top-left, top-right, bottom-right, bottom-left
-    if (
-      Math.abs(rx + halfW) <= handleSize / 2 &&
-      Math.abs(ry + halfH) <= handleSize / 2
-    )
-      return 'nw-resize'
-    if (
-      Math.abs(rx - halfW) <= handleSize / 2 &&
-      Math.abs(ry + halfH) <= handleSize / 2
-    )
-      return 'ne-resize'
-    if (
-      Math.abs(rx - halfW) <= handleSize / 2 &&
-      Math.abs(ry - halfH) <= handleSize / 2
-    )
-      return 'se-resize'
-    if (
-      Math.abs(rx + halfW) <= handleSize / 2 &&
-      Math.abs(ry - halfH) <= handleSize / 2
-    )
-      return 'sw-resize'
-
-    // If inside the box but not on a handle, it's a move
+    const halfW = box.width/2
+    const halfH = box.height/2
+    if (Math.abs(rx + halfW) <= handleSize/2 && Math.abs(ry + halfH) <= handleSize/2) return 'nw-resize'
+    if (Math.abs(rx - halfW) <= handleSize/2 && Math.abs(ry + halfH) <= handleSize/2) return 'ne-resize'
+    if (Math.abs(rx - halfW) <= handleSize/2 && Math.abs(ry - halfH) <= handleSize/2) return 'se-resize'
+    if (Math.abs(rx + halfW) <= handleSize/2 && Math.abs(ry - halfH) <= handleSize/2) return 'sw-resize'
     if (Math.abs(rx) < halfW && Math.abs(ry) < halfH) return 'move'
     return null
   }
 
-  // --- Determine if a point is near the “rotation area” around a box corner ---
   const isPointNearRotationArea = (
     x: number,
     y: number,
@@ -607,132 +559,126 @@ export default function InstagramPostCreator() {
   ): boolean => {
     const handleSize = 20
     const rotationRadius = 15
-    const cx = box.x + box.width / 2
-    const cy = box.y + box.height / 2
+    const cx = box.x + box.width/2
+    const cy = box.y + box.height/2
     const angle = box.rotation
     const dx = x - cx
     const dy = y - cy
     const rx = dx * Math.cos(-angle) - dy * Math.sin(-angle)
     const ry = dx * Math.sin(-angle) + dy * Math.cos(-angle)
 
-    const halfW = box.width / 2
-    const halfH = box.height / 2
+    const halfW = box.width/2
+    const halfH = box.height/2
     const corners = [
       { x: -halfW, y: -halfH },
-      { x: halfW, y: -halfH },
-      { x: halfW, y: halfH },
-      { x: -halfW, y: halfH }
+      { x:  halfW, y: -halfH },
+      { x:  halfW, y:  halfH },
+      { x: -halfW, y:  halfH }
     ]
     for (const c of corners) {
       const dist = Math.hypot(rx - c.x, ry - c.y)
-      if (dist > handleSize / 2 && dist <= handleSize / 2 + rotationRadius) return true
+      if (dist > handleSize/2 && dist <= handleSize/2 + rotationRadius) return true
     }
     return false
   }
 
-  // --- Rotate a single text block around (cx,cy) by angle radians ---
+  // --- Rotate a single text block around (cx,cy) by delta radians ---
   const rotateAroundPoint = (
     pos: TextPosition,
     cx: number,
     cy: number,
-    angleDelta: number
+    delta: number
   ): TextPosition => {
-    const dx = pos.x + pos.width / 2 - cx
-    const dy = pos.y + pos.height / 2 - cy
+    const dx = pos.x + pos.width/2 - cx
+    const dy = pos.y + pos.height/2 - cy
     const dist = Math.hypot(dx, dy)
-    const currentAngle = Math.atan2(dy, dx)
-    const newAngle = currentAngle + angleDelta
-    const nx = cx + dist * Math.cos(newAngle) - pos.width / 2
-    const ny = cy + dist * Math.sin(newAngle) - pos.height / 2
+    const currAngle = Math.atan2(dy, dx)
+    const newAngle = currAngle + delta
+    const nx = cx + dist * Math.cos(newAngle) - pos.width/2
+    const ny = cy + dist * Math.sin(newAngle) - pos.height/2
     return {
       ...pos,
       x: nx,
       y: ny,
-      rotation: pos.rotation + angleDelta
+      rotation: pos.rotation + delta
     }
   }
 
-  // --- Group rotation using rotateAroundPoint on each selected block ---
+  // --- Rotate selected group of blocks ---
   const rotateGroup = (x: number, y: number, groupBox: GroupBoundingBox) => {
     if (!lastMousePosition.current) return
-    const cx = groupBox.x + groupBox.width / 2
-    const cy = groupBox.y + groupBox.height / 2
+    const cx = groupBox.x + groupBox.width/2
+    const cy = groupBox.y + groupBox.height/2
 
     const lastAngle = Math.atan2(
       lastMousePosition.current.y - cy,
       lastMousePosition.current.x - cx
     )
-    const currentAngle = Math.atan2(y - cy, x - cx)
-    let delta = currentAngle - lastAngle
+    const currAngle = Math.atan2(y - cy, x - cx)
+    let delta = currAngle - lastAngle
     if (delta > Math.PI) delta -= 2 * Math.PI
     if (delta < -Math.PI) delta += 2 * Math.PI
 
-    // Rotate each selected block
     setTitlePositionsFrame2(prev =>
       prev.map((pos, i) => {
-        const key = `title${i + 1}`
-        if (selectedTexts.includes(key as 'title1' | 'title2')) {
-          // store individual rotations
+        const key = `title${i + 1}` as 'title1' | 'title2'
+        if (selectedTexts.includes(key)) {
           setLastKnownRotations(pk => ({ ...pk, [key]: pos.rotation + delta }))
           return rotateAroundPoint(pos, cx, cy, delta)
         }
         return pos
       })
     )
-
     if (selectedTexts.includes('subtitle')) {
       setSubtitlePositionFrame2(prev => {
-        const rotated = rotateAroundPoint(prev, cx, cy, delta)
-        setLastKnownRotations(pk => ({ ...pk, subtitle: rotated.rotation }))
-        return rotated
+        const rot = rotateAroundPoint(prev, cx, cy, delta)
+        setLastKnownRotations(pk => ({ ...pk, subtitle: rot.rotation }))
+        return rot
       })
     }
-
     setGroupRotation(gr => {
       const nr = gr + delta
       setLastKnownRotations(pk => ({ ...pk, group: nr }))
       return nr
     })
-
     lastMousePosition.current = { x, y }
   }
 
-  // --- Resize a single text block via handle ---
+  // --- Resize a single block via handle ---
   const resizeSingle = (
     x: number,
     y: number,
     pos: TextPosition,
-    textKey: 'title1' | 'title2' | 'subtitle',
+    key: 'title1' | 'title2' | 'subtitle',
     handle: string
   ) => {
     if (!lastMousePosition.current) return
-    // center of the block
-    const cx = pos.x + pos.width / 2
-    const cy = pos.y + pos.height / 2
+    const cx = pos.x + pos.width/2
+    const cy = pos.y + pos.height/2
 
-    const startVector = {
+    const startVec = {
       x: lastMousePosition.current.x - cx,
       y: lastMousePosition.current.y - cy
     }
-    const currentVector = { x: x - cx, y: y - cy }
+    const currVec = { x: x - cx, y: y - cy }
 
-    const speedFactor = 0.1
+    const speed = 0.1
     let scale = 1
     if (handle.includes('e') || handle.includes('w')) {
-      const sd = Math.abs(startVector.x)
-      const cd = Math.abs(currentVector.x)
-      scale = sd !== 0 ? 1 + ((cd / sd - 1) * speedFactor) : 1
+      const sd = Math.abs(startVec.x)
+      const cd = Math.abs(currVec.x)
+      scale = sd !== 0 ? 1 + ((cd / sd - 1) * speed) : 1
     } else {
-      const sd = Math.abs(startVector.y)
-      const cd = Math.abs(currentVector.y)
-      scale = sd !== 0 ? 1 + ((cd / sd - 1) * speedFactor) : 1
+      const sd = Math.abs(startVec.y)
+      const cd = Math.abs(currVec.y)
+      scale = sd !== 0 ? 1 + ((cd / sd - 1) * speed) : 1
     }
-    scale = Math.max(0.1, scale)
 
+    scale = Math.max(scale, 0.1)
     const newW = pos.width * scale
     const newH = pos.height * scale
-    const newX = cx - newW / 2
-    const newY = cy - newH / 2
+    const newX = cx - newW/2
+    const newY = cy - newH/2
 
     const updated: TextPosition = {
       ...pos,
@@ -742,12 +688,12 @@ export default function InstagramPostCreator() {
       height: newH,
       fontSize: pos.fontSize * scale
     }
-    if (textKey === 'subtitle') {
+    if (key === 'subtitle') {
       setSubtitlePositionFrame2(updated)
     } else {
       setTitlePositionsFrame2(prev => {
         const arr = [...prev]
-        const idx = textKey === 'title1' ? 0 : 1
+        const idx = key === 'title1' ? 0 : 1
         arr[idx] = updated
         return arr
       })
@@ -757,17 +703,17 @@ export default function InstagramPostCreator() {
   }
 
   // --- Drag a single text block ---
-  const dragSingle = (x: number, y: number, textKey: 'title1' | 'title2' | 'subtitle') => {
+  const dragSingle = (x: number, y: number, key: 'title1' | 'title2' | 'subtitle') => {
     if (!lastMousePosition.current) return
     const dx = x - lastMousePosition.current.x
     const dy = y - lastMousePosition.current.y
 
-    if (textKey === 'subtitle') {
+    if (key === 'subtitle') {
       setSubtitlePositionFrame2(prev => ({ ...prev, x: prev.x + dx, y: prev.y + dy }))
     } else {
       setTitlePositionsFrame2(prev => {
         const arr = [...prev]
-        const idx = textKey === 'title1' ? 0 : 1
+        const idx = key === 'title1' ? 0 : 1
         arr[idx] = { ...arr[idx], x: arr[idx].x + dx, y: arr[idx].y + dy }
         return arr
       })
@@ -776,7 +722,7 @@ export default function InstagramPostCreator() {
     drawCanvas()
   }
 
-  // --- Drag a group of selected text blocks ---
+  // --- Drag a group of selected blocks ---
   const dragGroup = (x: number, y: number) => {
     if (!lastMousePosition.current) return
     const dx = x - lastMousePosition.current.x
@@ -798,7 +744,7 @@ export default function InstagramPostCreator() {
     drawCanvas()
   }
 
-  // --- Handle mouse move: dragging/resizing/rotating or adjusting line endpoints ---
+  // --- Handle pointer move: dragging/resizing/rotating text or editing line points ---
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (isPlaying) return
     const canvas = canvasRef.current
@@ -808,7 +754,7 @@ export default function InstagramPostCreator() {
     const x = (e.clientX - rect.left) * (canvas.width / rect.width)
     const y = (e.clientY - rect.top) * (canvas.height / rect.height)
 
-    // If text elements selected in Frame 2, handle their transforms first
+    // If transforms in Frame 2 are active
     if (selectedTexts.length > 0 && currentFrame === 2) {
       if (isRotating) {
         const groupBox = calculateGroupBoundingBox()
@@ -836,7 +782,7 @@ export default function InstagramPostCreator() {
       return
     }
 
-    // If currently drawing or editing a line:
+    // If drawing or editing a line:
     if (currentLine) {
       setCurrentLine(prev => ({
         ...prev!,
@@ -859,11 +805,11 @@ export default function InstagramPostCreator() {
       return
     }
 
-    // If no text transform or current line, update cursor (hover feedback)
+    // Otherwise just update cursor hover state
     updateCursor(canvas, x, y)
   }
 
-  // --- Handle mouse down: selecting text or starting a line ---
+  // --- Handle pointer down: select text or start/edit a line ---
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (isPlaying) return
     const canvas = canvasRef.current
@@ -874,9 +820,8 @@ export default function InstagramPostCreator() {
     const y = (e.clientY - rect.top) * (canvas.height / rect.height)
     lastMousePosition.current = { x, y }
 
-    // Check if clicked on any text block in Frame 2
+    // Check if clicked on any text block in Frame 2:
     if (currentFrame === 2) {
-      // Titles:
       for (let i = 0; i < 2; i++) {
         const pos = titlePositionsFrame2[i]
         if (isPointInRotatedBox(x, y, getRotatedBoundingBox(pos))) {
@@ -884,23 +829,22 @@ export default function InstagramPostCreator() {
           return
         }
       }
-      // Subtitle:
       if (isPointInRotatedBox(x, y, getRotatedBoundingBox(subtitlePositionFrame2))) {
         handleTextInteraction(subtitlePositionFrame2, 'subtitle', x, y)
         return
       }
     }
 
-    // If we clicked elsewhere, start drawing/editing a line
+    // Otherwise: start or edit a line
     if (!isShiftPressed.current) {
       setSelectedTexts([])
       setGroupRotation(0)
     }
-    const clickedLineIdx = lines.findIndex(line =>
-      line.frame === currentFrame &&
-      (isPointNear({ x, y }, line.start) ||
-        isPointNear({ x, y }, line.end) ||
-        isPointNear({ x, y }, line))
+    const clickedLineIdx = lines.findIndex(l =>
+      l.frame === currentFrame &&
+      (isPointNear({ x, y }, l.start) ||
+       isPointNear({ x, y }, l.end)   ||
+       isPointNear({ x, y }, l))
     )
     if (clickedLineIdx !== -1) {
       setEditingLineIndex(clickedLineIdx)
@@ -910,10 +854,9 @@ export default function InstagramPostCreator() {
     drawCanvas()
   }
 
-  // --- Handle mouse up: finalize line or finish transforms ---
+  // --- Handle pointer up: finalize line or end transforms ---
   const handleMouseUp = () => {
     if (isPlaying) return
-
     if (currentLine) {
       setLines(prev => [...prev, currentLine])
       setCurrentLine(null)
@@ -927,29 +870,27 @@ export default function InstagramPostCreator() {
     drawCanvas()
   }
 
-  // --- Handle selection, dragging, resizing, rotating text blocks ---
+  // --- Handle selecting / dragging / resizing / rotating text blocks ---
   const handleTextInteraction = (
     pos: TextPosition,
     key: 'title1' | 'title2' | 'subtitle',
     x: number,
     y: number
   ) => {
-    // Only allow transforms in Frame 2
     if (currentFrame === 2) {
       lastMousePosition.current = { x, y }
 
-      // Preserve existing rotations if multi-select or single-select
+      // Preserve existing rotation when multi‐selecting
       if (selectedTexts.length > 0) {
         setLastKnownRotations(pk => ({ ...pk, group: groupRotation }))
       }
 
-      // Handle multi-select with Shift
+      // Shift toggles multi-select
       if (isShiftPressed.current) {
         setSelectedTexts(prev => {
           const newSel = prev.includes(key)
             ? prev.filter(t => t !== key)
             : [...prev, key]
-
           if (newSel.length > 1) {
             setGroupRotation(lastKnownRotations.group)
           } else if (newSel.length === 1) {
@@ -958,24 +899,23 @@ export default function InstagramPostCreator() {
           return newSel
         })
       } else {
-        // Single-select
         setSelectedTexts([key])
         setGroupRotation(lastKnownRotations[key])
       }
 
-      // Reset transform flags
+      // Clear any existing transform flags
       setIsResizing(false)
       setIsDragging(false)
       setIsRotating(false)
       setResizeHandle(null)
 
-      // Check if near rotation handle
+      // Check if user clicked near rotate‐handle area
       if (isPointNearRotationArea(x, y, pos)) {
         setIsRotating(true)
-        const groupBox = calculateGroupBoundingBox()
-        if (groupBox) setInitialGroupBox(groupBox)
+        const box = calculateGroupBoundingBox()
+        if (box) setInitialGroupBox(box)
       } else {
-        // Check for resize handle on that block
+        // Or check if clicked on a resize handle
         const handle = getResizeHandle(x, y, pos)
         if (handle) {
           if (handle === 'move') {
@@ -985,31 +925,30 @@ export default function InstagramPostCreator() {
             setIsResizing(true)
           }
         } else {
-          // If not resize or rotate, treat as drag
+          // Otherwise, begin dragging
           setIsDragging(true)
         }
       }
+
       drawCanvas()
     }
   }
 
-  // --- Animate loop with custom frame rate throttle ---
+  // --- Animation loop with FPS throttle ---
   const animate = (timestamp: number) => {
     if (!startTimeRef.current) startTimeRef.current = timestamp
     if (!lastFrameTimeRef.current) lastFrameTimeRef.current = timestamp
 
-    const elapsedSinceLastFrame = timestamp - lastFrameTimeRef.current
-    const frameInterval = 1000 / frameRate
-    if (elapsedSinceLastFrame < frameInterval) {
-      // Not yet time for next “frame”
+    const sinceLast = timestamp - lastFrameTimeRef.current
+    const interval = 1000 / frameRate
+    if (sinceLast < interval) {
       animationRef.current = requestAnimationFrame(animate)
       return
     }
     lastFrameTimeRef.current = timestamp
 
-    const elapsedTime = timestamp - startTimeRef.current
-    let progress = elapsedTime * animationSpeed
-
+    const elapsed = timestamp - startTimeRef.current
+    let progress = elapsed * animationSpeed
     if (progress > 1.4) {
       if (isLooping) {
         startTimeRef.current = timestamp
@@ -1028,14 +967,14 @@ export default function InstagramPostCreator() {
     }
   }
 
-  // --- When user switches frame, clear selections and redraw ---
+  // --- Handle frame switch button clicks ---
   const handleFrameChange = (frame: number) => {
     setCurrentFrame(frame)
     setSelectedTexts([])
     drawCanvas()
   }
 
-  // --- Utility: pick text color (black/white) based on background luminance ---
+  // --- Utility to pick black/white text color depending on background ---
   const getContrastColor = (bg: string) => {
     const r = parseInt(bg.slice(1, 3), 16)
     const g = parseInt(bg.slice(3, 5), 16)
@@ -1044,7 +983,7 @@ export default function InstagramPostCreator() {
     return lum > 0.5 ? '#000000' : '#FFFFFF'
   }
 
-  // --- Resize group of blocks when multiple selected ---
+  // --- Resize a group of selected blocks ---
   const resizeGroup = (
     x: number,
     y: number,
@@ -1052,8 +991,8 @@ export default function InstagramPostCreator() {
     groupBox: GroupBoundingBox
   ) => {
     if (!lastMousePosition.current) return
-    const cx = groupBox.x + groupBox.width / 2
-    const cy = groupBox.y + groupBox.height / 2
+    const cx = groupBox.x + groupBox.width/2
+    const cy = groupBox.y + groupBox.height/2
     const dx = x - lastMousePosition.current.x
     const dy = y - lastMousePosition.current.y
 
@@ -1067,16 +1006,16 @@ export default function InstagramPostCreator() {
 
     const newW = groupBox.width * scale
     const newH = groupBox.height * scale
-    const newX = cx - newW / 2
-    const newY = cy - newH / 2
+    const newX = cx - newW/2
+    const newY = cy - newH/2
 
     const updatePos = (pos: TextPosition) => {
-      const relX = (pos.x + pos.width / 2 - cx) / (groupBox.width / 2)
-      const relY = (pos.y + pos.height / 2 - cy) / (groupBox.height / 2)
+      const relX = (pos.x + pos.width/2 - cx) / (groupBox.width/2)
+      const relY = (pos.y + pos.height/2 - cy) / (groupBox.height/2)
       return {
         ...pos,
-        x: cx + relX * (newW / 2) - pos.width / 2 * scale,
-        y: cy + relY * (newH / 2) - pos.height / 2 * scale,
+        x: cx + relX * (newW/2) - (pos.width * scale)/2,
+        y: cy + relY * (newH/2) - (pos.height * scale)/2,
         width: pos.width * scale,
         height: pos.height * scale,
         fontSize: pos.fontSize * scale
@@ -1099,9 +1038,9 @@ export default function InstagramPostCreator() {
     lastMousePosition.current = { x, y }
   }
 
-  // --- Update cursor style based on hovered element (resize, rotate, move) ---
+  // --- Update cursor style (move, resize, rotate) ---
   const updateCursor = (canvas: HTMLCanvasElement, x: number, y: number) => {
-    // If group selected
+    // If a group box exists in Frame 2:
     const groupBox = calculateGroupBoundingBox()
     if (groupBox && currentFrame === 2 && isPointInRotatedBox(x, y, getRotatedGroupBoundingBox(groupBox))) {
       if (isPointNearRotationArea(x, y, groupBox)) {
@@ -1117,7 +1056,7 @@ export default function InstagramPostCreator() {
       return
     }
 
-    // If single text hovered
+    // Otherwise, check each single text block
     const allPositions = currentFrame === 1
       ? [titlePositionsFrame1[0], titlePositionsFrame1[1], subtitlePositionFrame1]
       : [titlePositionsFrame2[0], titlePositionsFrame2[1], subtitlePositionFrame2]
@@ -1141,7 +1080,6 @@ export default function InstagramPostCreator() {
       }
     }
 
-    // Otherwise default cursor
     canvas.style.cursor = 'default'
   }
 
@@ -1254,7 +1192,7 @@ export default function InstagramPostCreator() {
         </div>
       </div>
 
-      {/* Position-editing modal (double-click to open) */}
+      {/* Position‐editing modal (double-click to open) */}
       <Dialog open={positionModalOpen} onOpenChange={setPositionModalOpen}>
         <DialogContent>
           <DialogHeader>
@@ -1299,7 +1237,6 @@ export default function InstagramPostCreator() {
                 />
               </div>
               <Button onClick={() => {
-                // Apply the edited position to whichever block is selected
                 if (editingPosition) {
                   if (selectedTexts.includes('title1') || selectedTexts.includes('title2')) {
                     setTitlePositionsFrame2(prev => {
@@ -1355,9 +1292,9 @@ export default function InstagramPostCreator() {
               />
             </div>
             <div>
-              <Label htmlFor="staggerDelay">Trembling Intensity</Label>
+              <Label htmlFor="tremblingIntensity">Trembling Intensity</Label>
               <Slider
-                id="staggerDelay"
+                id="tremblingIntensity"
                 min={0}
                 max={10}
                 step={1}
