@@ -359,16 +359,42 @@ export default function InstagramPostCreator() {
       fontSize: interpolate(p1.fontSize, p2.fontSize, t)
     })
     const t = ultraFastEaseInOutFunction(progress)
+
+    // Draw titles with trembling
     titles.forEach((text, idx) => {
       const pos1 = fromFrame === 1 ? titlePositionsFrame1[idx] : titlePositionsFrame2[idx]
       const pos2 = toFrame === 1 ? titlePositionsFrame1[idx] : titlePositionsFrame2[idx]
       const midPos = interpolatePos(pos1, pos2, t)
-      drawRotatedText(ctx, midPos, text)
+      const tremX = (Math.random() - 0.5) * tremblingIntensity
+      const tremY = (Math.random() - 0.5) * tremblingIntensity
+
+      ctx.save()
+      ctx.translate(midPos.x + midPos.width / 2 + tremX, midPos.y + midPos.height / 2 + tremY)
+      ctx.rotate(midPos.rotation)
+      ctx.font = `bold ${midPos.fontSize}px Arial`
+      ctx.fillStyle = getContrastColor(backgroundColor)
+      ctx.textBaseline = 'middle'
+      ctx.textAlign = 'center'
+      ctx.fillText(text, 0, 0)
+      ctx.restore()
     })
+
+    // Draw subtitle with trembling
     const sub1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
     const sub2 = toFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
     const midSub = interpolatePos(sub1, sub2, t)
-    drawRotatedText(ctx, midSub, subtitle)
+    const tremXsub = (Math.random() - 0.5) * tremblingIntensity
+    const tremYsub = (Math.random() - 0.5) * tremblingIntensity
+
+    ctx.save()
+    ctx.translate(midSub.x + midSub.width / 2 + tremXsub, midSub.y + midSub.height / 2 + tremYsub)
+    ctx.rotate(midSub.rotation)
+    ctx.font = `bold ${midSub.fontSize}px Arial`
+    ctx.fillStyle = getContrastColor(backgroundColor)
+    ctx.textBaseline = 'middle'
+    ctx.textAlign = 'center'
+    ctx.fillText(subtitle, 0, 0)
+    ctx.restore()
   }
 
   const drawBoundingBox = (ctx: CanvasRenderingContext2D, pos: TextPosition) => {
