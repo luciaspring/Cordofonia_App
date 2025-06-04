@@ -8,31 +8,47 @@ export function getContrastColor(bgColor: string): string {
   return luminance > 0.5 ? '#000000' : '#FFFFFF'
 }
 
-export function drawLine(
+function ultraFastEaseInOutFunction(t: number): number {
+  return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t
+}
+
+export function drawFrameLines(
   ctx: CanvasRenderingContext2D,
-  line: Line,
-  progress: number,
-  color: string
+  lines: Line[],
+  frameProgress: number,
+  animationType: 'grow' | 'shrink',
+  staggerDelay: number,
+  lineThickness: number
 ) {
-  const start = line.points[0]
-  const end = line.points[1]
+  const animationDuration = 0.3
+  const maxStagger = staggerDelay
+  const capThreshold = lineThickness / 2
 
-  const dx = end.x - start.x
-  const dy = end.y - start.y
+  lines.forEach((line, i) => {
+    let t = (frameProgress - i * maxStagger) / animationDuration
+    t = Math.max(0, Math.min(1, t))
+    t = ultraFastEaseInOutFunction(t)
 
-  const currentX = start.x + dx * progress
-  const currentY = start.y + dy * progress
+    if (
+      (animationType === 'grow' && t <= 0.001) ||
+      (animationType === 'shrink' && t >= 0.999)
+    ) {
+      return
+    }
 
-  // Skip drawing if the line is too small
-  const distance = Math.hypot(currentX - start.x, currentY - start.y)
-  if (distance < 0.5) return
+    const start = line.points[0]
+    const end = line.points[1]
+    const frac = animationType === 'grow' ? t : 1 - t
+    const x = start.x + (end.x - start.x) * frac
+    const y = start.y + (end.y - start.y) * frac
 
-  ctx.strokeStyle = color
-  ctx.lineWidth = 4
-  ctx.beginPath()
-  ctx.moveTo(start.x, start.y)
-  ctx.lineTo(currentX, currentY)
-  ctx.stroke()
+    if (Math.hypot(x - start.x, y - start.y) < capThreshold) return
+
+    ctx.beginPath()
+    ctx.moveTo(start.x, start.y)
+    ctx.lineTo(x, y)
+    ctx.stroke()
+  })
 }
 
 export function isPointInRotatedBox(x: number, y: number, box: Point[]): boolean {
@@ -149,9 +165,14 @@ export function drawCanvas(
 
   // Draw lines
   const contrastColor = getContrastColor(state.backgroundColor)
-  state.lines.forEach(line => {
-    if (line.frame === state.currentFrame) {
-      drawLine(ctx, line, progress, contrastColor)
-    }
-  })
+  ctx.lineWidth = state.lineThickness
+  const currentFrameLines = state.lines.filter(line => line.frame === state.currentFrame)
+  drawFrameLines(
+    ctx,
+    currentFrameLines,
+    progress,
+    'grow',
+    state.staggerDelay,
+    state.lineThickness
+  )
 }
