@@ -4,8 +4,7 @@ export interface Point {
 }
 
 export interface Line {
-  start: Point
-  end: Point
+  points: [Point, Point]
   frame: number
 }
 

@@ -8,6 +8,33 @@ export function getContrastColor(bgColor: string): string {
   return luminance > 0.5 ? '#000000' : '#FFFFFF'
 }
 
+export function drawLine(
+  ctx: CanvasRenderingContext2D,
+  line: Line,
+  progress: number,
+  color: string
+) {
+  const start = line.points[0]
+  const end = line.points[1]
+
+  const dx = end.x - start.x
+  const dy = end.y - start.y
+
+  const currentX = start.x + dx * progress
+  const currentY = start.y + dy * progress
+
+  // Skip drawing if the line is too small
+  const distance = Math.hypot(currentX - start.x, currentY - start.y)
+  if (distance < 0.5) return
+
+  ctx.strokeStyle = color
+  ctx.lineWidth = 4
+  ctx.beginPath()
+  ctx.moveTo(start.x, start.y)
+  ctx.lineTo(currentX, currentY)
+  ctx.stroke()
+}
+
 export function isPointInRotatedBox(x: number, y: number, box: Point[]): boolean {
   let inside = false
   for (let i = 0, j = box.length - 1; i < box.length; j = i++) {
@@ -124,18 +151,7 @@ export function drawCanvas(
   const contrastColor = getContrastColor(state.backgroundColor)
   state.lines.forEach(line => {
     if (line.frame === state.currentFrame) {
-      ctx.beginPath()
-      if (state.isPlaying) {
-        // Make the line completely invisible at the start of the animation
-        const opacity = progress === 0 ? 1 : 0
-        ctx.strokeStyle = contrastColor.replace('rgb', 'rgba').replace(')', `, ${opacity})`)
-      } else {
-        ctx.strokeStyle = contrastColor
-      }
-      ctx.lineWidth = state.lineThickness
-      ctx.moveTo(line.start.x, line.start.y)
-      ctx.lineTo(line.end.x, line.end.y)
-      ctx.stroke()
+      drawLine(ctx, line, progress, contrastColor)
     }
   })
 }
