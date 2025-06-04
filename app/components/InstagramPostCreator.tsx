@@ -1071,7 +1071,7 @@ export default function InstagramPostCreator() {
     if (!startTimeRef.current) startTimeRef.current = timestamp
     const elapsed = timestamp - startTimeRef.current
     const msPerFrame = 1000 / frameRate
-    const normalized = elapsed / (msPerFrame * 150)
+    const normalized = elapsed / (msPerFrame * 300)
     let progress = normalized
     
     if (progress > 1.4) {
