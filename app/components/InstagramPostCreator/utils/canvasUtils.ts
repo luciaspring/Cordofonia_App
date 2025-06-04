@@ -14,20 +14,14 @@ export function drawFrameLines(
   tremblingIntensity: number
 ) {
   const animationDuration = 0.3
-  const maxStagger = staggerDelay
-  const capThreshold = lineThickness / 2
+  const adjustedStaggerDelay = lines.length > 1
+    ? staggerDelay / (lines.length - 1)
+    : 0
 
-  lines.forEach((line, i) => {
-    let t = (frameProgress - i * maxStagger) / animationDuration
-    t = Math.max(0, Math.min(1, t))
+  lines.forEach((line, index) => {
+    let t = Math.max(0, Math.min(1,
+      (frameProgress - index * adjustedStaggerDelay) / animationDuration))
     t = ultraFastEaseInOutFunction(t)
-
-    if (
-      (animationType === 'grow' && t <= 0.001) ||
-      (animationType === 'shrink' && t >= 0.999)
-    ) {
-      return
-    }
 
     const start = line.points[0]
     const end = line.points[1]
@@ -37,12 +31,16 @@ export function drawFrameLines(
       y: start.y + (end.y - start.y) * frac
     }
 
-    // Skip 0-length (or near-0) strokes
-    const d2 = (currentEnd.x - start.x) ** 2 + (currentEnd.y - start.y) ** 2
+    // Skip 0-length strokes
+    const dx = currentEnd.x - start.x
+    const dy = currentEnd.y - start.y
+    const len2 = dx * dx + dy * dy
     const cap2 = (lineThickness / 2) ** 2
-    if (d2 <= cap2) return
+    if (len2 <= cap2) return
 
-    // Apply trembling effect
+    // Optional: flat cap for very short segments
+    ctx.lineCap = len2 < cap2 * 4 ? 'butt' : 'round'
+
     const tremX = (Math.random() - 0.5) * tremblingIntensity
     const tremY = (Math.random() - 0.5) * tremblingIntensity
 
@@ -181,7 +179,7 @@ export function drawCanvas(
     ctx,
     currentFrameLines,
     progress,
-    'grow',
+    state.isPlaying ? 'grow' : 'shrink',
     state.staggerDelay,
     state.lineThickness,
     state.tremblingIntensity
