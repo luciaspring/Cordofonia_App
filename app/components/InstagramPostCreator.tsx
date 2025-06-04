@@ -69,10 +69,13 @@ const MIN_LINE_THICKNESS = 1
 const MIN_FRAME_RATE = 50
 const MAX_FRAME_RATE = 120
 
-// Replace the previous "ultra-fast" easing with a half-sine easing curve
-const sineEaseInOut = (t: number): number => {
-  // This follows y = (1 - cos(pi * t)) / 2, producing a U-shaped speed profile
-  return (1 - Math.cos(Math.PI * t)) / 2
+// Ease In-Out Quint easing function (piecewise)
+const easeInOutQuint = (t: number): number => {
+  if (t < 0.5) {
+    return 16 * Math.pow(t, 5)
+  } else {
+    return 1 - Math.pow(-2 * t + 2, 5) / 2
+  }
 }
 
 // ─── COMPONENT ───────────────────────────────────────────────────────────────────
@@ -354,7 +357,7 @@ export default function InstagramPostCreator() {
       const adjustedStagger = linesArr.length > 1 ? maxStaggerDelay / (linesArr.length - 1) : 0
       linesArr.forEach((ln, idx) => {
         let t = Math.max(0, Math.min(1, (fgProgress - idx * adjustedStagger) / animationDuration))
-        t = sineEaseInOut(t)
+        t = easeInOutQuint(t)
         const { start, end } = ln
         const currentEnd = {
           x: start.x + (end.x - start.x) * (animationType === 'grow' ? t : 1 - t),
@@ -383,7 +386,7 @@ export default function InstagramPostCreator() {
       rotation: interpolate(p1.rotation, p2.rotation, t),
       fontSize: interpolate(p1.fontSize, p2.fontSize, t)
     })
-    const t = sineEaseInOut(progress)
+    const t = easeInOutQuint(progress)
 
     // Draw titles with trembling
     titles.forEach((text, idx) => {
