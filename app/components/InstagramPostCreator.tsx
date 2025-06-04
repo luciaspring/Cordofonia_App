@@ -63,6 +63,12 @@ const colorOptions = [
   { name: 'Mint Green', value: '#D0EBDA' },
 ]
 
+// Preset maximums
+const MAX_LINE_THICKNESS = 10
+const MIN_LINE_THICKNESS = 1
+const MIN_FRAME_RATE = 50
+const MAX_FRAME_RATE = 120
+
 const ultraFastEaseInOutFunction = (t: number): number => {
   if (t < 0.5) {
     return Math.pow(2 * t, 16) / 2
@@ -104,9 +110,9 @@ export default function InstagramPostCreator() {
   const [isDragging, setIsDragging] = useState(false)
   const [positionModalOpen, setPositionModalOpen] = useState(false)
   const [editingPosition, setEditingPosition] = useState<TextPosition | null>(null)
-  const [lineThickness, setLineThickness] = useState(2)
-  const [tremblingIntensity, setTremblingIntensity] = useState(5)
-  const [frameRate, setFrameRate] = useState(60)
+  const [lineThickness, setLineThickness] = useState<number>(2)
+  const [tremblingIntensity, setTremblingIntensity] = useState<number>(5)
+  const [frameRate, setFrameRate] = useState<number>(60)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [groupRotation, setGroupRotation] = useState(0)
   const [initialGroupBox, setInitialGroupBox] = useState<GroupBoundingBox | null>(null)
@@ -1228,11 +1234,11 @@ export default function InstagramPostCreator() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="thicknessSlider">Line Thickness</Label>
+              <Label htmlFor="thicknessSlider">Line Thickness (max {MAX_LINE_THICKNESS})</Label>
               <Slider
                 id="thicknessSlider"
-                min={1}
-                max={10}
+                min={MIN_LINE_THICKNESS}
+                max={MAX_LINE_THICKNESS}
                 step={1}
                 value={[lineThickness]}
                 onValueChange={value => handleSettingsChange('lineThickness', value[0])}
@@ -1250,11 +1256,11 @@ export default function InstagramPostCreator() {
               />
             </div>
             <div>
-              <Label htmlFor="frameRateSlider">Frame Rate</Label>
+              <Label htmlFor="frameRateSlider">Frame Rate ({MIN_FRAME_RATE}–{MAX_FRAME_RATE})</Label>
               <Slider
                 id="frameRateSlider"
-                min={50}
-                max={120}
+                min={MIN_FRAME_RATE}
+                max={MAX_FRAME_RATE}
                 step={1}
                 value={[frameRate]}
                 onValueChange={value => handleSettingsChange('frameRate', value[0])}
@@ -1266,4 +1272,3 @@ export default function InstagramPostCreator() {
     </div>
   )
 }
-
