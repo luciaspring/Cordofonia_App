@@ -128,7 +128,7 @@ export default function InstagramPostCreator() {
     centerY: number
   } | null>(null)
 
-  // Ref’s for animation and mouse tracking
+  // Ref's for animation and mouse tracking
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<number | null>(null)
   const startTimeRef = useRef<number | null>(null)
@@ -1073,6 +1073,7 @@ export default function InstagramPostCreator() {
     const msPerFrame = 1000 / frameRate
     const normalized = elapsed / (msPerFrame * 150)
     let progress = normalized
+    
     if (progress > 1.4) {
       if (isLooping) {
         startTimeRef.current = timestamp
@@ -1082,7 +1083,9 @@ export default function InstagramPostCreator() {
         setIsPlaying(false)
       }
     }
+    
     drawCanvas(progress)
+    
     if (isPlaying || isLooping) {
       animationRef.current = requestAnimationFrame(animate)
     } else {
@@ -1129,6 +1132,11 @@ export default function InstagramPostCreator() {
         break
       case 'frameRate':
         setFrameRate(val)
+        // If animation is playing, restart loop with updated frameRate
+        if (animationRef.current) {
+          cancelAnimationFrame(animationRef.current)
+          animationRef.current = requestAnimationFrame(animate)
+        }
         break
     }
     drawCanvas()
