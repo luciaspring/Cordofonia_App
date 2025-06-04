@@ -1,13 +1,5 @@
 import { TextPosition, Line, Point, GroupBoundingBox } from '../types'
 
-export function getContrastColor(bgColor: string): string {
-  const r = parseInt(bgColor.slice(1, 3), 16)
-  const g = parseInt(bgColor.slice(3, 5), 16)
-  const b = parseInt(bgColor.slice(5, 7), 16)
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-  return luminance > 0.5 ? '#000000' : '#FFFFFF'
-}
-
 function ultraFastEaseInOutFunction(t: number): number {
   return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t
 }
@@ -18,7 +10,8 @@ export function drawFrameLines(
   frameProgress: number,
   animationType: 'grow' | 'shrink',
   staggerDelay: number,
-  lineThickness: number
+  lineThickness: number,
+  tremblingIntensity: number
 ) {
   const animationDuration = 0.3
   const maxStagger = staggerDelay
@@ -39,16 +32,33 @@ export function drawFrameLines(
     const start = line.points[0]
     const end = line.points[1]
     const frac = animationType === 'grow' ? t : 1 - t
-    const x = start.x + (end.x - start.x) * frac
-    const y = start.y + (end.y - start.y) * frac
+    const currentEnd = {
+      x: start.x + (end.x - start.x) * frac,
+      y: start.y + (end.y - start.y) * frac
+    }
 
-    if (Math.hypot(x - start.x, y - start.y) < capThreshold) return
+    // Skip 0-length (or near-0) strokes
+    const d2 = (currentEnd.x - start.x) ** 2 + (currentEnd.y - start.y) ** 2
+    const cap2 = (lineThickness / 2) ** 2
+    if (d2 <= cap2) return
+
+    // Apply trembling effect
+    const tremX = (Math.random() - 0.5) * tremblingIntensity
+    const tremY = (Math.random() - 0.5) * tremblingIntensity
 
     ctx.beginPath()
-    ctx.moveTo(start.x, start.y)
-    ctx.lineTo(x, y)
+    ctx.moveTo(start.x + tremX, start.y + tremY)
+    ctx.lineTo(currentEnd.x + tremX, currentEnd.y + tremY)
     ctx.stroke()
   })
+}
+
+export function getContrastColor(bgColor: string): string {
+  const r = parseInt(bgColor.slice(1, 3), 16)
+  const g = parseInt(bgColor.slice(3, 5), 16)
+  const b = parseInt(bgColor.slice(5, 7), 16)
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return luminance > 0.5 ? '#000000' : '#FFFFFF'
 }
 
 export function isPointInRotatedBox(x: number, y: number, box: Point[]): boolean {
@@ -164,7 +174,7 @@ export function drawCanvas(
   ctx.restore()
 
   // Draw lines
-  const contrastColor = getContrastColor(state.backgroundColor)
+  ctx.strokeStyle = getContrastColor(state.backgroundColor)
   ctx.lineWidth = state.lineThickness
   const currentFrameLines = state.lines.filter(line => line.frame === state.currentFrame)
   drawFrameLines(
@@ -173,6 +183,7 @@ export function drawCanvas(
     progress,
     'grow',
     state.staggerDelay,
-    state.lineThickness
+    state.lineThickness,
+    state.tremblingIntensity
   )
 }
