@@ -1250,8 +1250,8 @@ export default function InstagramPostCreator() {
               <Label htmlFor="frameRate">Frame Rate (Stop‐Motion)</Label>
               <Slider
                 id="frameRate"
-                min={1}
-                max={60}
+                min={50}
+                max={120}
                 step={1}
                 value={[frameRate]}
                 onValueChange={val => handleSettingsChange('frameRate', val[0])}
