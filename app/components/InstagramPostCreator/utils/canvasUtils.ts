@@ -31,14 +31,12 @@ export function drawFrameLines(
       y: start.y + (end.y - start.y) * frac
     }
 
-    // Skip 0-length strokes
     const dx = currentEnd.x - start.x
     const dy = currentEnd.y - start.y
     const len2 = dx * dx + dy * dy
     const cap2 = (lineThickness / 2) ** 2
     if (len2 <= cap2) return
 
-    // Optional: flat cap for very short segments
     ctx.lineCap = len2 < cap2 * 4 ? 'butt' : 'round'
 
     const tremX = (Math.random() - 0.5) * tremblingIntensity
