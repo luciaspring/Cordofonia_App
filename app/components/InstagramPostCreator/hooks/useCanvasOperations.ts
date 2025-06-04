@@ -62,30 +62,41 @@ export function useCanvasOperations(
   }, [canvasRef, state])
 
   const isPointInText = useCallback((x: number, y: number): ('title1' | 'title2' | 'subtitle') | null => {
+    if (state.currentFrame !== 2) return null
+
+    // Scale coordinates to match canvas dimensions
+    const canvas = canvasRef.current
+    if (!canvas) return null
+    
+    const scaleX = canvas.width / canvas.offsetWidth
+    const scaleY = canvas.height / canvas.offsetHeight
+    const scaledX = x * scaleX
+    const scaledY = y * scaleY
+
     // Check titles first
     for (let i = 0; i < state.titlePositionsFrame2.length; i++) {
       const box = getRotatedBoundingBox(state.titlePositionsFrame2[i])
-      if (isPointInRotatedBox(x, y, box)) {
+      if (isPointInRotatedBox(scaledX, scaledY, box)) {
         return i === 0 ? 'title1' : 'title2'
       }
     }
 
     // Check subtitle
     const subtitleBox = getRotatedBoundingBox(state.subtitlePositionFrame2)
-    if (isPointInRotatedBox(x, y, subtitleBox)) {
+    if (isPointInRotatedBox(scaledX, scaledY, subtitleBox)) {
       return 'subtitle'
     }
 
     return null
-  }, [state.titlePositionsFrame2, state.subtitlePositionFrame2])
+  }, [state.currentFrame, state.titlePositionsFrame2, state.subtitlePositionFrame2])
 
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
-    if (!canvas || state.currentFrame !== 2) return
+    if (!canvas) return
 
     const rect = canvas.getBoundingClientRect()
-    const x = (e.clientX - rect.left) * (canvas.width / rect.width)
-    const y = (e.clientY - rect.top) * (canvas.height / rect.height)
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
 
     const currentTime = Date.now()
     const isDoubleClick = currentTime - lastClickTime.current <= 300
@@ -115,12 +126,14 @@ export function useCanvasOperations(
     if (!canvas || !lastMousePosition.current || state.currentFrame !== 2) return
 
     const rect = canvas.getBoundingClientRect()
-    const x = (e.clientX - rect.left) * (canvas.width / rect.width)
-    const y = (e.clientY - rect.top) * (canvas.height / rect.height)
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
 
     if (isDragging.current && state.selectedTexts.length > 0) {
-      const dx = x - lastMousePosition.current.x
-      const dy = y - lastMousePosition.current.y
+      const scaleX = canvas.width / canvas.offsetWidth
+      const scaleY = canvas.height / canvas.offsetHeight
+      const dx = (x - lastMousePosition.current.x) * scaleX
+      const dy = (y - lastMousePosition.current.y) * scaleY
 
       state.selectedTexts.forEach(selectedText => {
         if (selectedText === 'subtitle') {
