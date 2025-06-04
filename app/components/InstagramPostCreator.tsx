@@ -110,9 +110,12 @@ export default function InstagramPostCreator() {
   const [isDragging, setIsDragging] = useState(false)
   const [positionModalOpen, setPositionModalOpen] = useState(false)
   const [editingPosition, setEditingPosition] = useState<TextPosition | null>(null)
-  const [lineThickness, setLineThickness] = useState<number>(2)
+
+  // Preset values: line thickness at maximum, trembling at 5, frame rate at minimum
+  const [lineThickness, setLineThickness] = useState<number>(MAX_LINE_THICKNESS)
   const [tremblingIntensity, setTremblingIntensity] = useState<number>(5)
-  const [frameRate, setFrameRate] = useState<number>(60)
+  const [frameRate, setFrameRate] = useState<number>(MIN_FRAME_RATE)
+
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [groupRotation, setGroupRotation] = useState(0)
   const [initialGroupBox, setInitialGroupBox] = useState<GroupBoundingBox | null>(null)
