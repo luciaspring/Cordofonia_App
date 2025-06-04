@@ -144,31 +144,39 @@ export function drawCanvas(
     const pos1 = state.titlePositionsFrame1[index]
     const pos2 = state.titlePositionsFrame2[index]
     
-    // Calculate interpolated position
+    // Calculate interpolated position and dimensions
     const x = pos1.x + (pos2.x - pos1.x) * progress
     const y = pos1.y + (pos2.y - pos1.y) * progress
+    const width = pos1.width + (pos2.width - pos1.width) * progress
+    const height = pos1.height + (pos2.height - pos1.height) * progress
     const rotation = pos1.rotation + (pos2.rotation - pos1.rotation) * progress
+    const fontSize = pos1.fontSize + (pos2.fontSize - pos1.fontSize) * progress
     
     ctx.save()
-    ctx.translate(x + pos1.width / 2, y + pos1.height / 2)
+    ctx.translate(x + width / 2, y + height / 2)
     ctx.rotate(rotation)
-    ctx.font = `${pos1.fontSize}px sans-serif`
-    ctx.fillText(title, -pos1.width / 2, -pos1.height / 2)
+    ctx.font = `${fontSize}px sans-serif`
+    ctx.fillText(title, -width / 2, -height / 2)
     ctx.restore()
   })
 
   // Draw subtitle
   const subPos1 = state.subtitlePositionFrame1
   const subPos2 = state.subtitlePositionFrame2
+  
+  // Calculate interpolated subtitle position and dimensions
   const subX = subPos1.x + (subPos2.x - subPos1.x) * progress
   const subY = subPos1.y + (subPos2.y - subPos1.y) * progress
+  const subWidth = subPos1.width + (subPos2.width - subPos1.width) * progress
+  const subHeight = subPos1.height + (subPos2.height - subPos1.height) * progress
   const subRotation = subPos1.rotation + (subPos2.rotation - subPos1.rotation) * progress
+  const subFontSize = subPos1.fontSize + (subPos2.fontSize - subPos1.fontSize) * progress
 
   ctx.save()
-  ctx.translate(subX + subPos1.width / 2, subY + subPos1.height / 2)
+  ctx.translate(subX + subWidth / 2, subY + subHeight / 2)
   ctx.rotate(subRotation)
-  ctx.font = `${subPos1.fontSize}px sans-serif`
-  ctx.fillText(state.subtitle, -subPos1.width / 2, -subPos1.height / 2)
+  ctx.font = `${subFontSize}px sans-serif`
+  ctx.fillText(state.subtitle, -subWidth / 2, -subHeight / 2)
   ctx.restore()
 
   // Draw lines
