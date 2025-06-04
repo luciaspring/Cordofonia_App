@@ -23,7 +23,7 @@ interface Line { start: Point, end: Point, frame: number }
 interface TextPosition { x: number, y: number, width: number, height: number, rotation: number, fontSize: number, aspectRatio?: number }
 interface GroupBoundingBox { x: number, y: number, width: number, height: number, rotation: number }
 
-// Used to track which object the modal is currently editing:
+// Track which object the modal is editing:
 type EditTarget = 'title1' | 'title2' | 'subtitle' | null
 
 export default function InstagramPostCreator() {
@@ -48,18 +48,16 @@ export default function InstagramPostCreator() {
   const [subtitlePositionFrame1, setSubtitlePositionFrame1] = useState<TextPosition>({ x: 40, y: 1000, width: 1000, height: 30, rotation: 0, fontSize: 36 })
   const [subtitlePositionFrame2, setSubtitlePositionFrame2] = useState<TextPosition>({ x: 40, y: 1000, width: 1000, height: 30, rotation: 0, fontSize: 36 })
 
-  // “selectedTexts” holds which items are currently selected (can be 0, 1, or more if Shift is held)
+  // “selectedTexts” holds which items are currently selected (can be none, one, or multiple with Shift)
   const [selectedTexts, setSelectedTexts] = useState<('title1' | 'title2' | 'subtitle')[]>([])
   const [resizeHandle, setResizeHandle] = useState<string | null>(null)
   const [isRotating, setIsRotating] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
 
-  // ─── NEW STATE for “Edit Position” modal ─────────────────────────────────────────────
+  // ─── EDIT POSITION MODAL STATE ──────────────────────────────────────────────────────
   const [positionModalOpen, setPositionModalOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<EditTarget>(null)
-  // We store a copy of the chosen object’s TextPosition in editingPosition so inputs can bind to it:
   const [editingPosition, setEditingPosition] = useState<TextPosition | null>(null)
-  // And we track a “Size (%)” slider value:
   const [editingSize, setEditingSize] = useState<number>(100)
 
   const [lineThickness, setLineThickness] = useState(2)
@@ -84,7 +82,7 @@ export default function InstagramPostCreator() {
   const isShiftPressed = useRef(false)
   const lastClickTime = useRef<number>(0)
 
-  // Track each item’s last known rotation so group‐vs‐individual rotation logic can revert properly:
+  // Store each item’s last known rotation for proper group-vs-individual logic:
   const [lastKnownRotations, setLastKnownRotations] = useState<{
     [key: string]: number;
   }>({
@@ -94,7 +92,7 @@ export default function InstagramPostCreator() {
     group: 0
   })
 
-  // ─── HELPER: detect double‐click if ≤ 300ms between clicks ─────────────────────────────
+  // ─── DOUBLE-CLICK DETECTION UTILITY ───────────────────────────────────────────────
   const wasDoubleClick = (): boolean => {
     const now = Date.now()
     const diff = now - lastClickTime.current
@@ -104,14 +102,10 @@ export default function InstagramPostCreator() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Shift') {
-        isShiftPressed.current = true
-      }
+      if (e.key === 'Shift') isShiftPressed.current = true
     }
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === 'Shift') {
-        isShiftPressed.current = false
-      }
+      if (e.key === 'Shift') isShiftPressed.current = false
     }
     window.addEventListener('keydown', handleKeyDown)
     window.addEventListener('keyup', handleKeyUp)
@@ -137,15 +131,11 @@ export default function InstagramPostCreator() {
       startTimeRef.current = null
       animationRef.current = requestAnimationFrame(animate)
     } else {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current)
-      }
+      if (animationRef.current) cancelAnimationFrame(animationRef.current)
       drawCanvas()
     }
     return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current)
-      }
+      if (animationRef.current) cancelAnimationFrame(animationRef.current)
     }
   }, [isPlaying])
 
@@ -159,27 +149,21 @@ export default function InstagramPostCreator() {
       }
     }
 
-    // Frame 1 titles
     setTitlePositionsFrame1(prev =>
       prev.map((pos, i) => {
         const { width, height } = measureText(titles[i], pos.fontSize)
-        const aspectRatio = width / height
-        return { ...pos, width, height, aspectRatio }
+        return { ...pos, width, height, aspectRatio: width / height }
       })
     )
-    // Frame 2 titles
     setTitlePositionsFrame2(prev =>
       prev.map((pos, i) => {
         const { width, height } = measureText(titles[i], pos.fontSize)
-        const aspectRatio = width / height
-        return { ...pos, width, height, aspectRatio }
+        return { ...pos, width, height, aspectRatio: width / height }
       })
     )
-    // Subtitle
-    const { width: subW, height: subH } = measureText(subtitle, subtitlePositionFrame2.fontSize)
-    const subAspect = subW / subH
-    setSubtitlePositionFrame1(prev => ({ ...prev, width: subW, height: subH, aspectRatio: subAspect }))
-    setSubtitlePositionFrame2(prev => ({ ...prev, width: subW, height: subH, aspectRatio: subAspect }))
+    const { width: sw, height: sh } = measureText(subtitle, subtitlePositionFrame2.fontSize)
+    setSubtitlePositionFrame1(prev => ({ ...prev, width: sw, height: sh, aspectRatio: sw / sh }))
+    setSubtitlePositionFrame2(prev => ({ ...prev, width: sw, height: sh, aspectRatio: sw / sh }))
   }
 
   const calculateGroupBoundingBox = (): GroupBoundingBox | null => {
@@ -249,49 +233,20 @@ export default function InstagramPostCreator() {
     }
   }
 
-  const drawAnimatedText = (ctx: CanvasRenderingContext2D, progress: number, fromFrame: number, toFrame: number) => {
-    const interp = (a: number, b: number, t: number) => a + (b - a) * t
-    const interpPos = (p1: TextPosition, p2: TextPosition, t: number): TextPosition => ({
-      x: interp(p1.x, p2.x, t),
-      y: interp(p1.y, p2.y, t),
-      width: interp(p1.width, p2.width, t),
-      height: interp(p1.height, p2.height, t),
-      rotation: interp(p1.rotation, p2.rotation, t),
-      fontSize: interp(p1.fontSize, p2.fontSize, t),
-    })
-    // “ultraFast” easing
-    const u = (t: number) => {
-      if (t < 0.5) return Math.pow(2 * t, 16) / 2
-      return 1 - Math.pow(-2 * t + 2, 16) / 2
-    }
-    const t = u(progress)
-
-    titles.forEach((title, i) => {
-      const pos1 = fromFrame === 1 ? titlePositionsFrame1[i] : titlePositionsFrame2[i]
-      const pos2 = toFrame === 1 ? titlePositionsFrame1[i] : titlePositionsFrame2[i]
-      const ip = interpPos(pos1, pos2, t)
-      drawRotatedText(ctx, ip, title)
-    })
-    const sub1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
-    const sub2 = toFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
-    const subIP = interpPos(sub1, sub2, t)
-    drawRotatedText(ctx, subIP, subtitle)
-  }
-
   const drawStaticText = (ctx: CanvasRenderingContext2D, frame: number) => {
     const positions = frame === 1 ? titlePositionsFrame1 : titlePositionsFrame2
-    titles.forEach((t, i) => {
-      drawRotatedText(ctx, positions[i], t)
+    titles.forEach((txt, i) => {
+      drawRotatedText(ctx, positions[i], txt)
     })
     const subPos = frame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
     drawRotatedText(ctx, subPos, subtitle)
   }
 
-  const drawRotatedText = (ctx: CanvasRenderingContext2D, position: TextPosition, text: string) => {
+  const drawRotatedText = (ctx: CanvasRenderingContext2D, pos: TextPosition, text: string) => {
     ctx.save()
-    ctx.translate(position.x + position.width / 2, position.y + position.height / 2)
-    ctx.rotate(position.rotation)
-    ctx.font = `bold ${position.fontSize}px Arial`
+    ctx.translate(pos.x + pos.width / 2, pos.y + pos.height / 2)
+    ctx.rotate(pos.rotation)
+    ctx.font = `bold ${pos.fontSize}px Arial`
     ctx.fillStyle = getContrastColor(backgroundColor)
     ctx.textBaseline = 'middle'
     ctx.textAlign = 'center'
@@ -342,13 +297,13 @@ export default function InstagramPostCreator() {
     const animationDuration = 0.3
     const maxStaggerDelay = 0.2
 
+    const u = (t: number) => {
+      if (t < 0.5) return Math.pow(2 * t, 16) / 2
+      return 1 - Math.pow(-2 * t + 2, 16) / 2
+    }
+
     const drawFrameLines = (lines: Line[], frameProgress: number) => {
       const adjustedStagger = lines.length > 1 ? maxStaggerDelay / (lines.length - 1) : 0
-      // same ultra‐fast easing:
-      const u = (t: number) => {
-        if (t < 0.5) return Math.pow(2 * t, 16) / 2
-        return 1 - Math.pow(-2 * t + 2, 16) / 2
-      }
       lines.forEach((line, idx) => {
         let t = Math.max(0, Math.min(1, (frameProgress - idx * adjustedStagger) / animationDuration))
         t = u(t)
@@ -375,10 +330,10 @@ export default function InstagramPostCreator() {
   }
 
   const drawBoundingBox = (ctx: CanvasRenderingContext2D, pos: TextPosition) => {
-    const centerX = pos.x + pos.width / 2
-    const centerY = pos.y + pos.height / 2
+    const cx = pos.x + pos.width / 2
+    const cy = pos.y + pos.height / 2
     ctx.save()
-    ctx.translate(centerX, centerY)
+    ctx.translate(cx, cy)
     ctx.rotate(pos.rotation)
     const halfW = pos.width / 2
     const halfH = pos.height / 2
@@ -392,12 +347,12 @@ export default function InstagramPostCreator() {
       [ halfW,  halfH],
       [-halfW,  halfH]
     ]
-    corners.forEach(([cx, cy]) => {
+    corners.forEach(([x, y]) => {
       ctx.fillStyle = 'white'
       ctx.strokeStyle = 'rgba(0,120,255,0.8)'
       ctx.lineWidth = 2
       ctx.beginPath()
-      ctx.rect(cx - handleSize/2, cy - handleSize/2, handleSize, handleSize)
+      ctx.rect(x - handleSize/2, y - handleSize/2, handleSize, handleSize)
       ctx.fill()
       ctx.stroke()
     })
@@ -406,10 +361,10 @@ export default function InstagramPostCreator() {
 
   const drawGroupBoundingBox = (ctx: CanvasRenderingContext2D, box: GroupBoundingBox) => {
     const { x, y, width, height, rotation } = box
-    const centerX = x + width / 2
-    const centerY = y + height / 2
+    const cx = x + width / 2
+    const cy = y + height / 2
     ctx.save()
-    ctx.translate(centerX, centerY)
+    ctx.translate(cx, cy)
     ctx.rotate(rotation)
     const halfW = width / 2
     const halfH = height / 2
@@ -423,12 +378,12 @@ export default function InstagramPostCreator() {
       [ halfW,  halfH],
       [-halfW,  halfH]
     ]
-    corners.forEach(([cx, cy]) => {
+    corners.forEach(([cxOff, cyOff]) => {
       ctx.fillStyle = 'white'
       ctx.strokeStyle = 'rgba(0,120,255,0.8)'
       ctx.lineWidth = 2
       ctx.beginPath()
-      ctx.rect(cx - handleSize/2, cy - handleSize/2, handleSize, handleSize)
+      ctx.rect(cxOff - handleSize/2, cyOff - handleSize/2, handleSize, handleSize)
       ctx.fill()
       ctx.stroke()
     })
@@ -437,11 +392,11 @@ export default function InstagramPostCreator() {
 
   const getResizeHandle = (x: number, y: number, pos: TextPosition | GroupBoundingBox): string | null => {
     const handleSize = 20
-    const centerX = pos.x + pos.width / 2
-    const centerY = pos.y + pos.height / 2
+    const cx = pos.x + pos.width / 2
+    const cy = pos.y + pos.height / 2
     const rotation = 'rotation' in pos ? pos.rotation : pos.rotation
-    const dx = x - centerX
-    const dy = y - centerY
+    const dx = x - cx
+    const dy = y - cy
     const rotatedX = dx * Math.cos(-rotation) - dy * Math.sin(-rotation)
     const rotatedY = dx * Math.sin(-rotation) + dy * Math.cos(-rotation)
     const halfW = pos.width / 2
@@ -457,11 +412,11 @@ export default function InstagramPostCreator() {
   const isPointNearRotationArea = (x: number, y: number, pos: TextPosition | GroupBoundingBox): boolean => {
     const handleSize = 20
     const rotationAreaSize = 15
-    const centerX = pos.x + pos.width / 2
-    const centerY = pos.y + pos.height / 2
+    const cx = pos.x + pos.width / 2
+    const cy = pos.y + pos.height / 2
     const rotation = 'rotation' in pos ? pos.rotation : pos.rotation
-    const dx = x - centerX
-    const dy = y - centerY
+    const dx = x - cx
+    const dy = y - cy
     const rotatedX = dx * Math.cos(-rotation) - dy * Math.sin(-rotation)
     const rotatedY = dx * Math.sin(-rotation) + dy * Math.cos(-rotation)
     const halfW = pos.width / 2
@@ -470,10 +425,10 @@ export default function InstagramPostCreator() {
       { x: -halfW, y: -halfH },
       { x:  halfW, y: -halfH },
       { x:  halfW, y:  halfH },
-      { x: -halfW, y:  halfH },
+      { x: -halfW, y:  halfH }
     ]
     for (const corner of corners) {
-      const dist = Math.sqrt((rotatedX - corner.x)**2 + (rotatedY - corner.y)**2)
+      const dist = Math.sqrt((rotatedX - corner.x) ** 2 + (rotatedY - corner.y) ** 2)
       if (dist > handleSize/2 && dist <= handleSize/2 + rotationAreaSize) return true
     }
     return false
@@ -483,8 +438,8 @@ export default function InstagramPostCreator() {
     if (!initialGroupBox || !resizeStartPosition) return
     const dx = x - resizeStartPosition.x
     const dy = y - resizeStartPosition.y
-    const centerX = initialGroupBox.x + initialGroupBox.width / 2
-    const centerY = initialGroupBox.y + initialGroupBox.height / 2
+    const cx = initialGroupBox.x + initialGroupBox.width / 2
+    const cy = initialGroupBox.y + initialGroupBox.height / 2
     let scale = 1
     if (handle.includes('e') || handle.includes('w')) {
       scale = 1 + (dx / initialGroupBox.width) * resizeSpeed
@@ -494,15 +449,15 @@ export default function InstagramPostCreator() {
     scale = Math.max(0.1, scale)
     const newW = initialGroupBox.width * scale
     const newH = initialGroupBox.height * scale
-    const newX = centerX - newW / 2
-    const newY = centerY - newH / 2
+    const newX = cx - newW / 2
+    const newY = cy - newH / 2
     const updatePos = (p: TextPosition) => {
-      const relX = (p.x - centerX) / (initialGroupBox.width / 2)
-      const relY = (p.y - centerY) / (initialGroupBox.height / 2)
+      const relX = (p.x - cx) / (initialGroupBox.width / 2)
+      const relY = (p.y - cy) / (initialGroupBox.height / 2)
       return {
         ...p,
-        x: centerX + relX * (newW / 2),
-        y: centerY + relY * (newH / 2),
+        x: cx + relX * (newW / 2),
+        y: cy + relY * (newH / 2),
         width: p.width * scale,
         height: p.height * scale,
         fontSize: p.fontSize * scale
@@ -510,7 +465,9 @@ export default function InstagramPostCreator() {
     }
     setTitlePositionsFrame2(prev =>
       prev.map((p, i) =>
-        selectedTexts.includes(`title${i + 1}` as 'title1' | 'title2') ? updatePos(p) : p
+        selectedTexts.includes(`title${i + 1}` as 'title1' | 'title2')
+          ? updatePos(p)
+          : p
       )
     )
     if (selectedTexts.includes('subtitle')) {
@@ -522,27 +479,27 @@ export default function InstagramPostCreator() {
 
   const rotateGroup = (x: number, y: number, groupBox: GroupBoundingBox) => {
     if (!lastMousePosition.current) return
-    const centerX = groupBox.x + groupBox.width / 2
-    const centerY = groupBox.y + groupBox.height / 2
-    const lastA = Math.atan2(lastMousePosition.current.y - centerY, lastMousePosition.current.x - centerX)
-    const currentA = Math.atan2(y - centerY, x - centerX)
-    let δ = currentA - lastA
+    const cx = groupBox.x + groupBox.width / 2
+    const cy = groupBox.y + groupBox.height / 2
+    const lastA = Math.atan2(lastMousePosition.current.y - cy, lastMousePosition.current.x - cx)
+    const currA = Math.atan2(y - cy, x - cx)
+    let δ = currA - lastA
     if (δ > Math.PI) δ -= 2 * Math.PI
     if (δ < -Math.PI) δ += 2 * Math.PI
 
     setTitlePositionsFrame2(prev =>
       prev.map((p, i) => {
-        const type = `title${i+1}` as 'title1' | 'title2'
+        const type = `title${i + 1}` as 'title1' | 'title2'
         if (selectedTexts.includes(type)) {
           setLastKnownRotations(l => ({ ...l, [type]: p.rotation + δ }))
-          return rotateAroundPoint(p, centerX, centerY, δ)
+          return rotateAroundPoint(p, cx, cy, δ)
         }
         return p
       })
     )
     if (selectedTexts.includes('subtitle')) {
       setSubtitlePositionFrame2(prev => {
-        const np = rotateAroundPoint(prev, centerX, centerY, δ)
+        const np = rotateAroundPoint(prev, cx, cy, δ)
         setLastKnownRotations(l => ({ ...l, subtitle: np.rotation }))
         return np
       })
@@ -556,13 +513,13 @@ export default function InstagramPostCreator() {
   }
 
   const rotateAroundPoint = (pos: TextPosition, cx: number, cy: number, angle: number): TextPosition => {
-    const dx = pos.x + pos.width/2 - cx
-    const dy = pos.y + pos.height/2 - cy
-    const dist = Math.sqrt(dx*dx + dy*dy)
+    const dx = pos.x + pos.width / 2 - cx
+    const dy = pos.y + pos.height / 2 - cy
+    const dist = Math.sqrt(dx * dx + dy * dy)
     const currentA = Math.atan2(dy, dx)
     const newA = currentA + angle
-    const newX = cx + dist * Math.cos(newA) - pos.width/2
-    const newY = cy + dist * Math.sin(newA) - pos.height/2
+    const newX = cx + dist * Math.cos(newA) - pos.width / 2
+    const newY = cy + dist * Math.sin(newA) - pos.height / 2
     return { ...pos, x: newX, y: newY, rotation: pos.rotation + angle }
   }
 
@@ -632,8 +589,8 @@ export default function InstagramPostCreator() {
   const resizeSingle = (x: number, y: number, pos: TextPosition, type: 'title1' | 'title2' | 'subtitle', handle: string) => {
     if (!resizeStartPosition) return
     const currentPos = type === 'subtitle' ? subtitlePositionFrame2 : titlePositionsFrame2[type === 'title1' ? 0 : 1]
-    const cx = currentPos.x + currentPos.width/2
-    const cy = currentPos.y + currentPos.height/2
+    const cx = currentPos.x + currentPos.width / 2
+    const cy = currentPos.y + currentPos.height / 2
     const startV = { x: resizeStartPosition.x - cx, y: resizeStartPosition.y - cy }
     const currV = { x: x - cx, y: y - cy }
     const factor = 0.1
@@ -650,13 +607,15 @@ export default function InstagramPostCreator() {
     scale = Math.max(0.1, scale)
     const newW = currentPos.width * scale
     const newH = currentPos.height * scale
-    const newX = cx - newW/2
-    const newY = cy - newH/2
+    const newX = cx - newW / 2
+    const newY = cy - newH / 2
     const newFont = currentPos.fontSize * scale
     const newPos: TextPosition = {
       ...currentPos,
-      x: newX, y: newY,
-      width: newW, height: newH,
+      x: newX,
+      y: newY,
+      width: newW,
+      height: newH,
       fontSize: newFont
     }
     if (type === 'subtitle') {
@@ -738,18 +697,17 @@ export default function InstagramPostCreator() {
     const positions = currentFrame === 1 ? titlePositionsFrame1 : titlePositionsFrame2
     const subtitlePos = currentFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
 
-    // ─── DOUBLE‐CLICK: still run the normal selection logic, then open modal ─────────────
+    // ─── DOUBLE-CLICK OPENS MODAL ──────────────────────────────────────────────────
     if (currentFrame === 2 && wasDoubleClick()) {
-      // Check titles
+      // Check titles first
       for (let i = 0; i < positions.length; i++) {
         if (isPointInRotatedBox(x, y, getRotatedBoundingBox(positions[i]))) {
-          // First, select exactly that item (so rotation/drag still work)
-          handleTextInteraction(positions[i], `title${i+1}` as 'title1' | 'title2', x, y)
-          // Then open the modal for editing that item:
+          // Still run our normal selection logic so that the item remains “selected”
+          handleTextInteraction(positions[i], `title${i + 1}` as 'title1' | 'title2', x, y)
+          // Then open the edit popup:
           setEditTarget(i === 0 ? 'title1' : 'title2')
-          // Copy its current “TextPosition” into editingPosition:
           setEditingPosition({ ...positions[i] })
-          setEditingSize(100) // reset Size (%) to 100%
+          setEditingSize(100)
           setPositionModalOpen(true)
           return
         }
@@ -765,7 +723,21 @@ export default function InstagramPostCreator() {
       }
     }
 
-    // Otherwise (not a double‐click), run normal line/selection logic:
+    // ─── SINGLE CLICK ON TEXT = select/drag/rotate, NOT start a new line ─────────
+    if (currentFrame === 2) {
+      for (let i = 0; i < positions.length; i++) {
+        if (isPointInRotatedBox(x, y, getRotatedBoundingBox(positions[i]))) {
+          handleTextInteraction(positions[i], `title${i + 1}` as 'title1' | 'title2', x, y)
+          return
+        }
+      }
+      if (isPointInRotatedBox(x, y, getRotatedBoundingBox(subtitlePos))) {
+        handleTextInteraction(subtitlePos, 'subtitle', x, y)
+        return
+      }
+    }
+
+    // ─── OTHERWISE: proceed to line-drawing / editing logic ───────────────────────
     if (!isShiftPressed.current) {
       setSelectedTexts([])
       setGroupRotation(0)
@@ -826,36 +798,36 @@ export default function InstagramPostCreator() {
   }
 
   const getRotatedBoundingBox = (pos: TextPosition): Point[] => {
-    const cx = pos.x + pos.width/2
-    const cy = pos.y + pos.height/2
+    const cx = pos.x + pos.width / 2
+    const cy = pos.y + pos.height / 2
     const w = pos.width
     const h = pos.height
     const corners = [
-      { x: -w/2, y: -h/2 },
-      { x:  w/2, y: -h/2 },
-      { x:  w/2, y:  h/2 },
-      { x: -w/2, y:  h/2 }
+      { x: -w / 2, y: -h / 2 },
+      { x:  w / 2, y: -h / 2 },
+      { x:  w / 2, y:  h / 2 },
+      { x: -w / 2, y:  h / 2 }
     ]
-    return corners.map(c => {
-      const rx = c.x * Math.cos(pos.rotation) - c.y * Math.sin(pos.rotation)
-      const ry = c.x * Math.sin(pos.rotation) + c.y * Math.cos(pos.rotation)
+    return corners.map(corner => {
+      const rx = corner.x * Math.cos(pos.rotation) - corner.y * Math.sin(pos.rotation)
+      const ry = corner.x * Math.sin(pos.rotation) + corner.y * Math.cos(pos.rotation)
       return { x: rx + cx, y: ry + cy }
     })
   }
 
   const getRotatedGroupBoundingBox = (box: GroupBoundingBox): Point[] => {
     const { x, y, width, height, rotation } = box
-    const cx = x + width/2
-    const cy = y + height/2
+    const cx = x + width / 2
+    const cy = y + height / 2
     const corners = [
-      { x: -width/2, y: -height/2 },
-      { x:  width/2, y: -height/2 },
-      { x:  width/2, y:  height/2 },
-      { x: -width/2, y:  height/2 }
+      { x: -width / 2, y: -height / 2 },
+      { x:  width / 2, y: -height / 2 },
+      { x:  width / 2, y:  height / 2 },
+      { x: -width / 2, y:  height / 2 }
     ]
-    return corners.map(c => {
-      const rx = c.x * Math.cos(rotation) - c.y * Math.sin(rotation)
-      const ry = c.x * Math.sin(rotation) + c.y * Math.cos(rotation)
+    return corners.map(corner => {
+      const rx = corner.x * Math.cos(rotation) - corner.y * Math.sin(rotation)
+      const ry = corner.x * Math.sin(rotation) + corner.y * Math.cos(rotation)
       return { x: rx + cx, y: ry + cy }
     })
   }
@@ -875,7 +847,7 @@ export default function InstagramPostCreator() {
     if ('x' in t && 'y' in t) {
       const dx = p.x - t.x
       const dy = p.y - t.y
-      return Math.sqrt(dx*dx + dy*dy) < threshold
+      return Math.sqrt(dx * dx + dy * dy) < threshold
     }
     return pointToLineDistance(p, t.start, t.end) < threshold
   }
@@ -885,8 +857,8 @@ export default function InstagramPostCreator() {
     const B = p.y - a.y
     const C = b.x - a.x
     const D = b.y - a.y
-    const dot = A*C + B*D
-    const lenSq = C*C + D*D
+    const dot = A * C + B * D
+    const lenSq = C * C + D * D
     let param = -1
     if (lenSq !== 0) param = dot / lenSq
     let xx, yy
@@ -895,12 +867,12 @@ export default function InstagramPostCreator() {
     } else if (param > 1) {
       xx = b.x; yy = b.y
     } else {
-      xx = a.x + param*C
-      yy = a.y + param*D
+      xx = a.x + param * C
+      yy = a.y + param * D
     }
     const dx = p.x - xx
     const dy = p.y - yy
-    return Math.sqrt(dx*dx + dy*dy)
+    return Math.sqrt(dx * dx + dy * dy)
   }
 
   const dragSingle = (x: number, y: number, type: 'title1' | 'title2' | 'subtitle') => {
@@ -926,7 +898,7 @@ export default function InstagramPostCreator() {
     const dy = y - lastMousePosition.current.y
     setTitlePositionsFrame2(prev =>
       prev.map((p, i) =>
-        selectedTexts.includes(`title${i+1}` as 'title1' | 'title2')
+        selectedTexts.includes(`title${i + 1}` as 'title1' | 'title2')
           ? { ...p, x: p.x + dx, y: p.y + dy }
           : p
       )
@@ -940,13 +912,14 @@ export default function InstagramPostCreator() {
   const rotateSingle = (x: number, y: number, pos: TextPosition, type: 'title1' | 'title2' | 'subtitle') => {
     if (!lastMousePosition.current) return
     const currentPos = type === 'subtitle' ? subtitlePositionFrame2 : titlePositionsFrame2[type === 'title1' ? 0 : 1]
-    const centerX = currentPos.x + currentPos.width/2
-    const centerY = currentPos.y + currentPos.height/2
-    const lastA = Math.atan2(lastMousePosition.current.y - centerY, lastMousePosition.current.x - centerX)
-    const currA = Math.atan2(y - centerY, x - centerX)
+    const cx = currentPos.x + currentPos.width / 2
+    const cy = currentPos.y + currentPos.height / 2
+    const lastA = Math.atan2(lastMousePosition.current.y - cy, lastMousePosition.current.x - cx)
+    const currA = Math.atan2(y - cy, x - cx)
     let δ = currA - lastA
     if (δ > Math.PI) δ -= 2 * Math.PI
     if (δ < -Math.PI) δ += 2 * Math.PI
+
     if (type === 'subtitle') {
       setSubtitlePositionFrame2(prev => ({ ...prev, rotation: prev.rotation + δ }))
     } else {
@@ -1000,10 +973,9 @@ export default function InstagramPostCreator() {
     console.log("Export not implemented")
   }
 
-  // ─── THIS is where the “Update” button in the modal writes back into the correct state:
+  // ─── UPDATE POSITION FROM POP-UP ─────────────────────────────────────────────────
   const updatePosition = (newPos: TextPosition) => {
     if (!editTarget || !editingPosition) return
-    // We also scale “Size (%)” now:
     const scaleFactor = editingSize / 100
     const scaled: TextPosition = {
       ...newPos,
@@ -1150,7 +1122,7 @@ export default function InstagramPostCreator() {
                   id="xPosition"
                   type="number"
                   value={editingPosition.x}
-                  onChange={e => setEditingPosition({...editingPosition, x: Number(e.target.value)})}
+                  onChange={e => setEditingPosition({ ...editingPosition, x: Number(e.target.value) })}
                 />
               </div>
               <div>
@@ -1159,7 +1131,7 @@ export default function InstagramPostCreator() {
                   id="yPosition"
                   type="number"
                   value={editingPosition.y}
-                  onChange={e => setEditingPosition({...editingPosition, y: Number(e.target.value)})}
+                  onChange={e => setEditingPosition({ ...editingPosition, y: Number(e.target.value) })}
                 />
               </div>
               <div>
@@ -1167,8 +1139,8 @@ export default function InstagramPostCreator() {
                 <Input
                   id="rotation"
                   type="number"
-                  value={editingPosition.rotation * (180/Math.PI)}
-                  onChange={e => setEditingPosition({...editingPosition, rotation: Number(e.target.value) * (Math.PI/180)})}
+                  value={editingPosition.rotation * (180 / Math.PI)}
+                  onChange={e => setEditingPosition({ ...editingPosition, rotation: Number(e.target.value) * (Math.PI / 180) })}
                 />
               </div>
               <div>
