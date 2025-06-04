@@ -1,6 +1,6 @@
 import { useRef, useCallback } from 'react'
-import { TextPosition, Line, Point } from '../types'
-import { drawCanvas as drawCanvasUtil } from '../utils/canvasUtils'
+import { TextPosition, Line, Point, GroupBoundingBox } from '../types'
+import { drawCanvas as drawCanvasUtil, getRotatedBoundingBox, isPointInRotatedBox } from '../utils/canvasUtils'
 
 interface CanvasState {
   titles: string[]
@@ -61,6 +61,24 @@ export function useCanvasOperations(
     state.setDebug(`Canvas rendered. Progress: ${progress.toFixed(2)}, Frame: ${state.currentFrame}, BG: ${state.backgroundColor}`)
   }, [canvasRef, state])
 
+  const isPointInText = useCallback((x: number, y: number): ('title1' | 'title2' | 'subtitle') | null => {
+    // Check titles first
+    for (let i = 0; i < state.titlePositionsFrame2.length; i++) {
+      const box = getRotatedBoundingBox(state.titlePositionsFrame2[i])
+      if (isPointInRotatedBox(x, y, box)) {
+        return i === 0 ? 'title1' : 'title2'
+      }
+    }
+
+    // Check subtitle
+    const subtitleBox = getRotatedBoundingBox(state.subtitlePositionFrame2)
+    if (isPointInRotatedBox(x, y, subtitleBox)) {
+      return 'subtitle'
+    }
+
+    return null
+  }, [state.titlePositionsFrame2, state.subtitlePositionFrame2])
+
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
     if (!canvas || state.currentFrame !== 2) return
@@ -72,8 +90,10 @@ export function useCanvasOperations(
     const currentTime = Date.now()
     const isDoubleClick = currentTime - lastClickTime.current <= 300
 
-    if (isDoubleClick) {
-      // Handle double-click
+    const clickedText = isPointInText(x, y)
+
+    if (isDoubleClick && clickedText) {
+      actions.setSelectedTexts([clickedText])
       actions.setPositionModalOpen(true)
       lastClickTime.current = 0 // Reset to prevent triple-click
       return
@@ -82,8 +102,13 @@ export function useCanvasOperations(
     lastClickTime.current = currentTime
     lastMousePosition.current = { x, y }
 
-    // Rest of your existing mouse down logic...
-  }, [state, actions])
+    if (clickedText) {
+      actions.setSelectedTexts([clickedText])
+      isDragging.current = true
+    } else {
+      actions.setSelectedTexts([])
+    }
+  }, [state, actions, isPointInText])
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
@@ -93,10 +118,35 @@ export function useCanvasOperations(
     const x = (e.clientX - rect.left) * (canvas.width / rect.width)
     const y = (e.clientY - rect.top) * (canvas.height / rect.height)
 
-    // Your existing mouse move logic...
+    if (isDragging.current && state.selectedTexts.length > 0) {
+      const dx = x - lastMousePosition.current.x
+      const dy = y - lastMousePosition.current.y
+
+      state.selectedTexts.forEach(selectedText => {
+        if (selectedText === 'subtitle') {
+          actions.setSubtitlePositionFrame2(prev => ({
+            ...prev,
+            x: prev.x + dx,
+            y: prev.y + dy
+          }))
+        } else {
+          const index = selectedText === 'title1' ? 0 : 1
+          actions.setTitlePositionsFrame2(prev => {
+            const newPositions = [...prev]
+            newPositions[index] = {
+              ...newPositions[index],
+              x: newPositions[index].x + dx,
+              y: newPositions[index].y + dy
+            }
+            return newPositions
+          })
+        }
+      })
+    }
 
     lastMousePosition.current = { x, y }
-  }, [state, actions])
+    drawCanvas()
+  }, [state, actions, drawCanvas])
 
   const handleMouseUp = useCallback(() => {
     lastMousePosition.current = null
@@ -107,7 +157,7 @@ export function useCanvasOperations(
     resizeStartPosition.current = null
     initialPosition.current = null
     initialGroupBox.current = null
-  }, [state, actions])
+  }, [])
 
   return {
     handleMouseDown,
