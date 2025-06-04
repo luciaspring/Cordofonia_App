@@ -4,6 +4,63 @@ function ultraFastEaseInOutFunction(t: number): number {
   return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t
 }
 
+export function drawAnimatedText(
+  ctx: CanvasRenderingContext2D,
+  progress: number,
+  fromFrame: number,
+  toFrame: number,
+  titles: string[],
+  subtitle: string,
+  titlePositionsFrame1: TextPosition[],
+  titlePositionsFrame2: TextPosition[],
+  subtitlePositionFrame1: TextPosition,
+  subtitlePositionFrame2: TextPosition
+) {
+  const t = ultraFastEaseInOutFunction(progress)
+  const fromPositions = fromFrame === 1 ? titlePositionsFrame1 : titlePositionsFrame2
+  const toPositions = fromFrame === 1 ? titlePositionsFrame2 : titlePositionsFrame1
+  const fromSubPos = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
+  const toSubPos = fromFrame === 1 ? subtitlePositionFrame2 : subtitlePositionFrame1
+
+  // Draw titles with interpolation
+  titles.forEach((title, i) => {
+    const fromPos = fromPositions[i]
+    const toPos = toPositions[i]
+    const x = fromPos.x + (toPos.x - fromPos.x) * t
+    const y = fromPos.y + (toPos.y - fromPos.y) * t
+    const width = fromPos.width + (toPos.width - fromPos.width) * t
+    const height = fromPos.height + (toPos.height - fromPos.height) * t
+    const rotation = fromPos.rotation + (toPos.rotation - fromPos.rotation) * t
+    const fontSize = fromPos.fontSize + (toPos.fontSize - fromPos.fontSize) * t
+
+    ctx.save()
+    ctx.translate(x + width / 2, y + height / 2)
+    ctx.rotate(rotation)
+    ctx.font = `bold ${fontSize}px Arial`
+    ctx.textBaseline = 'middle'
+    ctx.textAlign = 'center'
+    ctx.fillText(title, 0, 0)
+    ctx.restore()
+  })
+
+  // Draw subtitle with interpolation
+  const subX = fromSubPos.x + (toSubPos.x - fromSubPos.x) * t
+  const subY = fromSubPos.y + (toSubPos.y - fromSubPos.y) * t
+  const subWidth = fromSubPos.width + (toSubPos.width - fromSubPos.width) * t
+  const subHeight = fromSubPos.height + (toSubPos.height - fromSubPos.height) * t
+  const subRotation = fromSubPos.rotation + (toSubPos.rotation - fromSubPos.rotation) * t
+  const subFontSize = fromSubPos.fontSize + (toSubPos.fontSize - fromSubPos.fontSize) * t
+
+  ctx.save()
+  ctx.translate(subX + subWidth / 2, subY + subHeight / 2)
+  ctx.rotate(subRotation)
+  ctx.font = `${subFontSize}px Arial`
+  ctx.textBaseline = 'middle'
+  ctx.textAlign = 'center'
+  ctx.fillText(subtitle, 0, 0)
+  ctx.restore()
+}
+
 export function drawFrameLines(
   ctx: CanvasRenderingContext2D,
   lines: Line[],
@@ -23,8 +80,8 @@ export function drawFrameLines(
       (frameProgress - index * adjustedStaggerDelay) / animationDuration))
     t = ultraFastEaseInOutFunction(t)
 
-    const start = line.points[0]
-    const end = line.points[1]
+    const start = line.start
+    const end = line.end
     const frac = animationType === 'grow' ? t : 1 - t
     const currentEnd = {
       x: start.x + (end.x - start.x) * frac,
@@ -133,61 +190,71 @@ export function drawCanvas(
   ctx.fillStyle = state.backgroundColor
   ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
 
-  // Draw text
+  // Set text color
   ctx.fillStyle = getContrastColor(state.backgroundColor)
-  ctx.textBaseline = 'top'
+
+  if (state.isPlaying) {
+    if (progress <= 0.3) {
+      drawStaticText(ctx, state, 1)
+      drawFrameLines(ctx, state.lines.filter(l => l.frame === 1), progress / 0.3, 'grow', state.staggerDelay, state.lineThickness, state.tremblingIntensity)
+    } else if (progress <= 0.6) {
+      drawStaticText(ctx, state, 1)
+      drawFrameLines(ctx, state.lines.filter(l => l.frame === 1), (progress - 0.3) / 0.3, 'shrink', state.staggerDelay, state.lineThickness, state.tremblingIntensity)
+    } else if (progress <= 0.7) {
+      const tp = (progress - 0.6) / 0.1
+      drawAnimatedText(ctx, tp, 1, 2, state.titles, state.subtitle, state.titlePositionsFrame1, state.titlePositionsFrame2, state.subtitlePositionFrame1, state.subtitlePositionFrame2)
+    } else if (progress <= 1.0) {
+      drawStaticText(ctx, state, 2)
+      drawFrameLines(ctx, state.lines.filter(l => l.frame === 2), (progress - 0.7) / 0.3, 'grow', state.staggerDelay, state.lineThickness, state.tremblingIntensity)
+    } else if (progress <= 1.3) {
+      drawStaticText(ctx, state, 2)
+      drawFrameLines(ctx, state.lines.filter(l => l.frame === 2), (progress - 1.0) / 0.3, 'shrink', state.staggerDelay, state.lineThickness, state.tremblingIntensity)
+    } else if (progress <= 1.4) {
+      const tp = (progress - 1.3) / 0.1
+      drawAnimatedText(ctx, tp, 2, 1, state.titles, state.subtitle, state.titlePositionsFrame1, state.titlePositionsFrame2, state.subtitlePositionFrame1, state.subtitlePositionFrame2)
+    }
+  } else {
+    drawStaticText(ctx, state, state.currentFrame)
+    const currentFrameLines = state.lines.filter(l => l.frame === state.currentFrame)
+    drawFrameLines(ctx, currentFrameLines, 1, 'grow', state.staggerDelay, state.lineThickness, state.tremblingIntensity)
+  }
+}
+
+function drawStaticText(
+  ctx: CanvasRenderingContext2D,
+  state: {
+    titles: string[]
+    subtitle: string
+    titlePositionsFrame1: TextPosition[]
+    titlePositionsFrame2: TextPosition[]
+    subtitlePositionFrame1: TextPosition
+    subtitlePositionFrame2: TextPosition
+  },
+  frame: number
+) {
+  const positions = frame === 1 ? state.titlePositionsFrame1 : state.titlePositionsFrame2
+  const subPos = frame === 1 ? state.subtitlePositionFrame1 : state.subtitlePositionFrame2
 
   // Draw titles
-  state.titles.forEach((title, index) => {
-    const pos1 = state.titlePositionsFrame1[index]
-    const pos2 = state.titlePositionsFrame2[index]
-    
-    // Calculate interpolated position and dimensions
-    const x = pos1.x + (pos2.x - pos1.x) * progress
-    const y = pos1.y + (pos2.y - pos1.y) * progress
-    const width = pos1.width + (pos2.width - pos1.width) * progress
-    const height = pos1.height + (pos2.height - pos1.height) * progress
-    const rotation = pos1.rotation + (pos2.rotation - pos1.rotation) * progress
-    const fontSize = pos1.fontSize + (pos2.fontSize - pos1.fontSize) * progress
-    
+  state.titles.forEach((title, i) => {
+    const pos = positions[i]
     ctx.save()
-    ctx.translate(x + width / 2, y + height / 2)
-    ctx.rotate(rotation)
-    ctx.font = `${fontSize}px sans-serif`
-    ctx.fillText(title, -width / 2, -height / 2)
+    ctx.translate(pos.x + pos.width / 2, pos.y + pos.height / 2)
+    ctx.rotate(pos.rotation)
+    ctx.font = `bold ${pos.fontSize}px Arial`
+    ctx.textBaseline = 'middle'
+    ctx.textAlign = 'center'
+    ctx.fillText(title, 0, 0)
     ctx.restore()
   })
 
   // Draw subtitle
-  const subPos1 = state.subtitlePositionFrame1
-  const subPos2 = state.subtitlePositionFrame2
-  
-  // Calculate interpolated subtitle position and dimensions
-  const subX = subPos1.x + (subPos2.x - subPos1.x) * progress
-  const subY = subPos1.y + (subPos2.y - subPos1.y) * progress
-  const subWidth = subPos1.width + (subPos2.width - subPos1.width) * progress
-  const subHeight = subPos1.height + (subPos2.height - subPos1.height) * progress
-  const subRotation = subPos1.rotation + (subPos2.rotation - subPos1.rotation) * progress
-  const subFontSize = subPos1.fontSize + (subPos2.fontSize - subPos1.fontSize) * progress
-
   ctx.save()
-  ctx.translate(subX + subWidth / 2, subY + subHeight / 2)
-  ctx.rotate(subRotation)
-  ctx.font = `${subFontSize}px sans-serif`
-  ctx.fillText(state.subtitle, -subWidth / 2, -subHeight / 2)
+  ctx.translate(subPos.x + subPos.width / 2, subPos.y + subPos.height / 2)
+  ctx.rotate(subPos.rotation)
+  ctx.font = `${subPos.fontSize}px Arial`
+  ctx.textBaseline = 'middle'
+  ctx.textAlign = 'center'
+  ctx.fillText(state.subtitle, 0, 0)
   ctx.restore()
-
-  // Draw lines
-  ctx.strokeStyle = getContrastColor(state.backgroundColor)
-  ctx.lineWidth = state.lineThickness
-  const currentFrameLines = state.lines.filter(line => line.frame === state.currentFrame)
-  drawFrameLines(
-    ctx,
-    currentFrameLines,
-    progress,
-    state.isPlaying ? 'grow' : 'shrink',
-    state.staggerDelay,
-    state.lineThickness,
-    state.tremblingIntensity
-  )
 }
