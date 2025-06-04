@@ -94,7 +94,8 @@ export default function InstagramPostCreator() {
       setSubtitlePositionFrame2,
       setLines,
       setSelectedTexts,
-      setGroupRotation
+      setGroupRotation,
+      setPositionModalOpen
     }
   )
 
