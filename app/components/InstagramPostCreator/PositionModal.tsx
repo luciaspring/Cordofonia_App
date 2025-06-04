@@ -32,6 +32,7 @@ export default function PositionModal({
   drawCanvas
 }: PositionModalProps) {
   const [editingPosition, setEditingPosition] = useState<TextPosition | null>(null)
+  const [scale, setScale] = useState(100)
 
   useEffect(() => {
     if (open && selectedTexts.length === 1) {
@@ -42,24 +43,35 @@ export default function PositionModal({
         const index = textType === 'title1' ? 0 : 1
         setEditingPosition(titlePositionsFrame2[index])
       }
+      setScale(100) // Reset scale when opening
     }
   }, [open, selectedTexts, titlePositionsFrame2, subtitlePositionFrame2])
 
   const updatePosition = (newPosition: TextPosition) => {
+    if (!editingPosition) return
+
+    const scaleFactor = scale / 100
+    const scaledPosition = {
+      ...newPosition,
+      width: editingPosition.width * scaleFactor,
+      height: editingPosition.height * scaleFactor,
+      fontSize: editingPosition.fontSize * scaleFactor
+    }
+
     if (selectedTexts.includes('title1') || selectedTexts.includes('title2')) {
       setTitlePositionsFrame2(prev => {
         const newPositions = [...prev]
         selectedTexts.forEach(selectedText => {
           if (selectedText === 'title1' || selectedText === 'title2') {
             const index = selectedText === 'title1' ? 0 : 1
-            newPositions[index] = newPosition
+            newPositions[index] = scaledPosition
           }
         })
         return newPositions
       })
     }
     if (selectedTexts.includes('subtitle')) {
-      setSubtitlePositionFrame2(newPosition)
+      setSubtitlePositionFrame2(scaledPosition)
     }
     onOpenChange(false)
     drawCanvas()
@@ -98,6 +110,17 @@ export default function PositionModal({
                 type="number"
                 value={editingPosition.rotation * (180 / Math.PI)}
                 onChange={(e) => setEditingPosition({...editingPosition, rotation: Number(e.target.value) * (Math.PI / 180)})}
+              />
+            </div>
+            <div>
+              <Label htmlFor="size">Size (%)</Label>
+              <Input
+                id="size"
+                type="number"
+                value={scale}
+                onChange={(e) => setScale(Number(e.target.value))}
+                min={1}
+                max={500}
               />
             </div>
             <Button onClick={() => updatePosition(editingPosition)}>Update</Button>

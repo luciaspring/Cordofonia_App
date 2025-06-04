@@ -28,6 +28,7 @@ interface CanvasActions {
   setLines: React.Dispatch<React.SetStateAction<Line[]>>
   setSelectedTexts: React.Dispatch<React.SetStateAction<('title1' | 'title2' | 'subtitle')[]>>
   setGroupRotation: React.Dispatch<React.SetStateAction<number>>
+  setPositionModalOpen: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 export function useCanvasOperations(
@@ -61,15 +62,51 @@ export function useCanvasOperations(
   }, [canvasRef, state])
 
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    // ... (implement mouse down logic)
+    const canvas = canvasRef.current
+    if (!canvas || state.currentFrame !== 2) return
+
+    const rect = canvas.getBoundingClientRect()
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width)
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height)
+
+    const currentTime = Date.now()
+    const isDoubleClick = currentTime - lastClickTime.current <= 300
+
+    if (isDoubleClick) {
+      // Handle double-click
+      actions.setPositionModalOpen(true)
+      lastClickTime.current = 0 // Reset to prevent triple-click
+      return
+    }
+
+    lastClickTime.current = currentTime
+    lastMousePosition.current = { x, y }
+
+    // Rest of your existing mouse down logic...
   }, [state, actions])
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    // ... (implement mouse move logic)
+    const canvas = canvasRef.current
+    if (!canvas || !lastMousePosition.current) return
+
+    const rect = canvas.getBoundingClientRect()
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width)
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height)
+
+    // Your existing mouse move logic...
+
+    lastMousePosition.current = { x, y }
   }, [state, actions])
 
   const handleMouseUp = useCallback(() => {
-    // ... (implement mouse up logic)
+    lastMousePosition.current = null
+    isResizing.current = false
+    isDragging.current = false
+    isRotating.current = false
+    resizeHandle.current = null
+    resizeStartPosition.current = null
+    initialPosition.current = null
+    initialGroupBox.current = null
   }, [state, actions])
 
   return {
