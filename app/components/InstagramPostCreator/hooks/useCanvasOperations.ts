@@ -112,7 +112,7 @@ export function useCanvasOperations(
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
-    if (!canvas || !lastMousePosition.current) return
+    if (!canvas || !lastMousePosition.current || state.currentFrame !== 2) return
 
     const rect = canvas.getBoundingClientRect()
     const x = (e.clientX - rect.left) * (canvas.width / rect.width)
@@ -142,10 +142,11 @@ export function useCanvasOperations(
           })
         }
       })
+
+      drawCanvas()
     }
 
     lastMousePosition.current = { x, y }
-    drawCanvas()
   }, [state, actions, drawCanvas])
 
   const handleMouseUp = useCallback(() => {
