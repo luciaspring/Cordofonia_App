@@ -1017,7 +1017,7 @@ export default function InstagramPostCreator() {
     return null
   }
 
-  // Check if a point is inside a rotated polygon
+  // Check if point is inside a rotated polygon
   const isPointInRotatedBox = (x: number, y: number, box: Point[]): boolean => {
     let inside = false
     for (let i = 0, j = box.length - 1; i < box.length; j = i++) {
@@ -1199,6 +1199,74 @@ export default function InstagramPostCreator() {
       height: sH,
       aspectRatio: sAspect
     }))
+  }
+
+  // Handle text interaction for titles and subtitles
+  const handleTextInteraction = (position: TextPosition, textType: 'title1' | 'title2' | 'subtitle', x: number, y: number) => {
+    if (currentFrame === 2) {
+      lastMousePosition.current = { x, y }
+
+      // Store current rotation state before selection changes
+      if (selectedTexts.length > 0) {
+        setLastKnownRotations(prev => ({
+          ...prev,
+          group: groupRotation // Store current group rotation
+        }))
+      }
+
+      // Handle selection
+      if (isShiftPressed.current) {
+        setSelectedTexts(prev => {
+          const newSelection = prev.includes(textType)
+            ? prev.filter(t => t !== textType)
+            : [...prev, textType]
+
+          // If selecting multiple items, use group rotation
+          if (newSelection.length > 1) {
+            setGroupRotation(lastKnownRotations.group)
+          }
+          // If selecting single item, use its individual rotation
+          else if (newSelection.length === 1) {
+            setGroupRotation(lastKnownRotations[newSelection[0]])
+          }
+
+          return newSelection
+        })
+      } else {
+        setSelectedTexts([textType])
+        setGroupRotation(lastKnownRotations[textType])
+      }
+
+      // Reset interaction states
+      setIsResizing(false)
+      setIsDragging(false)
+      setIsRotating(false)
+      setResizeHandle(null)
+
+      // Determine interaction type
+      if (isPointNearRotationArea(x, y, position)) {
+        setIsRotating(true)
+        const groupBox = calculateGroupBoundingBox()
+        if (groupBox) {
+          setInitialGroupBox(groupBox)
+        }
+      } else {
+        const handle = getResizeHandle(x, y, position)
+        if (handle) {
+          if (handle === 'move') {
+            setIsDragging(true)
+          } else {
+            setResizeHandle(handle)
+            setIsResizing(true)
+            setResizeStartPosition({ x, y })
+          }
+        } else {
+          setIsDragging(true)
+        }
+      }
+
+      drawCanvas()
+    }
   }
 
   return (
