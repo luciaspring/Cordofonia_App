@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { PlayIcon, PauseIcon, RotateCcwIcon, ShareIcon, Settings } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const colorOptions = [
   { name: 'Light Pink', value: '#F6A69B' },
@@ -24,27 +23,8 @@ interface Line { start: Point, end: Point, frame: number }
 interface TextPosition { x: number, y: number, width: number, height: number, rotation: number, fontSize: number, aspectRatio?: number }
 interface GroupBoundingBox { x: number, y: number, width: number, height: number, rotation: number }
 
-// Add this to track initial state
-interface RigidBoundingBox {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  rotation: number;
-  centerX: number;
-  centerY: number;
-}
-
-const ultraFastEaseInOutFunction = (t: number): number => {
-  // Extremely fast ease-in and ease-out
-  if (t < 0.5) {
-    // Even faster ease-in (first half)
-    return Math.pow(2 * t, 16) / 2;
-  } else {
-    // Even faster ease-out (second half)
-    return 1 - Math.pow(-2 * t + 2, 16) / 2;
-  }
-}
+// Used to track which object the modal is currently editing:
+type EditTarget = 'title1' | 'title2' | 'subtitle' | null
 
 export default function InstagramPostCreator() {
   const [titles, setTitles] = useState<string[]>(['John', 'Doe'])
@@ -56,6 +36,7 @@ export default function InstagramPostCreator() {
   const [lines, setLines] = useState<Line[]>([])
   const [currentLine, setCurrentLine] = useState<Line | null>(null)
   const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null)
+
   const [titlePositionsFrame1, setTitlePositionsFrame1] = useState<TextPosition[]>([
     { x: 40, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 },
     { x: 40, y: 550, width: 1000, height: 200, rotation: 0, fontSize: 180 }
@@ -66,40 +47,35 @@ export default function InstagramPostCreator() {
   ])
   const [subtitlePositionFrame1, setSubtitlePositionFrame1] = useState<TextPosition>({ x: 40, y: 1000, width: 1000, height: 30, rotation: 0, fontSize: 36 })
   const [subtitlePositionFrame2, setSubtitlePositionFrame2] = useState<TextPosition>({ x: 40, y: 1000, width: 1000, height: 30, rotation: 0, fontSize: 36 })
+
+  // “selectedTexts” holds which items are currently selected (can be 0, 1, or more if Shift is held)
   const [selectedTexts, setSelectedTexts] = useState<('title1' | 'title2' | 'subtitle')[]>([])
   const [resizeHandle, setResizeHandle] = useState<string | null>(null)
   const [isRotating, setIsRotating] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
+
+  // ─── NEW STATE for “Edit Position” modal ─────────────────────────────────────────────
   const [positionModalOpen, setPositionModalOpen] = useState(false)
+  const [editTarget, setEditTarget] = useState<EditTarget>(null)
+  // We store a copy of the chosen object’s TextPosition in editingPosition so inputs can bind to it:
   const [editingPosition, setEditingPosition] = useState<TextPosition | null>(null)
-  // ─── NEW: track a “Size (%)” value in the edit dialog ────────────────────────────────
+  // And we track a “Size (%)” slider value:
   const [editingSize, setEditingSize] = useState<number>(100)
+
   const [lineThickness, setLineThickness] = useState(2)
   const [easingSpeed, setEasingSpeed] = useState(10)
   const [staggerDelay, setStaggerDelay] = useState(0.2)
   const [tremblingIntensity, setTremblingIntensity] = useState(5)
   const tremblingIntensityRef = useRef(0)
   const [settingsOpen, setSettingsOpen] = useState(false)
+
   const [groupRotation, setGroupRotation] = useState(0)
   const [initialGroupBox, setInitialGroupBox] = useState<GroupBoundingBox | null>(null)
   const [isResizing, setIsResizing] = useState(false)
   const [resizeStartPosition, setResizeStartPosition] = useState<Point | null>(null)
-  const [initialPosition, setInitialPosition] = useState<TextPosition | null>(null)
-  const [lastResizePosition, setLastResizePosition] = useState<Point | null>(null)
-  const [resizeOrigin, setResizeOrigin] = useState<Point | null>(null)
-  const [animationSpeed, setAnimationSpeed] = useState(0.00025); // State for animation speed
-  const [resizeSpeed, setResizeSpeed] = useState(0.5); // Add resize speed state
-  const [resizeStartCenter, setResizeStartCenter] = useState<Point | null>(null); // State for storing the center point
-  const [initialGroupState, setInitialGroupState] = useState<{
-    box: GroupBoundingBox;
-    centerX: number;
-    centerY: number;
-  } | null>(null);
-  const [initialUnrotatedBox, setInitialUnrotatedBox] = useState<GroupBoundingBox | null>(null);
-  const [initialBox, setInitialBox] = useState<GroupBoundingBox | null>(null);
-  const [initialBoundingBox, setInitialBoundingBox] = useState<GroupBoundingBox | null>(null);
-  const [rigidBox, setRigidBox] = useState<RigidBoundingBox | null>(null);
-  const [paperRect, setPaperRect] = useState<GroupBoundingBox | null>(null)
+
+  const [animationSpeed, setAnimationSpeed] = useState(0.00025)
+  const [resizeSpeed, setResizeSpeed] = useState(0.5)
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<number | null>(null)
@@ -108,7 +84,7 @@ export default function InstagramPostCreator() {
   const isShiftPressed = useRef(false)
   const lastClickTime = useRef<number>(0)
 
-  // Add this state to track last known rotations for each text element
+  // Track each item’s last known rotation so group‐vs‐individual rotation logic can revert properly:
   const [lastKnownRotations, setLastKnownRotations] = useState<{
     [key: string]: number;
   }>({
@@ -116,9 +92,9 @@ export default function InstagramPostCreator() {
     title2: 0,
     subtitle: 0,
     group: 0
-  });
+  })
 
-  // ─── HELPER: Any double-click interval ≤ 300ms counts as a “double-click” ────────────
+  // ─── HELPER: detect double‐click if ≤ 300ms between clicks ─────────────────────────────
   const wasDoubleClick = (): boolean => {
     const now = Date.now()
     const diff = now - lastClickTime.current
@@ -132,16 +108,13 @@ export default function InstagramPostCreator() {
         isShiftPressed.current = true
       }
     }
-
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.key === 'Shift') {
         isShiftPressed.current = false
       }
     }
-
     window.addEventListener('keydown', handleKeyDown)
     window.addEventListener('keyup', handleKeyUp)
-
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
@@ -169,7 +142,6 @@ export default function InstagramPostCreator() {
       }
       drawCanvas()
     }
-
     return () => {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current)
@@ -179,184 +151,147 @@ export default function InstagramPostCreator() {
 
   const updateTextDimensions = (ctx: CanvasRenderingContext2D) => {
     const measureText = (text: string, fontSize: number) => {
-      ctx.font = `bold ${fontSize}px Arial`; // Set font style
-      const metrics = ctx.measureText(text); // Measure text
-      // Use actual text metrics for height instead of fontSize
+      ctx.font = `bold ${fontSize}px Arial`
+      const metrics = ctx.measureText(text)
       return {
-        width: metrics.width, // Width of the text
-        height: metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent || fontSize * 0.8 // Fallback for height
-      };
-    };
+        width: metrics.width,
+        height: metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent || fontSize * 0.8
+      }
+    }
 
-    // Update title positions for frame 1
-    setTitlePositionsFrame1(prev => 
-      prev.map((pos, index) => {
-        const { width, height } = measureText(titles[index], pos.fontSize); // Measure text dimensions
-        const aspectRatio = width / height; // Calculate aspect ratio
-        return { ...pos, width, height, aspectRatio }; // Update position with new dimensions
+    // Frame 1 titles
+    setTitlePositionsFrame1(prev =>
+      prev.map((pos, i) => {
+        const { width, height } = measureText(titles[i], pos.fontSize)
+        const aspectRatio = width / height
+        return { ...pos, width, height, aspectRatio }
       })
-    );
-
-    // Update title positions for frame 2
-    setTitlePositionsFrame2(prev => 
-      prev.map((pos, index) => {
-        const { width, height } = measureText(titles[index], pos.fontSize); // Measure text dimensions
-        const aspectRatio = width / height; // Calculate aspect ratio
-        return { ...pos, width, height, aspectRatio }; // Update position with new dimensions
+    )
+    // Frame 2 titles
+    setTitlePositionsFrame2(prev =>
+      prev.map((pos, i) => {
+        const { width, height } = measureText(titles[i], pos.fontSize)
+        const aspectRatio = width / height
+        return { ...pos, width, height, aspectRatio }
       })
-    );
-
-    // Measure subtitle dimensions
-    const { width: subtitleWidth, height: subtitleHeight } = measureText(subtitle, subtitlePositionFrame2.fontSize);
-    const subtitleAspectRatio = subtitleWidth / subtitleHeight; // Calculate aspect ratio for subtitle
-    
-    // Update subtitle positions for frame 1
-    setSubtitlePositionFrame1(prev => ({ 
-      ...prev, 
-      width: subtitleWidth, 
-      height: subtitleHeight,
-      aspectRatio: subtitleAspectRatio // Update aspect ratio
-    }));
-    
-    // Update subtitle positions for frame 2
-    setSubtitlePositionFrame2(prev => ({ 
-      ...prev, 
-      width: subtitleWidth, 
-      height: subtitleHeight,
-      aspectRatio: subtitleAspectRatio // Update aspect ratio
-    }));
-  };
+    )
+    // Subtitle
+    const { width: subW, height: subH } = measureText(subtitle, subtitlePositionFrame2.fontSize)
+    const subAspect = subW / subH
+    setSubtitlePositionFrame1(prev => ({ ...prev, width: subW, height: subH, aspectRatio: subAspect }))
+    setSubtitlePositionFrame2(prev => ({ ...prev, width: subW, height: subH, aspectRatio: subAspect }))
+  }
 
   const calculateGroupBoundingBox = (): GroupBoundingBox | null => {
-    if (selectedTexts.length === 0) return null; // Return null if no texts are selected
-
-    // Calculate fresh bounds every time to ensure accurate rotation
+    if (selectedTexts.length === 0) return null
     const selectedPositions = titlePositionsFrame2
-      .filter((_, index) => selectedTexts.includes(`title${index + 1}` as 'title1' | 'title2'))
-      .concat(selectedTexts.includes('subtitle') ? [subtitlePositionFrame2] : []);
-
-    // Calculate the minimum and maximum coordinates
-    let minX = Math.min(...selectedPositions.map(pos => pos.x));
-    let minY = Math.min(...selectedPositions.map(pos => pos.y));
-    let maxX = Math.max(...selectedPositions.map(pos => pos.x + pos.width));
-    let maxY = Math.max(...selectedPositions.map(pos => pos.y + pos.height));
-
-    return {
-      x: minX,
-      y: minY,
-      width: maxX - minX,
-      height: maxY - minY,
-      rotation: groupRotation // Include current rotation
-    };
-  };
+      .filter((_, idx) => selectedTexts.includes(`title${idx + 1}` as 'title1' | 'title2'))
+      .concat(selectedTexts.includes('subtitle') ? [subtitlePositionFrame2] : [])
+    let minX = Math.min(...selectedPositions.map(p => p.x))
+    let minY = Math.min(...selectedPositions.map(p => p.y))
+    let maxX = Math.max(...selectedPositions.map(p => p.x + p.width))
+    let maxY = Math.max(...selectedPositions.map(p => p.y + p.height))
+    return { x: minX, y: minY, width: maxX - minX, height: maxY - minY, rotation: groupRotation }
+  }
 
   const drawCanvas = (progress: number = 0) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    ctx.fillStyle = backgroundColor
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
 
-    ctx.fillStyle = backgroundColor; // Set background color
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height); // Clear the canvas
-
-    const frame1Lines = lines.filter(line => line.frame === 1); // Lines for frame 1
-    const frame2Lines = lines.filter(line => line.frame === 2); // Lines for frame 2
+    const frame1Lines = lines.filter(l => l.frame === 1)
+    const frame2Lines = lines.filter(l => l.frame === 2)
 
     if (isPlaying) {
       if (progress <= 0.3) {
-        // Frame 1 grow (0.3 units)
-        drawStaticText(ctx, 1); // Draw static text for frame 1
-        drawAnimatedLines(ctx, progress / 0.3, frame1Lines, [], 'grow'); // Animate growing lines
+        drawStaticText(ctx, 1)
+        drawAnimatedLines(ctx, progress / 0.3, frame1Lines, [], 'grow')
       } else if (progress <= 0.6) {
-        // Frame 1 shrink (0.3 units)
-        drawStaticText(ctx, 1); // Draw static text for frame 1
-        drawAnimatedLines(ctx, (progress - 0.3) / 0.3, frame1Lines, [], 'shrink'); // Animate shrinking lines
+        drawStaticText(ctx, 1)
+        drawAnimatedLines(ctx, (progress - 0.3) / 0.3, frame1Lines, [], 'shrink')
       } else if (progress <= 0.7) {
-        // Text transition 1->2 (0.1 units)
-        const textProgress = (progress - 0.6) / 0.1; // Normalize text transition progress
-        drawAnimatedText(ctx, textProgress, 1, 2); // Animate text transition to frame 2
+        const tp = (progress - 0.6) / 0.1
+        drawAnimatedText(ctx, tp, 1, 2)
       } else if (progress <= 1.0) {
-        // Frame 2 grow (0.3 units)
-        drawStaticText(ctx, 2); // Draw static text for frame 2
-        drawAnimatedLines(ctx, (progress - 0.7) / 0.3, [], frame2Lines, 'grow'); // Animate growing lines for frame 2
+        drawStaticText(ctx, 2)
+        drawAnimatedLines(ctx, (progress - 0.7) / 0.3, [], frame2Lines, 'grow')
       } else if (progress <= 1.3) {
-        // Frame 2 shrink (0.3 units)
-        drawStaticText(ctx, 2); // Draw static text for frame 2
-        drawAnimatedLines(ctx, (progress - 1.0) / 0.3, [], frame2Lines, 'shrink'); // Animate shrinking lines for frame 2
+        drawStaticText(ctx, 2)
+        drawAnimatedLines(ctx, (progress - 1.0) / 0.3, [], frame2Lines, 'shrink')
       } else if (progress <= 1.4) {
-        // Text transition 2->1 (0.1 units)
-        const textProgress = (progress - 1.3) / 0.1; // Normalize text transition progress
-        drawAnimatedText(ctx, textProgress, 2, 1); // Animate final text transition back to frame 1
+        const tp = (progress - 1.3) / 0.1
+        drawAnimatedText(ctx, tp, 2, 1)
       }
     } else {
-      // If not playing, draw the current frame's lines and static text
-      drawLines(ctx, currentFrame === 1 ? frame1Lines : frame2Lines); // Draw lines for the current frame
-      drawStaticText(ctx, currentFrame); // Draw static text for the current frame
+      drawLines(ctx, currentFrame === 1 ? frame1Lines : frame2Lines)
+      drawStaticText(ctx, currentFrame)
 
-      // Draw bounding boxes for selected texts if in frame 2
       if (selectedTexts.length > 0 && currentFrame === 2) {
-        const groupBox = calculateGroupBoundingBox(); // Calculate bounding box for selected texts
+        const groupBox = calculateGroupBoundingBox()
         if (groupBox) {
-          drawGroupBoundingBox(ctx, groupBox); // Draw the group bounding box
+          drawGroupBoundingBox(ctx, groupBox)
         } else {
-          const positions = titlePositionsFrame2; // Get positions for titles
-          selectedTexts.forEach(selectedText => {
-            if (selectedText === 'title1' || selectedText === 'title2') {
-              const index = selectedText === 'title1' ? 0 : 1; // Determine index for title
-              drawBoundingBox(ctx, positions[index]); // Draw bounding box for title
-            } else if (selectedText === 'subtitle') {
-              drawBoundingBox(ctx, subtitlePositionFrame2); // Draw bounding box for subtitle
+          const positions = titlePositionsFrame2
+          selectedTexts.forEach(sel => {
+            if (sel === 'title1' || sel === 'title2') {
+              const idx = sel === 'title1' ? 0 : 1
+              drawBoundingBox(ctx, positions[idx])
+            } else {
+              drawBoundingBox(ctx, subtitlePositionFrame2)
             }
-          });
+          })
         }
       }
     }
-  };
+  }
 
   const drawAnimatedText = (ctx: CanvasRenderingContext2D, progress: number, fromFrame: number, toFrame: number) => {
-    const interpolate = (start: number, end: number, t: number) => start + (end - start) * t;
+    const interp = (a: number, b: number, t: number) => a + (b - a) * t
+    const interpPos = (p1: TextPosition, p2: TextPosition, t: number): TextPosition => ({
+      x: interp(p1.x, p2.x, t),
+      y: interp(p1.y, p2.y, t),
+      width: interp(p1.width, p2.width, t),
+      height: interp(p1.height, p2.height, t),
+      rotation: interp(p1.rotation, p2.rotation, t),
+      fontSize: interp(p1.fontSize, p2.fontSize, t),
+    })
+    // “ultraFast” easing
+    const u = (t: number) => {
+      if (t < 0.5) return Math.pow(2 * t, 16) / 2
+      return 1 - Math.pow(-2 * t + 2, 16) / 2
+    }
+    const t = u(progress)
 
-    const interpolatePosition = (pos1: TextPosition, pos2: TextPosition, t: number): TextPosition => ({
-      x: interpolate(pos1.x, pos2.x, t),
-      y: interpolate(pos1.y, pos2.y, t),
-      width: interpolate(pos1.width, pos2.width, t),
-      height: interpolate(pos1.height, pos2.height, t),
-      rotation: interpolate(pos1.rotation, pos2.rotation, t),
-      fontSize: interpolate(pos1.fontSize, pos2.fontSize, t),
-    });
-
-    const t = ultraFastEaseInOutFunction(progress);
-
-    titles.forEach((title, index) => {
-      const pos1 = fromFrame === 1 ? titlePositionsFrame1[index] : titlePositionsFrame2[index];
-      const pos2 = toFrame === 1 ? titlePositionsFrame1[index] : titlePositionsFrame2[index];
-      const interpolatedPos = interpolatePosition(pos1, pos2, t);
-      drawRotatedText(ctx, interpolatedPos, title);
-    });
-
-    const subtitlePos1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2;
-    const subtitlePos2 = toFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2;
-    const interpolatedSubtitlePos = interpolatePosition(subtitlePos1, subtitlePos2, t);
-    drawRotatedText(ctx, interpolatedSubtitlePos, subtitle);
+    titles.forEach((title, i) => {
+      const pos1 = fromFrame === 1 ? titlePositionsFrame1[i] : titlePositionsFrame2[i]
+      const pos2 = toFrame === 1 ? titlePositionsFrame1[i] : titlePositionsFrame2[i]
+      const ip = interpPos(pos1, pos2, t)
+      drawRotatedText(ctx, ip, title)
+    })
+    const sub1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
+    const sub2 = toFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
+    const subIP = interpPos(sub1, sub2, t)
+    drawRotatedText(ctx, subIP, subtitle)
   }
 
   const drawStaticText = (ctx: CanvasRenderingContext2D, frame: number) => {
-    const positions = frame === 1 ? titlePositionsFrame1 : titlePositionsFrame2; // Select title positions based on frame
-    titles.forEach((title, index) => {
-      drawRotatedText(ctx, positions[index], title); // Draw each title with rotation
-    });
-    const subtitlePosition = frame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2; // Corrected subtitle position selection
-    drawRotatedText(ctx, subtitlePosition, subtitle); // Draw the subtitle with rotation
+    const positions = frame === 1 ? titlePositionsFrame1 : titlePositionsFrame2
+    titles.forEach((t, i) => {
+      drawRotatedText(ctx, positions[i], t)
+    })
+    const subPos = frame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
+    drawRotatedText(ctx, subPos, subtitle)
   }
 
   const drawRotatedText = (ctx: CanvasRenderingContext2D, position: TextPosition, text: string) => {
     ctx.save()
-    
     ctx.translate(position.x + position.width / 2, position.y + position.height / 2)
     ctx.rotate(position.rotation)
     ctx.font = `bold ${position.fontSize}px Arial`
-    
     ctx.fillStyle = getContrastColor(backgroundColor)
     ctx.textBaseline = 'middle'
     ctx.textAlign = 'center'
@@ -378,13 +313,12 @@ export default function InstagramPostCreator() {
     ctx.lineJoin = 'round'
     ctx.strokeStyle = '#0000FF'
 
-    framelines.forEach((line) => {
+    framelines.forEach(line => {
       ctx.beginPath()
       ctx.moveTo(line.start.x, line.start.y)
       ctx.lineTo(line.end.x, line.end.y)
       ctx.stroke()
     })
-
     if (currentLine) {
       ctx.beginPath()
       ctx.moveTo(currentLine.start.x, currentLine.start.y)
@@ -394,622 +328,462 @@ export default function InstagramPostCreator() {
   }
 
   const drawAnimatedLines = (
-    ctx: CanvasRenderingContext2D, 
-    progress: number, 
+    ctx: CanvasRenderingContext2D,
+    progress: number,
     frame1Lines: Line[],
     frame2Lines: Line[],
     animationType: 'grow' | 'shrink'
   ) => {
-    ctx.lineWidth = lineThickness; // Set line thickness
-    ctx.lineCap = 'round'; // Set line cap style
-    ctx.lineJoin = 'round'; // Set line join style
-    ctx.strokeStyle = isPlaying ? '#000000' : '#0000FF'; // Set stroke color based on playing state
+    ctx.lineWidth = lineThickness
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+    ctx.strokeStyle = isPlaying ? '#000000' : '#0000FF'
 
-    const animationDuration = 0.3; // Match our progress window size
-    const maxStaggerDelay = 0.2; // Maximum stagger delay across all lines
-    
+    const animationDuration = 0.3
+    const maxStaggerDelay = 0.2
+
     const drawFrameLines = (lines: Line[], frameProgress: number) => {
-      // Adjust stagger delay based on number of lines
-      const adjustedStaggerDelay = lines.length > 1 ? maxStaggerDelay / (lines.length - 1) : 0;
-      
-      lines.forEach((line, index) => {
-        // Calculate time with adjusted stagger
-        let t = Math.max(0, Math.min(1, (frameProgress - index * adjustedStaggerDelay) / animationDuration));
-        t = ultraFastEaseInOutFunction(t); // Apply easing function
-
-        const { start, end } = line;
+      const adjustedStagger = lines.length > 1 ? maxStaggerDelay / (lines.length - 1) : 0
+      // same ultra‐fast easing:
+      const u = (t: number) => {
+        if (t < 0.5) return Math.pow(2 * t, 16) / 2
+        return 1 - Math.pow(-2 * t + 2, 16) / 2
+      }
+      lines.forEach((line, idx) => {
+        let t = Math.max(0, Math.min(1, (frameProgress - idx * adjustedStagger) / animationDuration))
+        t = u(t)
+        const { start, end } = line
         const currentEnd = {
           x: start.x + (end.x - start.x) * (animationType === 'grow' ? t : 1 - t),
           y: start.y + (end.y - start.y) * (animationType === 'grow' ? t : 1 - t)
-        };
+        }
+        const trembleX = (Math.random() - 0.5) * tremblingIntensity
+        const trembleY = (Math.random() - 0.5) * tremblingIntensity
+        ctx.beginPath()
+        ctx.moveTo(start.x + trembleX, start.y + trembleY)
+        ctx.lineTo(currentEnd.x + trembleX, currentEnd.y + trembleY)
+        ctx.stroke()
+      })
+    }
 
-        // Add trembling effect
-        const tremblingX = (Math.random() - 0.5) * tremblingIntensity; // Random trembling effect on X
-        const tremblingY = (Math.random() - 0.5) * tremblingIntensity; // Random trembling effect on Y
-
-        ctx.beginPath();
-        ctx.moveTo(start.x + tremblingX, start.y + tremblingY); // Move to start point with trembling
-        ctx.lineTo(currentEnd.x + tremblingX, currentEnd.y + tremblingY); // Draw line to current end point with trembling
-        ctx.stroke(); // Render the line
-      });
-    };
-
-    // Draw lines for the appropriate frame
     if (frame1Lines.length > 0) {
-      drawFrameLines(frame1Lines, progress); // Draw frame 1 lines
+      drawFrameLines(frame1Lines, progress)
     }
     if (frame2Lines.length > 0) {
-      drawFrameLines(frame2Lines, progress); // Draw frame 2 lines
+      drawFrameLines(frame2Lines, progress)
     }
-  };
+  }
 
-  // Draw bounding box for individual text position
-  const drawBoundingBox = (ctx: CanvasRenderingContext2D, position: TextPosition) => {
-    // Calculate the center of rotation
-    const centerX = position.x + position.width / 2; // Center x
-    const centerY = position.y + position.height / 2; // Center y
-    
-    ctx.save(); // Save current context state
-    
-    // Move to center, rotate, then draw the box
-    ctx.translate(centerX, centerY); // Translate to center
-    ctx.rotate(position.rotation); // Apply rotation
-    
-    // Calculate the box dimensions relative to center
-    const halfWidth = position.width / 2; // Half width
-    const halfHeight = position.height / 2; // Half height
-    
-    // Draw the rotated rectangle
-    ctx.strokeStyle = 'rgba(0, 120, 255, 0.8)'; // Set stroke color
-    ctx.lineWidth = 2; // Set line width
-    ctx.strokeRect(-halfWidth, -halfHeight, position.width, position.height); // Draw rectangle
-    
-    // Draw the handles at each corner
-    const handleSize = 10; // Size of the handles
-    const corners = [
-      [-halfWidth, -halfHeight], // Top-left
-      [halfWidth, -halfHeight],  // Top-right
-      [halfWidth, halfHeight],   // Bottom-right
-      [-halfWidth, halfHeight]   // Bottom-left
-    ];
-    
-    corners.forEach(([x, y]) => {
-      ctx.fillStyle = 'white'; // Set fill color for handles
-      ctx.strokeStyle = 'rgba(0, 120, 255, 0.8)'; // Set stroke color for handles
-      ctx.lineWidth = 2; // Set line width for handles
-      ctx.beginPath();
-      ctx.rect(x - handleSize / 2, y - handleSize / 2, handleSize, handleSize); // Draw handle
-      ctx.fill(); // Fill the handle
-      ctx.stroke(); // Stroke the handle
-    });
-    
-    ctx.restore(); // Restore the context state
-  };
+  const drawBoundingBox = (ctx: CanvasRenderingContext2D, pos: TextPosition) => {
+    const centerX = pos.x + pos.width / 2
+    const centerY = pos.y + pos.height / 2
+    ctx.save()
+    ctx.translate(centerX, centerY)
+    ctx.rotate(pos.rotation)
+    const halfW = pos.width / 2
+    const halfH = pos.height / 2
+    ctx.strokeStyle = 'rgba(0,120,255,0.8)'
+    ctx.lineWidth = 2
+    ctx.strokeRect(-halfW, -halfH, pos.width, pos.height)
+    const handleSize = 10
+    const corners: [number, number][] = [
+      [-halfW, -halfH],
+      [ halfW, -halfH],
+      [ halfW,  halfH],
+      [-halfW,  halfH]
+    ]
+    corners.forEach(([cx, cy]) => {
+      ctx.fillStyle = 'white'
+      ctx.strokeStyle = 'rgba(0,120,255,0.8)'
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.rect(cx - handleSize/2, cy - handleSize/2, handleSize, handleSize)
+      ctx.fill()
+      ctx.stroke()
+    })
+    ctx.restore()
+  }
 
-  // Update the group bounding box drawing function similarly
   const drawGroupBoundingBox = (ctx: CanvasRenderingContext2D, box: GroupBoundingBox) => {
-    const centerX = box.x + box.width / 2; // Calculate center x
-    const centerY = box.y + box.height / 2; // Calculate center y
-    
-    ctx.save(); // Save the current context state
-    
-    // Move to center and rotate
-    ctx.translate(centerX, centerY); // Translate to center
-    ctx.rotate(box.rotation); // Apply rotation
-    
-    // Draw the rotated rectangle
-    const halfWidth = box.width / 2; // Half width
-    const halfHeight = box.height / 2; // Half height
-    
-    ctx.strokeStyle = 'rgba(0, 120, 255, 0.8)'; // Set stroke color
-    ctx.lineWidth = 2; // Set line width
-    ctx.strokeRect(-halfWidth, -halfHeight, box.width, box.height); // Draw rectangle
-    
-    // Draw handles
-    const handleSize = 10; // Size of the handles
+    const { x, y, width, height, rotation } = box
+    const centerX = x + width / 2
+    const centerY = y + height / 2
+    ctx.save()
+    ctx.translate(centerX, centerY)
+    ctx.rotate(rotation)
+    const halfW = width / 2
+    const halfH = height / 2
+    ctx.strokeStyle = 'rgba(0,120,255,0.8)'
+    ctx.lineWidth = 2
+    ctx.strokeRect(-halfW, -halfH, width, height)
+    const handleSize = 10
+    const corners: [number, number][] = [
+      [-halfW, -halfH],
+      [ halfW, -halfH],
+      [ halfW,  halfH],
+      [-halfW,  halfH]
+    ]
+    corners.forEach(([cx, cy]) => {
+      ctx.fillStyle = 'white'
+      ctx.strokeStyle = 'rgba(0,120,255,0.8)'
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.rect(cx - handleSize/2, cy - handleSize/2, handleSize, handleSize)
+      ctx.fill()
+      ctx.stroke()
+    })
+    ctx.restore()
+  }
+
+  const getResizeHandle = (x: number, y: number, pos: TextPosition | GroupBoundingBox): string | null => {
+    const handleSize = 20
+    const centerX = pos.x + pos.width / 2
+    const centerY = pos.y + pos.height / 2
+    const rotation = 'rotation' in pos ? pos.rotation : pos.rotation
+    const dx = x - centerX
+    const dy = y - centerY
+    const rotatedX = dx * Math.cos(-rotation) - dy * Math.sin(-rotation)
+    const rotatedY = dx * Math.sin(-rotation) + dy * Math.cos(-rotation)
+    const halfW = pos.width / 2
+    const halfH = pos.height / 2
+    if (Math.abs(rotatedX + halfW) <= handleSize/2 && Math.abs(rotatedY + halfH) <= handleSize/2) return 'nw-resize'
+    if (Math.abs(rotatedX - halfW) <= handleSize/2 && Math.abs(rotatedY + halfH) <= handleSize/2) return 'ne-resize'
+    if (Math.abs(rotatedX - halfW) <= handleSize/2 && Math.abs(rotatedY - halfH) <= handleSize/2) return 'se-resize'
+    if (Math.abs(rotatedX + halfW) <= handleSize/2 && Math.abs(rotatedY - halfH) <= handleSize/2) return 'sw-resize'
+    if (Math.abs(rotatedX) < halfW && Math.abs(rotatedY) < halfH) return 'move'
+    return null
+  }
+
+  const isPointNearRotationArea = (x: number, y: number, pos: TextPosition | GroupBoundingBox): boolean => {
+    const handleSize = 20
+    const rotationAreaSize = 15
+    const centerX = pos.x + pos.width / 2
+    const centerY = pos.y + pos.height / 2
+    const rotation = 'rotation' in pos ? pos.rotation : pos.rotation
+    const dx = x - centerX
+    const dy = y - centerY
+    const rotatedX = dx * Math.cos(-rotation) - dy * Math.sin(-rotation)
+    const rotatedY = dx * Math.sin(-rotation) + dy * Math.cos(-rotation)
+    const halfW = pos.width / 2
+    const halfH = pos.height / 2
     const corners = [
-      [-halfWidth, -halfHeight], // Top-left
-      [halfWidth, -halfHeight],  // Top-right
-      [halfWidth, halfHeight],   // Bottom-right
-      [-halfWidth, halfHeight]   // Bottom-left
-    ];
-    
-    corners.forEach(([x, y]) => {
-      ctx.fillStyle = 'white'; // Set fill color for handles
-      ctx.strokeStyle = 'rgba(0, 120, 255, 0.8)'; // Set stroke color for handles
-      ctx.lineWidth = 2; // Set line width for handles
-      ctx.beginPath();
-      ctx.rect(x - handleSize / 2, y - handleSize / 2, handleSize, handleSize); // Draw handle
-      ctx.fill(); // Fill the handle
-      ctx.stroke(); // Stroke the handle
-    });
-    
-    ctx.restore(); // Restore the context state
-  };
-
-  // Get the appropriate resize handle based on mouse position
-  const getResizeHandle = (x: number, y: number, position: TextPosition | GroupBoundingBox): string | null => {
-    const handleSize = 20; // Size of the resize handles
-    const centerX = position.x + position.width / 2; // Center x
-    const centerY = position.y + position.height / 2; // Center y
-    const rotation = 'rotation' in position ? position.rotation : position.rotation; // Get rotation
-
-    // Transform point to rotated space
-    const dx = x - centerX; // Difference in x
-    const dy = y - centerY; // Difference in y
-    const rotatedX = dx * Math.cos(-rotation) - dy * Math.sin(-rotation); // Unrotate x
-    const rotatedY = dx * Math.sin(-rotation) + dy * Math.cos(-rotation); // Unrotate y
-
-    // Define handle regions
-    const halfWidth = position.width / 2; // Half width
-    const halfHeight = position.height / 2; // Half height
-
-    // Check corners for resize handles
-    if (Math.abs(rotatedX + halfWidth) <= handleSize / 2 && Math.abs(rotatedY + halfHeight) <= handleSize / 2) return 'nw-resize'; // Top-left
-    if (Math.abs(rotatedX - halfWidth) <= handleSize / 2 && Math.abs(rotatedY + halfHeight) <= handleSize / 2) return 'ne-resize'; // Top-right
-    if (Math.abs(rotatedX - halfWidth) <= handleSize / 2 && Math.abs(rotatedY - halfHeight) <= handleSize / 2) return 'se-resize'; // Bottom-right
-    if (Math.abs(rotatedX + halfWidth) <= handleSize / 2 && Math.abs(rotatedY - halfHeight) <= handleSize / 2) return 'sw-resize'; // Bottom-left
-
-    // Check if inside box but not on handle
-    if (Math.abs(rotatedX) < halfWidth && Math.abs(rotatedY) < halfHeight) {
-      return 'move'; // Indicate that the box can be moved
-    }
-
-    return null; // No handle detected
-  };
-
-  // Helper function to detect if a point is near the rotation area
-  const isPointNearRotationArea = (x: number, y: number, position: TextPosition | GroupBoundingBox): boolean => {
-    const handleSize = 20; // Size of the resize handles
-    const rotationAreaSize = 15; // Size of the rotation area
-    const centerX = position.x + position.width / 2; // Center x
-    const centerY = position.y + position.height / 2; // Center y
-    const rotation = 'rotation' in position ? position.rotation : position.rotation; // Get rotation
-    const halfWidth = position.width / 2; // Half width
-    const halfHeight = position.height / 2; // Half height
-
-    // Transform point to rotated space
-    const dx = x - centerX; // Difference in x
-    const dy = y - centerY; // Difference in y
-    const rotatedX = dx * Math.cos(-rotation) - dy * Math.sin(-rotation); // Unrotate x
-    const rotatedY = dx * Math.sin(-rotation) + dy * Math.cos(-rotation); // Unrotate y
-
-    // Define corners in rotated space
-    const corners = [
-      { x: -halfWidth, y: -halfHeight }, // Top-left
-      { x: halfWidth, y: -halfHeight },  // Top-right
-      { x: halfWidth, y: halfHeight },   // Bottom-right
-      { x: -halfWidth, y: halfHeight }   // Bottom-left
-    ];
-
-    // Check distance from each corner
+      { x: -halfW, y: -halfH },
+      { x:  halfW, y: -halfH },
+      { x:  halfW, y:  halfH },
+      { x: -halfW, y:  halfH },
+    ]
     for (const corner of corners) {
-      const distanceFromCorner = Math.sqrt(
-        Math.pow(rotatedX - corner.x, 2) + 
-        Math.pow(rotatedY - corner.y, 2)
-      );
-      // Check if the point is near the rotation area
-      if (distanceFromCorner > handleSize / 2 && distanceFromCorner <= handleSize / 2 + rotationAreaSize) {
-        return true; // Point is near the rotation area
-      }
+      const dist = Math.sqrt((rotatedX - corner.x)**2 + (rotatedY - corner.y)**2)
+      if (dist > handleSize/2 && dist <= handleSize/2 + rotationAreaSize) return true
     }
-
-    return false; // Point is not near the rotation area
-  };
+    return false
+  }
 
   const resizeGroup = (x: number, y: number, handle: string) => {
-    if (!initialGroupBox || !resizeStartPosition) return; // Ensure initial conditions are met
-
-    const dx = x - resizeStartPosition.x; // Change in x
-    const dy = y - resizeStartPosition.y; // Change in y
-
-    const centerX = initialGroupBox.x + initialGroupBox.width / 2; // Center x
-    const centerY = initialGroupBox.y + initialGroupBox.height / 2; // Center y
-
-    // Calculate scale based on the larger change to maintain aspect ratio
-    let scale = 1;
+    if (!initialGroupBox || !resizeStartPosition) return
+    const dx = x - resizeStartPosition.x
+    const dy = y - resizeStartPosition.y
+    const centerX = initialGroupBox.x + initialGroupBox.width / 2
+    const centerY = initialGroupBox.y + initialGroupBox.height / 2
+    let scale = 1
     if (handle.includes('e') || handle.includes('w')) {
-      scale = 1 + (dx / initialGroupBox.width) * resizeSpeed; // Use resizeSpeed for scaling
+      scale = 1 + (dx / initialGroupBox.width) * resizeSpeed
     } else if (handle.includes('n') || handle.includes('s')) {
-      scale = 1 + (dy / initialGroupBox.height) * resizeSpeed; // Use resizeSpeed for scaling
+      scale = 1 + (dy / initialGroupBox.height) * resizeSpeed
     }
-
-    // Ensure minimum scale
-    const minScale = 0.1;
-    scale = Math.max(scale, minScale); // Cap scale at minimum
-
-    // Apply uniform scaling
-    const newWidth = initialGroupBox.width * scale; // New width
-    const newHeight = initialGroupBox.height * scale; // New height
-    const newX = centerX - (newWidth / 2); // New x position
-    const newY = centerY - (newHeight / 2); // New y position
-
-    const updatePosition = (position: TextPosition) => {
-      const relativeX = (position.x - centerX) / (initialGroupBox.width / 2);
-      const relativeY = (position.y - centerY) / (initialGroupBox.height / 2);
+    scale = Math.max(0.1, scale)
+    const newW = initialGroupBox.width * scale
+    const newH = initialGroupBox.height * scale
+    const newX = centerX - newW / 2
+    const newY = centerY - newH / 2
+    const updatePos = (p: TextPosition) => {
+      const relX = (p.x - centerX) / (initialGroupBox.width / 2)
+      const relY = (p.y - centerY) / (initialGroupBox.height / 2)
       return {
-        ...position,
-        x: centerX + relativeX * (newWidth / 2), // Update x position
-        y: centerY + relativeY * (newHeight / 2), // Update y position
-        width: position.width * scale, // Update width
-        height: position.height * scale, // Update height
-        fontSize: position.fontSize * scale // Update font size
-      };
-    };
-
-    // Update title positions for frame 2
-    setTitlePositionsFrame2(prev => 
-      prev.map((position, index) => 
-        selectedTexts.includes(`title${index + 1}` as 'title1' | 'title2')
-          ? updatePosition(position)
-          : position
-      )
-    );
-
-    if (selectedTexts.includes('subtitle')) {
-      setSubtitlePositionFrame2(prev => updatePosition(prev));
+        ...p,
+        x: centerX + relX * (newW / 2),
+        y: centerY + relY * (newH / 2),
+        width: p.width * scale,
+        height: p.height * scale,
+        fontSize: p.fontSize * scale
+      }
     }
+    setTitlePositionsFrame2(prev =>
+      prev.map((p, i) =>
+        selectedTexts.includes(`title${i + 1}` as 'title1' | 'title2') ? updatePos(p) : p
+      )
+    )
+    if (selectedTexts.includes('subtitle')) {
+      setSubtitlePositionFrame2(prev => updatePos(prev))
+    }
+    setInitialGroupBox({ x: newX, y: newY, width: newW, height: newH, rotation: initialGroupBox.rotation })
+    drawCanvas()
+  }
 
-    setInitialGroupBox({ x: newX, y: newY, width: newWidth, height: newHeight, rotation: initialGroupBox.rotation });
-    drawCanvas();
-  };
-
-  // Rotate the selected group based on mouse movement
   const rotateGroup = (x: number, y: number, groupBox: GroupBoundingBox) => {
-    if (!lastMousePosition.current) return; // Ensure last mouse position is set
+    if (!lastMousePosition.current) return
+    const centerX = groupBox.x + groupBox.width / 2
+    const centerY = groupBox.y + groupBox.height / 2
+    const lastA = Math.atan2(lastMousePosition.current.y - centerY, lastMousePosition.current.x - centerX)
+    const currentA = Math.atan2(y - centerY, x - centerX)
+    let δ = currentA - lastA
+    if (δ > Math.PI) δ -= 2 * Math.PI
+    if (δ < -Math.PI) δ += 2 * Math.PI
 
-    const centerX = groupBox.x + groupBox.width / 2; // Center x
-    const centerY = groupBox.y + groupBox.height / 2; // Center y
-
-    const lastAngle = Math.atan2(lastMousePosition.current.y - centerY, lastMousePosition.current.x - centerX); // Last angle
-    const currentAngle = Math.atan2(y - centerY, x - centerX); // Current angle
-    let deltaAngle = currentAngle - lastAngle; // Change in angle
-
-    // Normalize the delta angle
-    if (deltaAngle > Math.PI) deltaAngle -= 2 * Math.PI;
-    if (deltaAngle < -Math.PI) deltaAngle += 2 * Math.PI;
-
-    // Update text positions with rotation
-    setTitlePositionsFrame2(prev => 
-      prev.map((position, index) => {
-        const textType = `title${index + 1}` as 'title1' | 'title2';
-        if (selectedTexts.includes(textType)) {
-          // Store individual rotation
-          setLastKnownRotations(prev => ({
-            ...prev,
-            [textType]: position.rotation + deltaAngle // Update stored rotation
-          }));
-          return rotateAroundPoint(position, centerX, centerY, deltaAngle); // Rotate selected titles
+    setTitlePositionsFrame2(prev =>
+      prev.map((p, i) => {
+        const type = `title${i+1}` as 'title1' | 'title2'
+        if (selectedTexts.includes(type)) {
+          setLastKnownRotations(l => ({ ...l, [type]: p.rotation + δ }))
+          return rotateAroundPoint(p, centerX, centerY, δ)
         }
-        return position; // Return unchanged position
+        return p
       })
-    );
-
-    // Rotate subtitle if selected
+    )
     if (selectedTexts.includes('subtitle')) {
       setSubtitlePositionFrame2(prev => {
-        const newPosition = rotateAroundPoint(prev, centerX, centerY, deltaAngle); // Rotate subtitle
-        // Store subtitle rotation
-        setLastKnownRotations(prev => ({
-          ...prev,
-          subtitle: newPosition.rotation // Update stored rotation
-        }));
-        return newPosition; // Return new position
-      });
+        const np = rotateAroundPoint(prev, centerX, centerY, δ)
+        setLastKnownRotations(l => ({ ...l, subtitle: np.rotation }))
+        return np
+      })
     }
+    setGroupRotation(g => {
+      const nr = g + δ
+      setLastKnownRotations(l => ({ ...l, group: nr }))
+      return nr
+    })
+    lastMousePosition.current = { x, y }
+  }
 
-    // Update group rotation
-    setGroupRotation(prev => {
-      const newRotation = prev + deltaAngle; // Calculate new rotation
-      // Store group rotation
-      setLastKnownRotations(prevRotations => ({
-        ...prevRotations,
-        group: newRotation // Update stored group rotation
-      }));
-      return newRotation; // Return new rotation
-    });
-    
-    lastMousePosition.current = { x, y }; // Update last mouse position
-  };
+  const rotateAroundPoint = (pos: TextPosition, cx: number, cy: number, angle: number): TextPosition => {
+    const dx = pos.x + pos.width/2 - cx
+    const dy = pos.y + pos.height/2 - cy
+    const dist = Math.sqrt(dx*dx + dy*dy)
+    const currentA = Math.atan2(dy, dx)
+    const newA = currentA + angle
+    const newX = cx + dist * Math.cos(newA) - pos.width/2
+    const newY = cy + dist * Math.sin(newA) - pos.height/2
+    return { ...pos, x: newX, y: newY, rotation: pos.rotation + angle }
+  }
 
-  const rotateAroundPoint = (position: TextPosition, centerX: number, centerY: number, angle: number): TextPosition => {
-    const dx = position.x + position.width / 2 - centerX;
-    const dy = position.y + position.height / 2 - centerY;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    const currentAngle = Math.atan2(dy, dx);
-    const newAngle = currentAngle + angle;
-    const newX = centerX + distance * Math.cos(newAngle) - position.width / 2;
-    const newY = centerY + distance * Math.sin(newAngle) - position.height / 2;
-    return {
-      ...position,
-      x: newX,
-      y: newY,
-      rotation: position.rotation + angle
-    };
-  };
-
-  // Update handleMouseUp to clean up properly
   const handleMouseUp = () => {
-    if (isPlaying) return; // Prevent actions while playing
-    
+    if (isPlaying) return
     if (currentLine) {
-      setLines(prevLines => [...prevLines, currentLine]); // Save current line
-      setCurrentLine(null); // Reset current line
+      setLines(pl => [...pl, currentLine])
+      setCurrentLine(null)
     }
+    setEditingLineIndex(null)
+    setIsResizing(false)
+    setIsDragging(false)
+    setIsRotating(false)
+    setResizeHandle(null)
+    setResizeStartPosition(null)
+    lastMousePosition.current = null
+    drawCanvas()
+  }
 
-    setEditingLineIndex(null); // Reset editing line index
-    setIsResizing(false); // Stop resizing
-    setIsDragging(false); // Stop dragging
-    setIsRotating(false); // Stop rotating
-    setResizeHandle(null); // Clear resize handle
-    setResizeStartPosition(null); // Clear resize start position
-    lastMousePosition.current = null; // Clear last mouse position
-    
-    // Only clear paperRect if we're not rotating
-    if (!isRotating) {
-      setPaperRect(null); // Clear the paper rectangle
+  const handleTextInteraction = (pos: TextPosition, type: 'title1' | 'title2' | 'subtitle', x: number, y: number) => {
+    if (currentFrame !== 2) return
+    lastMousePosition.current = { x, y }
+    if (selectedTexts.length > 0) {
+      setLastKnownRotations(l => ({ ...l, group: groupRotation }))
     }
-    
-    drawCanvas(); // Redraw the canvas
-  };
-
-  // Handle text interaction for titles and subtitles
-  const handleTextInteraction = (position: TextPosition, textType: 'title1' | 'title2' | 'subtitle', x: number, y: number) => {
-    if (currentFrame === 2) {
-      lastMousePosition.current = { x, y }; // Store last mouse position
-
-      // Store current rotation state before selection changes
-      if (selectedTexts.length > 0) {
-        setLastKnownRotations(prev => ({
-          ...prev,
-          group: groupRotation // Store current group rotation
-        }));
-      }
-
-      // Handle selection
-      if (isShiftPressed.current) {
-        setSelectedTexts(prev => {
-          const newSelection = prev.includes(textType) 
-            ? prev.filter(t => t !== textType) 
-            : [...prev, textType];
-          
-          // If selecting multiple items, use group rotation
-          if (newSelection.length > 1) {
-            setGroupRotation(lastKnownRotations.group); // Use stored group rotation
-          } 
-          // If selecting single item, use its individual rotation
-          else if (newSelection.length === 1) {
-            setGroupRotation(lastKnownRotations[newSelection[0]]); // Use stored rotation for the selected text
-          }
-          
-          return newSelection; // Update selected texts
-        });
-      } else {
-        setSelectedTexts([textType]); // Select only the current text type
-        // Use individual rotation for single selection
-        setGroupRotation(lastKnownRotations[textType]); // Set group rotation to the selected text's rotation
-      }
-
-      // Reset interaction states
-      setIsResizing(false)
-      setIsDragging(false)
-      setIsRotating(false)
-      setResizeHandle(null)
-
-      // Determine interaction type
-      if (isPointNearRotationArea(x, y, position)) {
-        setIsRotating(true) // Start rotation
-        const groupBox = calculateGroupBoundingBox()
-        if (groupBox) {
-          setInitialGroupBox(groupBox) // Store current group box for rotation
+    if (isShiftPressed.current) {
+      setSelectedTexts(prev => {
+        const newSel = prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+        if (newSel.length > 1) {
+          setGroupRotation(lastKnownRotations.group)
+        } else if (newSel.length === 1) {
+          setGroupRotation(lastKnownRotations[newSel[0]])
         }
-      } else {
-        const handle = getResizeHandle(x, y, position)
-        if (handle) {
-          if (handle === 'move') {
-            setIsDragging(true) // Start dragging
-          } else {
-            setResizeHandle(handle) // Set resize handle
-            setIsResizing(true) // Start resizing
-            setResizeStartPosition({ x, y }) // Store starting position
-          }
+        return newSel
+      })
+    } else {
+      setSelectedTexts([type])
+      setGroupRotation(lastKnownRotations[type])
+    }
+
+    setIsResizing(false)
+    setIsDragging(false)
+    setIsRotating(false)
+    setResizeHandle(null)
+
+    if (isPointNearRotationArea(x, y, pos)) {
+      setIsRotating(true)
+      const gb = calculateGroupBoundingBox()
+      if (gb) setInitialGroupBox(gb)
+    } else {
+      const handle = getResizeHandle(x, y, pos)
+      if (handle) {
+        if (handle === 'move') {
+          setIsDragging(true)
         } else {
-          setIsDragging(true) // Start dragging if no handle is found
+          setResizeHandle(handle)
+          setIsResizing(true)
+          setResizeStartPosition({ x, y })
         }
+      } else {
+        setIsDragging(true)
       }
-
-      drawCanvas() // Redraw the canvas
     }
-  };
+    drawCanvas()
+  }
 
-  // Ensure resizeSingle properly uses and updates state
-  const resizeSingle = (x: number, y: number, position: TextPosition, textType: 'title1' | 'title2' | 'subtitle', handle: string) => {
-    if (!resizeStartPosition) return; // Ensure resize start position is set
-
-    // Get the current position
-    const currentPosition = textType === 'subtitle' 
-      ? subtitlePositionFrame2 
-      : titlePositionsFrame2[textType === 'title1' ? 0 : 1];
-
-    // Center calculations and resizing logic...
-    const centerX = currentPosition.x + currentPosition.width / 2; // Center x
-    const centerY = currentPosition.y + currentPosition.height / 2; // Center y
-
-    const startVector = {
-      x: resizeStartPosition.x - centerX, // Vector from center to start position
-      y: resizeStartPosition.y - centerY
-    };
-
-    const currentVector = {
-      x: x - centerX, // Vector from center to current mouse position
-      y: y - centerY
-    };
-
-    // Resize speed factor
-    const resizeSpeedFactor = 0.1; // Adjusted sensitivity
-
-    let scale = 1;
+  const resizeSingle = (x: number, y: number, pos: TextPosition, type: 'title1' | 'title2' | 'subtitle', handle: string) => {
+    if (!resizeStartPosition) return
+    const currentPos = type === 'subtitle' ? subtitlePositionFrame2 : titlePositionsFrame2[type === 'title1' ? 0 : 1]
+    const cx = currentPos.x + currentPos.width/2
+    const cy = currentPos.y + currentPos.height/2
+    const startV = { x: resizeStartPosition.x - cx, y: resizeStartPosition.y - cy }
+    const currV = { x: x - cx, y: y - cy }
+    const factor = 0.1
+    let scale = 1
     if (handle.includes('e') || handle.includes('w')) {
-      const startDist = Math.abs(startVector.x); // Distance from center to start position
-      const currentDist = Math.abs(currentVector.x); // Distance from center to current position
-      scale = startDist !== 0 ? 1 + ((currentDist / startDist - 1) * resizeSpeedFactor) : 1; // Apply speed factor
+      const sd = Math.abs(startV.x)
+      const cd = Math.abs(currV.x)
+      scale = sd !== 0 ? 1 + ((cd / sd - 1) * factor) : 1
     } else if (handle.includes('n') || handle.includes('s')) {
-      const startDist = Math.abs(startVector.y); // Distance from center to start position
-      const currentDist = Math.abs(currentVector.y); // Distance from center to current position
-      scale = startDist !== 0 ? 1 + ((currentDist / startDist - 1) * resizeSpeedFactor) : 1; // Apply speed factor
+      const sd = Math.abs(startV.y)
+      const cd = Math.abs(currV.y)
+      scale = sd !== 0 ? 1 + ((cd / sd - 1) * factor) : 1
     }
-
-    scale = Math.max(0.1, scale); // Ensure minimum scale
-
-    const newWidth = currentPosition.width * scale; // Calculate new width
-    const newHeight = currentPosition.height * scale; // Calculate new height
-    const newX = centerX - newWidth / 2; // Calculate new x position
-    const newY = centerY - newHeight / 2; // Calculate new y position
-
-    const newPosition = {
-      ...currentPosition,
-      x: newX,
-      y: newY,
-      width: newWidth,
-      height: newHeight,
-      fontSize: currentPosition.fontSize * scale // Update font size
-    };
-
-    // Update position based on text type
-    if (textType === 'subtitle') {
-      setSubtitlePositionFrame2(newPosition); // Update subtitle position
+    scale = Math.max(0.1, scale)
+    const newW = currentPos.width * scale
+    const newH = currentPos.height * scale
+    const newX = cx - newW/2
+    const newY = cy - newH/2
+    const newFont = currentPos.fontSize * scale
+    const newPos: TextPosition = {
+      ...currentPos,
+      x: newX, y: newY,
+      width: newW, height: newH,
+      fontSize: newFont
+    }
+    if (type === 'subtitle') {
+      setSubtitlePositionFrame2(newPos)
     } else {
       setTitlePositionsFrame2(prev => {
-        const newPositions = [...prev]; // Create a copy of previous positions
-        const index = textType === 'title1' ? 0 : 1; // Determine index for title
-        newPositions[index] = newPosition; // Update position for title
-        return newPositions; // Return updated positions
-      });
+        const copy = [...prev]
+        const idx = type === 'title1' ? 0 : 1
+        copy[idx] = newPos
+        return copy
+      })
     }
+    drawCanvas()
+  }
 
-    drawCanvas(); // Redraw the canvas
-  };
-
-  // Handle mouse movement for dragging, resizing, and rotating
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (isPlaying) return; // Prevent actions while playing
+    if (isPlaying) return
     const canvas = canvasRef.current
-    if (!canvas) return; // Ensure canvas is available
-
-    const rect = canvas.getBoundingClientRect() // Get canvas dimensions
-    const x = (e.clientX - rect.left) * (canvas.width / rect.width) // Calculate x position
-    const y = (e.clientY - rect.top) * (canvas.height / rect.height) // Calculate y position
+    if (!canvas) return
+    const rect = canvas.getBoundingClientRect()
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width)
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height)
 
     if (selectedTexts.length > 0 && currentFrame === 2) {
       if (isRotating) {
-        const groupBox = calculateGroupBoundingBox()
-        if (groupBox) {
-          rotateGroup(x, y, groupBox) // Rotate the group
-        }
+        const gb = calculateGroupBoundingBox()
+        if (gb) rotateGroup(x, y, gb)
       } else if (isDragging) {
         if (selectedTexts.length === 1) {
-          dragSingle(x, y, selectedTexts[0]) // Drag single text
+          dragSingle(x, y, selectedTexts[0])
         } else {
-          dragGroup(x, y) // Drag group of texts
+          dragGroup(x, y)
         }
       } else if (isResizing && resizeHandle) {
         if (selectedTexts.length === 1) {
-          const textType = selectedTexts[0]
-          const position = textType === 'subtitle' 
-            ? subtitlePositionFrame2 
-            : titlePositionsFrame2[textType === 'title1' ? 0 : 1]
-          resizeSingle(x, y, position, textType, resizeHandle) // Resize single text
+          const t = selectedTexts[0]
+          const pos = t === 'subtitle' ? subtitlePositionFrame2 : titlePositionsFrame2[t === 'title1' ? 0 : 1]
+          resizeSingle(x, y, pos, t, resizeHandle)
         } else {
-          resizeGroup(x, y, resizeHandle) // Resize group of texts
+          resizeGroup(x, y, resizeHandle)
         }
       }
-      drawCanvas() // Redraw the canvas
+      drawCanvas()
     }
-    // Add line handling here, after the text manipulation checks
     else if (currentLine) {
-      setCurrentLine(prevLine => ({
-        ...prevLine!,
-        end: { x, y } // Update the end position of the current line
+      setCurrentLine(prev => ({
+        ...prev!,
+        end: { x, y }
       }))
-      drawCanvas() // Redraw the canvas
+      drawCanvas()
     }
     else if (editingLineIndex !== null) {
       setLines(prev => {
-        const newLines = [...prev]
-        const editedLine = { ...newLines[editingLineIndex] }
-        if (isPointNear({ x, y }, editedLine.start)) {
-          editedLine.start = { x, y } // Move start point if near
-        } else if (isPointNear({ x, y }, editedLine.end)) {
-          editedLine.end = { x, y } // Move end point if near
+        const copy = [...prev]
+        const edit = { ...copy[editingLineIndex] }
+        if (isPointNear({ x, y }, edit.start)) {
+          edit.start = { x, y }
+        } else if (isPointNear({ x, y }, edit.end)) {
+          edit.end = { x, y }
         }
-        newLines[editingLineIndex] = editedLine // Update the edited line
-        return newLines // Return updated lines
+        copy[editingLineIndex] = edit
+        return copy
       })
-      drawCanvas() // Redraw the canvas
+      drawCanvas()
     }
 
-    updateCursor(canvas, x, y) // Update cursor based on mouse position
+    updateCursor(canvas, x, y)
   }
 
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (isPlaying) return; // Prevent actions while playing
+    if (isPlaying) return
     const canvas = canvasRef.current
-    if (!canvas) return; // Ensure canvas is available
+    if (!canvas) return
+    const rect = canvas.getBoundingClientRect()
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width)
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height)
+    lastMousePosition.current = { x, y }
 
-    const rect = canvas.getBoundingClientRect() // Get canvas dimensions
-    const x = (e.clientX - rect.left) * (canvas.width / rect.width) // Calculate x position
-    const y = (e.clientY - rect.top) * (canvas.height / rect.height) // Calculate y position
+    const positions = currentFrame === 1 ? titlePositionsFrame1 : titlePositionsFrame2
+    const subtitlePos = currentFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
 
-    lastMousePosition.current = { x, y } // Set last mouse position
-
-    const positions = currentFrame === 1 ? titlePositionsFrame1 : titlePositionsFrame2 // Get title positions
-    const subtitlePosition = currentFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2 // Get subtitle position
-
-    // ─── FIRST: check if this is a double-click inside a text bounding box (Frame 2 only) ───
+    // ─── DOUBLE‐CLICK: still run the normal selection logic, then open modal ─────────────
     if (currentFrame === 2 && wasDoubleClick()) {
-      // Title texts
+      // Check titles
       for (let i = 0; i < positions.length; i++) {
         if (isPointInRotatedBox(x, y, getRotatedBoundingBox(positions[i]))) {
-          // Open dialog on double-click
-          setEditingPosition(positions[i])
-          setEditingSize(100)           // start at 100% scale
+          // First, select exactly that item (so rotation/drag still work)
+          handleTextInteraction(positions[i], `title${i+1}` as 'title1' | 'title2', x, y)
+          // Then open the modal for editing that item:
+          setEditTarget(i === 0 ? 'title1' : 'title2')
+          // Copy its current “TextPosition” into editingPosition:
+          setEditingPosition({ ...positions[i] })
+          setEditingSize(100) // reset Size (%) to 100%
           setPositionModalOpen(true)
           return
         }
       }
-      // Subtitle
-      if (isPointInRotatedBox(x, y, getRotatedBoundingBox(subtitlePosition))) {
-        setEditingPosition(subtitlePosition)
+      // Check subtitle
+      if (isPointInRotatedBox(x, y, getRotatedBoundingBox(subtitlePos))) {
+        handleTextInteraction(subtitlePos, 'subtitle', x, y)
+        setEditTarget('subtitle')
+        setEditingPosition({ ...subtitlePos })
         setEditingSize(100)
         setPositionModalOpen(true)
         return
       }
     }
 
-    // If no text interaction, handle lines
+    // Otherwise (not a double‐click), run normal line/selection logic:
     if (!isShiftPressed.current) {
-      setSelectedTexts([]) // Clear selection if shift is not pressed
-      setGroupRotation(0) // Reset group rotation
+      setSelectedTexts([])
+      setGroupRotation(0)
     }
 
-    // Find the index of the clicked line based on the current frame and mouse position
-    const clickedLineIndex = lines.findIndex(line => 
-      line.frame === currentFrame && 
-      (isPointNear({ x, y }, line) || isPointNear({ x, y }, line.start) || isPointNear({ x, y }, line.end))
+    const clickedLineIndex = lines.findIndex(l =>
+      l.frame === currentFrame &&
+      (isPointNear({ x, y }, l) || isPointNear({ x, y }, l.start) || isPointNear({ x, y }, l.end))
     )
-
     if (clickedLineIndex !== -1) {
-      setEditingLineIndex(clickedLineIndex) // Set the index of the line being edited
+      setEditingLineIndex(clickedLineIndex)
     } else {
-      setCurrentLine({ start: { x, y }, end: { x, y }, frame: currentFrame }) // Create a new line
+      setCurrentLine({ start: { x, y }, end: { x, y }, frame: currentFrame })
     }
-
-    drawCanvas() // Redraw the canvas
+    drawCanvas()
   }
 
-  // Update the cursor based on mouse position
   const updateCursor = (canvas: HTMLCanvasElement, x: number, y: number) => {
-    // If we have a group box in frame 2
     const groupBox = calculateGroupBoundingBox()
     if (groupBox && currentFrame === 2 && isPointInRotatedBox(x, y, getRotatedGroupBoundingBox(groupBox))) {
       if (isPointNearRotationArea(x, y, groupBox)) {
@@ -1018,83 +792,71 @@ export default function InstagramPostCreator() {
       }
       const handle = getResizeHandle(x, y, groupBox)
       if (handle) {
-        canvas.style.cursor = handle // Set cursor based on handle
+        canvas.style.cursor = handle
         return
       }
-      canvas.style.cursor = 'move' // Default move cursor
+      canvas.style.cursor = 'move'
       return
     }
 
-    // Check individual text elements
-    const currentPositions = currentFrame === 1 
+    const currentPositions = currentFrame === 1
       ? [titlePositionsFrame1[0], titlePositionsFrame1[1], subtitlePositionFrame1]
       : [titlePositionsFrame2[0], titlePositionsFrame2[1], subtitlePositionFrame2]
 
     for (let i = 0; i < currentPositions.length; i++) {
-      const position = currentPositions[i]
-      if (isPointInRotatedBox(x, y, getRotatedBoundingBox(position))) {
+      const pos = currentPositions[i]
+      if (isPointInRotatedBox(x, y, getRotatedBoundingBox(pos))) {
         if (currentFrame === 2) {
-          if (isPointNearRotationArea(x, y, position)) {
+          if (isPointNearRotationArea(x, y, pos)) {
             canvas.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16.8\' height=\'16.8\' viewBox=\'0 0 24 24\' fill=\'none\'%3E%3Cg stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M20.49 15a9 9 0 1 1-2.12-9.36L23 10\' stroke=\'%23FFFFFF\' stroke-width=\'4.8\'/%3E%3Cpath d=\'M20.49 15a9 9 0 1 1-2.12-9.36L23 10\' stroke=\'%23000000\' stroke-width=\'2.4\'/%3E%3Cpolyline points=\'23 4 23 10 17 10\' stroke=\'%23FFFFFF\' stroke-width=\'4.8\'/%3E%3Cpolyline points=\'23 4 23 10 17 10\' stroke=\'%23000000\' stroke-width=\'2.4\'/%3E%3C/g%3E%3C/svg%3E") 8 8, auto'
             return
           }
-          const handle = getResizeHandle(x, y, position)
+          const handle = getResizeHandle(x, y, pos)
           if (handle) {
-            canvas.style.cursor = handle // Set cursor based on handle
+            canvas.style.cursor = handle
             return
           }
-          canvas.style.cursor = 'move' // Default move cursor
+          canvas.style.cursor = 'move'
           return
         }
       }
     }
 
-    canvas.style.cursor = 'default' // Default cursor
+    canvas.style.cursor = 'default'
   }
 
-  const getRotatedBoundingBox = (position: TextPosition): Point[] => {
-    // Get the true center of the text box
-    const centerX = position.x + position.width / 2; // Center x
-    const centerY = position.y + position.height / 2; // Center y
-
-    // Fixed dimensions that won't change with rotation
-    const width = position.width; // Width
-    const height = position.height; // Height
-
-    // Create corners relative to center (these distances remain constant)
+  const getRotatedBoundingBox = (pos: TextPosition): Point[] => {
+    const cx = pos.x + pos.width/2
+    const cy = pos.y + pos.height/2
+    const w = pos.width
+    const h = pos.height
     const corners = [
-      { x: -width / 2, y: -height / 2 },  // top-left
-      { x: width / 2, y: -height / 2 },   // top-right
-      { x: width / 2, y: height / 2 },    // bottom-right
-      { x: -width / 2, y: height / 2 }    // bottom-left
-    ];
-
-    // Apply rotation while maintaining exact distances
-    return corners.map(corner => {
-      const rotatedX = corner.x * Math.cos(position.rotation) - corner.y * Math.sin(position.rotation); // Rotate x
-      const rotatedY = corner.x * Math.sin(position.rotation) + corner.y * Math.cos(position.rotation); // Rotate y
-      return {
-        x: rotatedX + centerX, // Adjust x to center
-        y: rotatedY + centerY  // Adjust y to center
-      };
-    });
-  };
-
-  const getRotatedGroupBoundingBox = (groupBox: GroupBoundingBox): Point[] => {
-    const { x, y, width, height, rotation } = groupBox
-    const centerX = x + width / 2
-    const centerY = y + height / 2
-    const corners = [
-      { x: -width / 2, y: -height / 2 },
-      { x: width / 2, y: -height / 2 },
-      { x: width / 2, y: height / 2 },
-      { x: -width / 2, y: height / 2 },
+      { x: -w/2, y: -h/2 },
+      { x:  w/2, y: -h/2 },
+      { x:  w/2, y:  h/2 },
+      { x: -w/2, y:  h/2 }
     ]
+    return corners.map(c => {
+      const rx = c.x * Math.cos(pos.rotation) - c.y * Math.sin(pos.rotation)
+      const ry = c.x * Math.sin(pos.rotation) + c.y * Math.cos(pos.rotation)
+      return { x: rx + cx, y: ry + cy }
+    })
+  }
 
-    return corners.map(corner => {
-      const rotatedX = corner.x * Math.cos(rotation) - corner.y * Math.sin(rotation)
-      const rotatedY = corner.x * Math.sin(rotation) + corner.y * Math.cos(rotation)
-      return { x: rotatedX + centerX, y: rotatedY + centerY }
+  const getRotatedGroupBoundingBox = (box: GroupBoundingBox): Point[] => {
+    const { x, y, width, height, rotation } = box
+    const cx = x + width/2
+    const cy = y + height/2
+    const corners = [
+      { x: -width/2, y: -height/2 },
+      { x:  width/2, y: -height/2 },
+      { x:  width/2, y:  height/2 },
+      { x: -width/2, y:  height/2 }
+    ]
+    return corners.map(c => {
+      const rx = c.x * Math.cos(rotation) - c.y * Math.sin(rotation)
+      const ry = c.x * Math.sin(rotation) + c.y * Math.cos(rotation)
+      return { x: rx + cx, y: ry + cy }
     })
   }
 
@@ -1109,212 +871,162 @@ export default function InstagramPostCreator() {
     return inside
   }
 
-  const isPointNear = (point: Point, target: Point | Line, threshold: number = 10): boolean => {
-    if ('x' in target && 'y' in target) {
-      const dx = point.x - target.x
-      const dy = point.y - target.y
-      return Math.sqrt(dx * dx + dy * dy) < threshold
-    } else {
-      return pointToLineDistance(point, target.start, target.end) < threshold
+  const isPointNear = (p: Point, t: Point | Line, threshold: number = 10): boolean => {
+    if ('x' in t && 'y' in t) {
+      const dx = p.x - t.x
+      const dy = p.y - t.y
+      return Math.sqrt(dx*dx + dy*dy) < threshold
     }
+    return pointToLineDistance(p, t.start, t.end) < threshold
   }
 
-  const pointToLineDistance = (point: Point, lineStart: Point, lineEnd: Point): number => {
-    const A = point.x - lineStart.x
-    const B = point.y - lineStart.y
-    const C = lineEnd.x - lineStart.x
-    const D = lineEnd.y - lineStart.y
-
-    const dot = A * C + B * D
-    const lenSq = C * C + D * D
+  const pointToLineDistance = (p: Point, a: Point, b: Point): number => {
+    const A = p.x - a.x
+    const B = p.y - a.y
+    const C = b.x - a.x
+    const D = b.y - a.y
+    const dot = A*C + B*D
+    const lenSq = C*C + D*D
     let param = -1
     if (lenSq !== 0) param = dot / lenSq
-
     let xx, yy
-
     if (param < 0) {
-      xx = lineStart.x
-      yy = lineStart.y
+      xx = a.x; yy = a.y
     } else if (param > 1) {
-      xx = lineEnd.x
-      yy = lineEnd.y
+      xx = b.x; yy = b.y
     } else {
-      xx = lineStart.x + param * C
-      yy = lineStart.y + param * D
+      xx = a.x + param*C
+      yy = a.y + param*D
     }
-
-    const dx = point.x - xx
-    const dy = point.y - yy
-    return Math.sqrt(dx * dx + dy * dy)
+    const dx = p.x - xx
+    const dy = p.y - yy
+    return Math.sqrt(dx*dx + dy*dy)
   }
 
-  const dragSingle = (x: number, y: number, textType: 'title1' | 'title2' | 'subtitle') => {
-    if (!lastMousePosition.current) return; // Ensure last mouse position is set
-
-    const dx = x - lastMousePosition.current.x; // Change in x
-    const dy = y - lastMousePosition.current.y; // Change in y
-
-    // Update position based on text type
-    if (textType === 'subtitle') {
-      setSubtitlePositionFrame2(prev => ({
-        ...prev,
-        x: prev.x + dx, // Update x position
-        y: prev.y + dy  // Update y position
-      }))
+  const dragSingle = (x: number, y: number, type: 'title1' | 'title2' | 'subtitle') => {
+    if (!lastMousePosition.current) return
+    const dx = x - lastMousePosition.current.x
+    const dy = y - lastMousePosition.current.y
+    if (type === 'subtitle') {
+      setSubtitlePositionFrame2(prev => ({ ...prev, x: prev.x + dx, y: prev.y + dy }))
     } else {
       setTitlePositionsFrame2(prev => {
-        const newPositions = [...prev]; // Create a copy of previous positions
-        const index = textType === 'title1' ? 0 : 1; // Determine index for title
-        newPositions[index] = {
-          ...newPositions[index],
-          x: newPositions[index].x + dx, // Update x position
-          y: newPositions[index].y + dy  // Update y position
-        }
-        return newPositions // Return updated positions
+        const copy = [...prev]
+        const idx = type === 'title1' ? 0 : 1
+        copy[idx] = { ...copy[idx], x: copy[idx].x + dx, y: copy[idx].y + dy }
+        return copy
       })
     }
-
-    lastMousePosition.current = { x, y } // Update last mouse position
+    lastMousePosition.current = { x, y }
   }
 
   const dragGroup = (x: number, y: number) => {
-    if (!lastMousePosition.current) return; // Ensure last mouse position is set
-
-    const dx = x - lastMousePosition.current.x; // Change in x
-    const dy = y - lastMousePosition.current.y; // Change in y
-
-    // Update positions for selected titles
-    setTitlePositionsFrame2(prev => 
-      prev.map((position, index) => 
-        selectedTexts.includes(`title${index + 1}` as 'title1' | 'title2')
-          ? { ...position, x: position.x + dx, y: position.y + dy } // Update position
-          : position
+    if (!lastMousePosition.current) return
+    const dx = x - lastMousePosition.current.x
+    const dy = y - lastMousePosition.current.y
+    setTitlePositionsFrame2(prev =>
+      prev.map((p, i) =>
+        selectedTexts.includes(`title${i+1}` as 'title1' | 'title2')
+          ? { ...p, x: p.x + dx, y: p.y + dy }
+          : p
       )
     )
-
-    // Update position for subtitle if selected
     if (selectedTexts.includes('subtitle')) {
-      setSubtitlePositionFrame2(prev => ({
-        ...prev,
-        x: prev.x + dx, // Update x position
-        y: prev.y + dy  // Update y position
-      }))
+      setSubtitlePositionFrame2(prev => ({ ...prev, x: prev.x + dx, y: prev.y + dy }))
     }
-
-    lastMousePosition.current = { x, y } // Update last mouse position
+    lastMousePosition.current = { x, y }
   }
 
-  const rotateSingle = (x: number, y: number, position: TextPosition, textType: 'title1' | 'title2' | 'subtitle') => {
-    if (!lastMousePosition.current) return; // Ensure last mouse position is set
-
-    const currentPosition = textType === 'subtitle' 
-      ? subtitlePositionFrame2 
-      : titlePositionsFrame2[textType === 'title1' ? 0 : 1]
-
-    const centerX = currentPosition.x + currentPosition.width / 2; // Center x
-    const centerY = currentPosition.y + currentPosition.height / 2; // Center y
-
-    const lastAngle = Math.atan2(lastMousePosition.current.y - centerY, lastMousePosition.current.x - centerX)
-    const currentAngle = Math.atan2(y - centerY, x - centerX)
-    let deltaAngle = currentAngle - lastAngle; // Calculate change in angle
-
-    // Normalize angle
-    if (deltaAngle > Math.PI) deltaAngle -= 2 * Math.PI
-    if (deltaAngle < -Math.PI) deltaAngle += 2 * Math.PI
-
-    // Update rotation based on text type
-    if (textType === 'subtitle') {
-      setSubtitlePositionFrame2(prev => ({
-        ...prev,
-        rotation: prev.rotation + deltaAngle // Update rotation for subtitle
-      }))
+  const rotateSingle = (x: number, y: number, pos: TextPosition, type: 'title1' | 'title2' | 'subtitle') => {
+    if (!lastMousePosition.current) return
+    const currentPos = type === 'subtitle' ? subtitlePositionFrame2 : titlePositionsFrame2[type === 'title1' ? 0 : 1]
+    const centerX = currentPos.x + currentPos.width/2
+    const centerY = currentPos.y + currentPos.height/2
+    const lastA = Math.atan2(lastMousePosition.current.y - centerY, lastMousePosition.current.x - centerX)
+    const currA = Math.atan2(y - centerY, x - centerX)
+    let δ = currA - lastA
+    if (δ > Math.PI) δ -= 2 * Math.PI
+    if (δ < -Math.PI) δ += 2 * Math.PI
+    if (type === 'subtitle') {
+      setSubtitlePositionFrame2(prev => ({ ...prev, rotation: prev.rotation + δ }))
     } else {
       setTitlePositionsFrame2(prev => {
-        const newPositions = [...prev]; // Create a copy of previous positions
-        const index = textType === 'title1' ? 0 : 1; // Determine index for title
-        newPositions[index] = {
-          ...newPositions[index],
-          rotation: newPositions[index].rotation + deltaAngle // Update rotation for title
-        }
-        return newPositions // Return updated positions
+        const copy = [...prev]
+        const idx = type === 'title1' ? 0 : 1
+        copy[idx] = { ...copy[idx], rotation: copy[idx].rotation + δ }
+        return copy
       })
     }
-
-    lastMousePosition.current = { x, y } // Update last mouse position
+    lastMousePosition.current = { x, y }
   }
 
   const animate = (timestamp: number) => {
-    if (!startTimeRef.current) {
-      startTimeRef.current = timestamp; // Initialize start time
-    }
-    
-    const elapsedTime = timestamp - startTimeRef.current; // Calculate elapsed time
-    const animationSpeed = 0.0002; // Lower number = slower animation
-    let progress = elapsedTime * animationSpeed; // Calculate progress based on elapsed time
-
-    // Only reset for looping
+    if (!startTimeRef.current) startTimeRef.current = timestamp
+    const elapsed = timestamp - startTimeRef.current
+    const speed = 0.0002
+    let progress = elapsed * speed
     if (progress > 1.4) {
       if (isLooping) {
-        startTimeRef.current = timestamp; // Reset start time for looping
-        progress = 0; // Reset progress
+        startTimeRef.current = timestamp
+        progress = 0
       } else {
-        progress = 1.4; // Cap progress at 1.4 if not looping
-        setIsPlaying(false); // Stop playing
+        progress = 1.4
+        setIsPlaying(false)
       }
     }
-
-    drawCanvas(progress); // Draw the canvas with the current progress
-
+    drawCanvas(progress)
     if (isLooping || isPlaying) {
-      animationRef.current = requestAnimationFrame(animate); // Continue animation
+      animationRef.current = requestAnimationFrame(animate)
     } else {
-      drawCanvas(0); // Reset canvas if not playing
+      drawCanvas(0)
     }
   }
 
   const handleFrameChange = (frame: number) => {
-    setCurrentFrame(frame) // Set current frame
-    setSelectedTexts([]) // Clear selected texts
-    // Don't reset groupRotation here anymore
-    drawCanvas() // Redraw the canvas
+    setCurrentFrame(frame)
+    setSelectedTexts([])
+    drawCanvas()
   }
 
   const togglePlay = () => {
-    setIsPlaying(!isPlaying)
+    setIsPlaying(p => !p)
   }
 
   const toggleLoop = () => {
-    setIsLooping(!isLooping)
+    setIsLooping(l => !l)
   }
 
   const handleExport = () => {
-    // Implementation for export functionality
-    console.log("Export functionality not implemented yet")
+    console.log("Export not implemented")
   }
 
-  const updatePosition = (newPosition: TextPosition) => {
-    // ─── APPLY UNIFORM SCALE before committing ─────────────────────────────────────────
+  // ─── THIS is where the “Update” button in the modal writes back into the correct state:
+  const updatePosition = (newPos: TextPosition) => {
+    if (!editTarget || !editingPosition) return
+    // We also scale “Size (%)” now:
     const scaleFactor = editingSize / 100
     const scaled: TextPosition = {
-      ...newPosition,
-      width:  newPosition.width  * scaleFactor,
-      height: newPosition.height * scaleFactor,
-      fontSize: newPosition.fontSize * scaleFactor,
+      ...newPos,
+      width: newPos.width * scaleFactor,
+      height: newPos.height * scaleFactor,
+      fontSize: newPos.fontSize * scaleFactor,
     }
 
-    if (selectedTexts.includes('title1') || selectedTexts.includes('title2')) {
+    if (editTarget === 'title1') {
       setTitlePositionsFrame2(prev => {
-        const newPositions = [...prev]
-        selectedTexts.forEach(selectedText => {
-          if (selectedText === 'title1' || selectedText === 'title2') {
-            const index = selectedText === 'title1' ? 0 : 1
-            newPositions[index] = scaled
-          }
-        })
-        return newPositions
+        const copy = [...prev]
+        copy[0] = scaled
+        return copy
       })
     }
-    if (selectedTexts.includes('subtitle')) {
+    if (editTarget === 'title2') {
+      setTitlePositionsFrame2(prev => {
+        const copy = [...prev]
+        copy[1] = scaled
+        return copy
+      })
+    }
+    if (editTarget === 'subtitle') {
       setSubtitlePositionFrame2(scaled)
     }
     setPositionModalOpen(false)
@@ -1324,10 +1036,9 @@ export default function InstagramPostCreator() {
   const handleSettingsChange = (name: string, value: number) => {
     switch (name) {
       case 'tremblingIntensity':
-        setTremblingIntensity(value) // Update trembling intensity state
-        drawCanvas() // Redraw the canvas to reflect the updated trembling intensity
+        setTremblingIntensity(value)
+        drawCanvas()
         break
-      // Other settings handlers
     }
   }
 
@@ -1341,7 +1052,7 @@ export default function InstagramPostCreator() {
             <Input
               id="title1"
               value={titles[0]}
-              onChange={(e) => setTitles([e.target.value, titles[1]])}
+              onChange={e => setTitles([e.target.value, titles[1]])}
               className="mt-1 bg-white rounded text-lg h-10"
             />
           </div>
@@ -1350,7 +1061,7 @@ export default function InstagramPostCreator() {
             <Input
               id="title2"
               value={titles[1]}
-              onChange={(e) => setTitles([titles[0], e.target.value])}
+              onChange={e => setTitles([titles[0], e.target.value])}
               className="mt-1 bg-white rounded text-lg h-10"
             />
           </div>
@@ -1359,20 +1070,20 @@ export default function InstagramPostCreator() {
             <Input
               id="subtitle"
               value={subtitle}
-              onChange={(e) => setSubtitle(e.target.value)}
+              onChange={e => setSubtitle(e.target.value)}
               className="mt-1 bg-white rounded text-lg h-10"
             />
           </div>
           <div>
             <Label className="text-sm text-gray-600">Background Color</Label>
             <div className="flex flex-wrap gap-2 mt-2">
-              {colorOptions.map((color) => (
+              {colorOptions.map(c => (
                 <button
-                  key={color.value}
-                  onClick={() => setBackgroundColor(color.value)}
+                  key={c.value}
+                  onClick={() => setBackgroundColor(c.value)}
                   className="w-8 h-8 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  style={{ backgroundColor: color.value }}
-                  aria-label={color.name}
+                  style={{ backgroundColor: c.value }}
+                  aria-label={c.name}
                 />
               ))}
             </div>
@@ -1425,7 +1136,7 @@ export default function InstagramPostCreator() {
         </div>
       </div>
 
-      {/* ─── EDIT POSITION DIALOG ─────────────────────────────────────────────────────────── */}
+      {/* ─── EDIT POSITION MODAL ───────────────────────────────────────────────────────────── */}
       <Dialog open={positionModalOpen} onOpenChange={setPositionModalOpen}>
         <DialogContent>
           <DialogHeader>
@@ -1439,7 +1150,7 @@ export default function InstagramPostCreator() {
                   id="xPosition"
                   type="number"
                   value={editingPosition.x}
-                  onChange={(e) => setEditingPosition({...editingPosition, x: Number(e.target.value)})}
+                  onChange={e => setEditingPosition({...editingPosition, x: Number(e.target.value)})}
                 />
               </div>
               <div>
@@ -1448,7 +1159,7 @@ export default function InstagramPostCreator() {
                   id="yPosition"
                   type="number"
                   value={editingPosition.y}
-                  onChange={(e) => setEditingPosition({...editingPosition, y: Number(e.target.value)})}
+                  onChange={e => setEditingPosition({...editingPosition, y: Number(e.target.value)})}
                 />
               </div>
               <div>
@@ -1456,18 +1167,17 @@ export default function InstagramPostCreator() {
                 <Input
                   id="rotation"
                   type="number"
-                  value={editingPosition.rotation * (180 / Math.PI)}
-                  onChange={(e) => setEditingPosition({...editingPosition, rotation: Number(e.target.value) * (Math.PI / 180)})}
+                  value={editingPosition.rotation * (180/Math.PI)}
+                  onChange={e => setEditingPosition({...editingPosition, rotation: Number(e.target.value) * (Math.PI/180)})}
                 />
               </div>
-              {/* ─── NEW: Size (%) field ────────────────────────────────────────────────────── */}
               <div>
                 <Label htmlFor="sizePercent">Size (%)</Label>
                 <Input
                   id="sizePercent"
                   type="number"
                   value={editingSize}
-                  onChange={(e) => setEditingSize(Number(e.target.value))}
+                  onChange={e => setEditingSize(Number(e.target.value))}
                   min={1}
                   max={1000}
                 />
@@ -1478,7 +1188,7 @@ export default function InstagramPostCreator() {
         </DialogContent>
       </Dialog>
 
-      {/* ─── SETTINGS DIALOG ───────────────────────────────────────────────────────────────── */}
+      {/* ─── SETTINGS MODAL ─────────────────────────────────────────────────────────────────── */}
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
         <DialogContent>
           <DialogHeader>
@@ -1493,7 +1203,7 @@ export default function InstagramPostCreator() {
                 max={10}
                 step={1}
                 value={[lineThickness]}
-                onValueChange={(value) => setLineThickness(value[0])}
+                onValueChange={val => setLineThickness(val[0])}
               />
             </div>
             <div>
@@ -1503,8 +1213,8 @@ export default function InstagramPostCreator() {
                 min={0.00005}
                 max={0.0005}
                 step={0.00001}
-                value={[animationSpeed]} // Bind to state variable
-                onValueChange={(value) => setAnimationSpeed(value[0])} // Update state on change
+                value={[animationSpeed]}
+                onValueChange={val => setAnimationSpeed(val[0])}
               />
             </div>
             <div>
@@ -1515,7 +1225,7 @@ export default function InstagramPostCreator() {
                 max={0.5}
                 step={0.01}
                 value={[staggerDelay]}
-                onValueChange={(value) => setStaggerDelay(value[0])}
+                onValueChange={val => setStaggerDelay(val[0])}
               />
             </div>
             <div>
@@ -1526,7 +1236,7 @@ export default function InstagramPostCreator() {
                 max={10}
                 step={1}
                 value={[tremblingIntensity]}
-                onValueChange={(value) => handleSettingsChange('tremblingIntensity', value[0])}
+                onValueChange={val => handleSettingsChange('tremblingIntensity', val[0])}
               />
             </div>
           </div>
