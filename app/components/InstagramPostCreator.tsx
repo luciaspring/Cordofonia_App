@@ -272,11 +272,38 @@ export default function InstagramPostCreator() {
     }
   }
 
+  // ─── STATIC TEXT DRAW WITH TREMBLING ─────────────────────────────────────────────
   const drawStaticText = (ctx: CanvasRenderingContext2D, frame: number) => {
     const positions = frame === 1 ? titlePositionsFrame1 : titlePositionsFrame2
-    titles.forEach((text, idx) => drawRotatedText(ctx, positions[idx], text))
     const subPos = frame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
-    drawRotatedText(ctx, subPos, subtitle)
+
+    // Draw titles with random tremble
+    positions.forEach((pos, idx) => {
+      const tremX = (Math.random() - 0.5) * tremblingIntensity
+      const tremY = (Math.random() - 0.5) * tremblingIntensity
+      ctx.save()
+      ctx.translate(pos.x + pos.width / 2 + tremX, pos.y + pos.height / 2 + tremY)
+      ctx.rotate(pos.rotation)
+      ctx.font = `bold ${pos.fontSize}px Arial`
+      ctx.fillStyle = getContrastColor(backgroundColor)
+      ctx.textBaseline = 'middle'
+      ctx.textAlign = 'center'
+      ctx.fillText(titles[idx], 0, 0)
+      ctx.restore()
+    })
+
+    // Draw subtitle with random tremble
+    const tremXsub = (Math.random() - 0.5) * tremblingIntensity
+    const tremYsub = (Math.random() - 0.5) * tremblingIntensity
+    ctx.save()
+    ctx.translate(subPos.x + subPos.width / 2 + tremXsub, subPos.y + subPos.height / 2 + tremYsub)
+    ctx.rotate(subPos.rotation)
+    ctx.font = `bold ${subPos.fontSize}px Arial`
+    ctx.fillStyle = getContrastColor(backgroundColor)
+    ctx.textBaseline = 'middle'
+    ctx.textAlign = 'center'
+    ctx.fillText(subtitle, 0, 0)
+    ctx.restore()
   }
 
   const drawRotatedText = (ctx: CanvasRenderingContext2D, pos: TextPosition, text: string) => {
