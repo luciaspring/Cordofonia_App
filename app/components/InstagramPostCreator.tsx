@@ -922,60 +922,56 @@ export default function InstagramPostCreator() {
       }
     }
 
-    // ─── PRIORITY 2: Line selection via Path2D hit test ───────────────────────────
+    // ─── PRIORITY 2: Line selection (point-to-segment) ─────────────────────────────
     let foundIdx: number | null = null
     let mode: 'start' | 'end' | 'move' | null = null
 
-    // First, try Path2D stroke hit test for body
-    const ctx = canvas.getContext('2d')
-    if (ctx) {
-      ctx.lineWidth = lineThickness
-      for (const { path, index } of linePathsRef.current) {
-        if (foundIdx !== null) break
-        const line = lines[index]
+    // 1. Check nearest line endpoint first (within 10px)
+    for (let idx = 0; idx < lines.length; idx++) {
+      const line = lines[idx]
+      if (line.frame !== currentFrame) continue
+      const ds = Math.hypot(x - line.start.x, y - line.start.y)
+      if (ds <= 10) {
+        foundIdx = idx
+        mode = 'start'
+        break
+      }
+      const de = Math.hypot(x - line.end.x, y - line.end.y)
+      if (de <= 10) {
+        foundIdx = idx
+        mode = 'end'
+        break
+      }
+    }
+
+    // 2. If no endpoint, check the body (within 5px of segment)
+    if (foundIdx === null) {
+      for (let idx = 0; idx < lines.length; idx++) {
+        const line = lines[idx]
         if (line.frame !== currentFrame) continue
-        if (ctx.isPointInStroke(path, x, y)) {
-          foundIdx = index
+        const dSeg = pointToLineDistance({ x, y }, line.start, line.end)
+        if (dSeg <= 5) {
+          foundIdx = idx
           mode = 'move'
           break
         }
       }
     }
 
-    // If body not hit, check endpoints manually (threshold = lineThickness)
-    if (foundIdx === null) {
-      for (let idx = 0; idx < lines.length; idx++) {
-        const line = lines[idx]
-        if (line.frame !== currentFrame) continue
-        const dxStart = x - line.start.x
-        const dyStart = y - line.start.y
-        if (Math.hypot(dxStart, dyStart) < lineThickness) {
-          foundIdx = idx
-          mode = 'start'
-          break
-        }
-        const dxEnd = x - line.end.x
-        const dyEnd = y - line.end.y
-        if (Math.hypot(dxEnd, dyEnd) < lineThickness) {
-          foundIdx = idx
-          mode = 'end'
-          break
-        }
-      }
-    }
-
     if (foundIdx !== null && mode) {
-      // Select and prepare to drag existing line
+      // Select existing line and prepare for drag
       setEditingLineIndex(foundIdx)
       setDraggedMode(mode)
       lastMousePositionForLine.current = { x, y }
-      setCurrentLine(null)
-    } else {
-      // Begin drawing a new line
-      setEditingLineIndex(null)
-      setDraggedMode(null)
-      setCurrentLine({ start: { x, y }, end: { x, y }, frame: currentFrame })
+      setCurrentLine(null)  // prevent starting a new line
+      drawCanvas()
+      return
     }
+
+    // ─── PRIORITY 3: Begin drawing a new line if none selected ────────────────────
+    setEditingLineIndex(null)
+    setDraggedMode(null)
+    setCurrentLine({ start: { x, y }, end: { x, y }, frame: currentFrame })
     drawCanvas()
   }
 
