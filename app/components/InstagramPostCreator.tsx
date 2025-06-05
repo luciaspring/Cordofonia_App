@@ -937,11 +937,14 @@ export default function InstagramPostCreator() {
         }
       }
     }
-    // Check line body (threshold 20 for easier selection)
+    // Check line body (explicit point-to-line distance, threshold 20)
     if (foundIdx === null) {
       for (let idx = 0; idx < lines.length; idx++) {
         const line = lines[idx]
-        if (line.frame === currentFrame && isPointNear({ x, y }, line, 20)) {
+        if (
+          line.frame === currentFrame &&
+          pointToLineDistance({ x, y }, line.start, line.end) < 20
+        ) {
           foundIdx = idx
           mode = 'move'
           break
