@@ -1209,11 +1209,9 @@ export default function InstagramPostCreator() {
   const exportVideo = () => {
     if (!canvasRef.current) return
 
-    // 1) Capture the canvas stream
     const stream = (canvasRef.current as HTMLCanvasElement).captureStream(baseFps)
     recordedChunksRef.current = []
 
-    // 2) Create MediaRecorder for WebM
     const options: MediaRecorderOptions = { mimeType: 'video/webm; codecs=vp9' }
     const recorder = new MediaRecorder(stream, options)
     mediaRecorderRef.current = recorder
@@ -1225,7 +1223,6 @@ export default function InstagramPostCreator() {
     }
 
     recorder.onstop = () => {
-      // 3) Build a Blob from the recorded chunks and download
       const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -1238,27 +1235,20 @@ export default function InstagramPostCreator() {
       setIsRecording(false)
     }
 
-    // 4) Start recording and play the animation
+    // Start recording and force-play two full cycles (1 cycle = 1.4 s). Two cycles = 2.8 s.
     recordedChunksRef.current = []
     setIsRecording(true)
     recorder.start()
 
-    // If currently paused, start playing to capture frames
     if (!isPlaying) {
       setIsPlaying(true)
-      // Stop recording after one full cycle of your animation (1.4 * 1000 / baseFps * number of base frames).
-      // For a 1.4 cycle at baseFps fps: durationMs = (1.4 / 1) * 1000
-      // But since animate() runs at baseFps pacing, record for (1.4 * (1000/baseFps) * baseFps) = 1.4*1000 = 1400ms
-      setTimeout(() => {
-        recorder.stop()
-        setIsPlaying(false)
-      }, 1400)
-    } else {
-      // If already playing, stop after same duration
-      setTimeout(() => {
-        recorder.stop()
-      }, 1400)
     }
+
+    // Stop after ~2800 ms so you capture both Frame 1 and Frame 2 animations
+    setTimeout(() => {
+      recorder.stop()
+      setIsPlaying(false)
+    }, 2800)
   }
 
   // ─── UTILITY ────────────────────────────────────────────────────────────────────
