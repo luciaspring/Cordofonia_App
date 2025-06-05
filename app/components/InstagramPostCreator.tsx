@@ -111,6 +111,7 @@ export default function InstagramPostCreator() {
   const [isDragging, setIsDragging] = useState(false)
   const [positionModalOpen, setPositionModalOpen] = useState(false)
   const [editingPosition, setEditingPosition] = useState<TextPosition | null>(null)
+  const [editingBaseFontSize, setEditingBaseFontSize] = useState<number | null>(null)
 
   // Preset values for animation controls
   const [lineThickness, setLineThickness] = useState<number>(MAX_LINE_THICKNESS)       // 10
@@ -969,6 +970,13 @@ export default function InstagramPostCreator() {
     drawCanvas()
   }
 
+  // Capture base font size when opening modal
+  const handleTextDoubleClick = (pos: TextPosition) => {
+    setEditingPosition(pos)
+    setEditingBaseFontSize(pos.fontSize)
+  }
+
+  // Update handleTextInteraction to use new double click handler
   const handleTextInteraction = (
     position: TextPosition,
     textType: 'title1' | 'title2' | 'subtitle',
@@ -1024,7 +1032,7 @@ export default function InstagramPostCreator() {
     drawCanvas()
     if (isDoubleClick) {
       setPositionModalOpen(true)
-      setEditingPosition(position)
+      handleTextDoubleClick(position)
     }
   }
 
@@ -1262,7 +1270,7 @@ export default function InstagramPostCreator() {
           <DialogHeader>
             <DialogTitle>Edit Position</DialogTitle>
           </DialogHeader>
-          {editingPosition && (
+          {editingPosition && editingBaseFontSize !== null && (
             <div className="space-y-4">
               <div>
                 <Label htmlFor="xPos">X Position</Label>
@@ -1289,6 +1297,21 @@ export default function InstagramPostCreator() {
                   type="number"
                   value={editingPosition.rotation * (180 / Math.PI)}
                   onChange={e => setEditingPosition({ ...editingPosition, rotation: Number(e.target.value) * (Math.PI / 180) })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="scale">Scale (%)</Label>
+                <Input
+                  id="scale"
+                  type="number"
+                  value={Math.round((editingPosition.fontSize / editingBaseFontSize) * 100)}
+                  onChange={e => {
+                    const scale = Number(e.target.value) / 100
+                    setEditingPosition({
+                      ...editingPosition,
+                      fontSize: editingBaseFontSize * scale
+                    })
+                  }}
                 />
               </div>
               <Button onClick={() => updatePosition(editingPosition)}>Update</Button>
