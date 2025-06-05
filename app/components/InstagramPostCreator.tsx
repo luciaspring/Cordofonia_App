@@ -899,8 +899,10 @@ export default function InstagramPostCreator() {
   const getCanvasCoords = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current!
     const rect = canvas.getBoundingClientRect()
-    const x = (e.clientX - rect.left) * (canvas.width / rect.width)
-    const y = (e.clientY - rect.top) * (canvas.height / rect.height)
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
+    const x = e.nativeEvent.offsetX * scaleX
+    const y = e.nativeEvent.offsetY * scaleY
     return { x, y }
   }
 
