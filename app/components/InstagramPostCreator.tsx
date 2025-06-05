@@ -915,41 +915,38 @@ export default function InstagramPostCreator() {
     let foundIdx: number | null = null
     let mode: 'start' | 'end' | 'move' | null = null
 
-    // 1. Check start endpoint (distance < lineThickness)
-    for (let idx = 0; idx < lines.length; idx++) {
-      const line = lines[idx]
-      if (line.frame !== currentFrame) continue
-      const dxStart = x - line.start.x
-      const dyStart = y - line.start.y
-      if (Math.hypot(dxStart, dyStart) < lineThickness) {
-        foundIdx = idx
-        mode = 'start'
-        break
-      }
+    const ctx = canvas.getContext('2d')
+    if (ctx) {
+      ctx.lineWidth = lineThickness
+      lines.forEach((line, idx) => {
+        if (foundIdx !== null || line.frame !== currentFrame) return
+        ctx.beginPath()
+        ctx.moveTo(line.start.x, line.start.y)
+        ctx.lineTo(line.end.x, line.end.y)
+        if (ctx.isPointInStroke(x, y)) {
+          foundIdx = idx
+          mode = 'move'
+        }
+      })
     }
-    // 2. Check end endpoint if none found
+
+    // Check endpoints if body not found
     if (foundIdx === null) {
       for (let idx = 0; idx < lines.length; idx++) {
         const line = lines[idx]
         if (line.frame !== currentFrame) continue
+        const dxStart = x - line.start.x
+        const dyStart = y - line.start.y
+        if (Math.hypot(dxStart, dyStart) < lineThickness) {
+          foundIdx = idx
+          mode = 'start'
+          break
+        }
         const dxEnd = x - line.end.x
         const dyEnd = y - line.end.y
         if (Math.hypot(dxEnd, dyEnd) < lineThickness) {
           foundIdx = idx
           mode = 'end'
-          break
-        }
-      }
-    }
-    // 3. Check line body if still none (point-to-line distance < lineThickness)
-    if (foundIdx === null) {
-      for (let idx = 0; idx < lines.length; idx++) {
-        const line = lines[idx]
-        if (line.frame !== currentFrame) continue
-        const distToLine = pointToLineDistance({ x, y }, line.start, line.end)
-        if (distToLine < lineThickness) {
-          foundIdx = idx
-          mode = 'move'
           break
         }
       }
