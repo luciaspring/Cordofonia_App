@@ -306,8 +306,6 @@ export default function InstagramPostCreator() {
     if (!ctx) return
 
     drawLinesAndText(ctx)
-
-    // If animating, the animation loop will call drawAnimated routines separately
   }
 
   const drawBoundingBox = (ctx: CanvasRenderingContext2D, pos: TextPosition) => {
@@ -582,12 +580,11 @@ export default function InstagramPostCreator() {
     }
   }
 
-  // ─── REMAINING HANDLERS & UTILITY FUNCTIONS ────────────────────────────────────
-
   const handleMouseLeave = () => {
     handleMouseUp()
   }
 
+  // ─── FRAME CONTROLS ─────────────────────────────────────────────────────────────
   const handleFrameChange = (frame: number) => {
     setCurrentFrame(frame)
     setSelectedTexts([])
@@ -597,6 +594,7 @@ export default function InstagramPostCreator() {
   const togglePlay = () => setIsPlaying(prev => !prev)
   const toggleLoop = () => setIsLooping(prev => !prev)
 
+  // ─── TEXT INTERACTION ──────────────────────────────────────────────────────────
   const handleTextInteraction = (
     position: TextPosition,
     textType: 'title1' | 'title2' | 'subtitle',
@@ -653,49 +651,20 @@ export default function InstagramPostCreator() {
     }
   }
 
-  const updateCursor = (canvas: HTMLCanvasElement, x: number, y: number) => {
-    const groupBox = calculateGroupBoundingBox()
-    if (groupBox && currentFrame === 2 && isPointInRotatedBox(x, y, getRotatedGroupBoundingBox(groupBox))) {
-      if (isPointNearRotationArea(x, y, groupBox)) {
-        canvas.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16.8\' height=\'16.8\' viewBox=\'0 0 24 24\' fill=\'none\'%3E%3Cg stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M20.49 15a9 9 0 1 1-2.12-9.36L23 10\' stroke=\'%23FFFFFF\' stroke-width=\'4.8\'/%3E%3Cpath d=\'M20.49 15a9 9 0 1 1-2.12-9.36L23 10\' stroke=\'%23000000\' stroke-width=\'2.4\'/%3E%3Cpolyline points=\'23 4 23 10 17 10\' stroke=\'%23FFFFFF\' stroke-width=\'4.8\'/%3E%3Cpolyline points=\'23 4 23 10 17 10\' stroke=\'%23000000\' stroke-width=\'2.4\'/%3E%3C/g%3E%3C/svg%3E") 8 8, auto'
-        return
-      }
-      const handle = getResizeHandle(x, y, groupBox)
-      if (handle) {
-        canvas.style.cursor = handle
-        return
-      }
-      canvas.style.cursor = 'move'
-      return
+  // ─── SETTINGS HANDLERS ──────────────────────────────────────────────────────────
+  const handleSettingsChange = (name: string, val: number) => {
+    switch (name) {
+      case 'tremblingIntensity':
+        setTremblingIntensity(val)
+        break
+      case 'frameRate':
+        setFrameRate(val)
+        break
     }
-
-    const positions = currentFrame === 1
-      ? [titlePositionsFrame1[0], titlePositionsFrame1[1], subtitlePositionFrame1]
-      : [titlePositionsFrame2[0], titlePositionsFrame2[1], subtitlePositionFrame2]
-
-    for (let i = 0; i < positions.length; i++) {
-      const pos = positions[i]
-      if (isPointInRotatedBox(x, y, getRotatedBoundingBox(pos))) {
-        if (currentFrame === 2) {
-          if (isPointNearRotationArea(x, y, pos)) {
-            canvas.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16.8\' height=\'16.8\' viewBox=\'0 0 24 24\' fill=\'none\'%3E%3Cg stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M20.49 15a9 9 0 1 1-2.12-9.36L23 10\' stroke=\'%23FFFFFF\' stroke-width=\'4.8\'/%3E%3Cpath d=\'M20.49 15a9 9 0 1 1-2.12-9.36L23 10\' stroke=\'%23000000\' stroke-width=\'2.4\'/%3E%3Cpolyline points=\'23 4 23 10 17 10\' stroke=\'%23FFFFFF\' stroke-width=\'4.8\'/%3E%3Cpolyline points=\'23 4 23 10 17 10\' stroke=\'%23000000\' stroke-width=\'2.4\'/%3E%3C/g%3E%3C/svg%3E") 8 8, auto'
-            return
-          }
-          const handle = getResizeHandle(x, y, pos)
-          if (handle) {
-            canvas.style.cursor = handle
-            return
-          }
-          canvas.style.cursor = 'move'
-          return
-        }
-      }
-    }
-
-    // Default
-    canvas.style.cursor = 'default'
+    drawCanvas()
   }
 
+  // ─── ANIMATION LOOP ─────────────────────────────────────────────────────────────
   const animate = (timestamp: number) => {
     if (!startTimeRef.current) startTimeRef.current = timestamp
     const elapsed = timestamp - startTimeRef.current
@@ -719,56 +688,7 @@ export default function InstagramPostCreator() {
     }
   }
 
-  const handleFrameChange = (frame: number) => {
-    setCurrentFrame(frame)
-    setSelectedTexts([])
-    drawCanvas()
-  }
-
-  const togglePlay = () => setIsPlaying(prev => !prev)
-  const toggleLoop = () => setIsLooping(prev => !prev)
-
-  // ─── POSITION MODAL HANDLERS ────────────────────────────────────────────────────
-  const updatePosition = (newPos: TextPosition) => {
-    if (selectedTexts.includes('title1') || selectedTexts.includes('title2')) {
-      setTitlePositionsFrame2(prev => {
-        const arr = [...prev]
-        selectedTexts.forEach(st => {
-          const idx = st === 'title1' ? 0 : 1
-          arr[idx] = newPos
-        })
-        return arr
-      })
-    }
-    if (selectedTexts.includes('subtitle')) {
-      setSubtitlePositionFrame2(newPos)
-    }
-    setPositionModalOpen(false)
-    drawCanvas()
-  }
-
-  // ─── SETTINGS HANDLERS ──────────────────────────────────────────────────────────
-  const handleSettingsChange = (name: string, val: number) => {
-    switch (name) {
-      case 'tremblingIntensity':
-        setTremblingIntensity(val)
-        break
-      case 'frameRate':
-        setFrameRate(val)
-        break
-    }
-    drawCanvas()
-  }
-
-  // ─── UTILITY FUNCTIONS ──────────────────────────────────────────────────────────
-  const getContrastColor = (bgColor: string): string => {
-    const r = parseInt(bgColor.slice(1, 3), 16)
-    const g = parseInt(bgColor.slice(3, 5), 16)
-    const b = parseInt(bgColor.slice(5, 7), 16)
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-    return luminance > 0.5 ? '#000000' : '#FFFFFF'
-  }
-
+  // ─── DRAG/RESIZE/ROTATE TEXT ─────────────────────────────────────────────────────
   const dragSingle = (x: number, y: number, textType: 'title1' | 'title2' | 'subtitle') => {
     if (!lastMousePosition.current) return
     const dx = x - lastMousePosition.current.x
