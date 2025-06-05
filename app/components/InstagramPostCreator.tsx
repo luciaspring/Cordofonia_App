@@ -886,40 +886,18 @@ export default function InstagramPostCreator() {
   // ─── MOUSE EVENT HANDLERS ───────────────────────────────────────────────────────
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (isPlaying) return
+    lastMousePositionForLine.current = null
     const canvas = canvasRef.current
     if (!canvas) return
     const rect = canvas.getBoundingClientRect()
     const x = (e.clientX - rect.left) * (canvas.width / rect.width)
     const y = (e.clientY - rect.top) * (canvas.height / rect.height)
 
-    lastMousePosition.current = { x, y }
-
-    const positions = currentFrame === 1 ? titlePositionsFrame1 : titlePositionsFrame2
-    const subPos = currentFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
-
-    for (let i = 0; i < positions.length; i++) {
-      const rotatedBox = getRotatedBoundingBox(positions[i])
-      if (isPointInRotatedBox(x, y, rotatedBox)) {
-        handleTextInteraction(positions[i], `title${i + 1}` as 'title1' | 'title2', x, y)
-        return
-      }
-    }
-    const subBox = getRotatedBoundingBox(subPos)
-    if (isPointInRotatedBox(x, y, subBox)) {
-      handleTextInteraction(subPos, 'subtitle', x, y)
-      return
-    }
-
-    if (!isShiftPressed.current) {
-      setSelectedTexts([])
-      setGroupRotation(0)
-    }
-
-    // Check for clicking near an existing line's endpoints or body
+    // Detect if clicking near an existing line's start, end, or body
     let foundIdx: number | null = null
     let mode: 'start' | 'end' | 'move' | null = null
 
-    // 1. check start points
+    // Check start points
     lines.forEach((line, idx) => {
       if (
         foundIdx === null &&
@@ -930,7 +908,7 @@ export default function InstagramPostCreator() {
         mode = 'start'
       }
     })
-    // 2. if no start, check end points
+    // Check end points if none found yet
     if (foundIdx === null) {
       lines.forEach((line, idx) => {
         if (
@@ -943,13 +921,13 @@ export default function InstagramPostCreator() {
         }
       })
     }
-    // 3. if no endpoints, check body
+    // Check body if no endpoints matched
     if (foundIdx === null) {
       lines.forEach((line, idx) => {
         if (
           foundIdx === null &&
           line.frame === currentFrame &&
-          isPointNear({ x, y }, line)
+          isPointNear({ x, y }, line) // body proximity
         ) {
           foundIdx = idx
           mode = 'move'
@@ -957,14 +935,14 @@ export default function InstagramPostCreator() {
       })
     }
 
-    if (foundIdx !== null && mode !== null) {
-      // Cancel new line drawing
-      setCurrentLine(null)
+    if (foundIdx !== null && mode) {
+      // Select and prepare to drag existing line
       setEditingLineIndex(foundIdx)
-      lastMousePositionForLine.current = { x, y }
       setDraggedMode(mode)
+      lastMousePositionForLine.current = { x, y }
+      setCurrentLine(null)
     } else {
-      // Begin drawing a new line
+      // Start drawing a new line
       setEditingLineIndex(null)
       setDraggedMode(null)
       setCurrentLine({ start: { x, y }, end: { x, y }, frame: currentFrame })
@@ -980,7 +958,7 @@ export default function InstagramPostCreator() {
     const x = (e.clientX - rect.left) * (canvas.width / rect.width)
     const y = (e.clientY - rect.top) * (canvas.height / rect.height)
 
-    // Drag selected line: either endpoint or entire line
+    // Drag selected line: handle endpoints or move entire line
     if (editingLineIndex !== null && draggedMode && lastMousePositionForLine.current) {
       setLines((prev) => {
         const arr = [...prev]
