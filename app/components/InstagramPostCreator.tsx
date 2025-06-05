@@ -1169,10 +1169,11 @@ export default function InstagramPostCreator() {
 
   // Replace easeInOutQuint with parameterized easeInOut
   const easeInOut = (t: number): number => {
+    const p = easePower * 1.5   // amplify the exponent for a stronger curve
     if (t < 0.5) {
-      return 0.5 * Math.pow(2 * t, easePower)
+      return 0.5 * Math.pow(2 * t, p)
     } else {
-      return 1 - 0.5 * Math.pow(2 * (1 - t), easePower)
+      return 1 - 0.5 * Math.pow(2 * (1 - t), p)
     }
   }
 
@@ -1394,7 +1395,7 @@ export default function InstagramPostCreator() {
               <Slider
                 id="easePowerSlider"
                 min={1}
-                max={10}
+                max={20}
                 step={1}
                 value={[easePower]}
                 onValueChange={([val]) => {
