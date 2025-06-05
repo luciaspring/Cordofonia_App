@@ -886,6 +886,8 @@ export default function InstagramPostCreator() {
   // ─── MOUSE EVENT HANDLERS ───────────────────────────────────────────────────────
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (isPlaying) return
+    lastMousePositionForLine.current = null
+
     const canvas = canvasRef.current
     if (!canvas) return
     const rect = canvas.getBoundingClientRect()
@@ -912,52 +914,49 @@ export default function InstagramPostCreator() {
     }
 
     // ─── PRIORITY 2: Line selection or new line drawing ─────────────────────────────
-    lastMousePositionForLine.current = null
     let foundIdx: number | null = null
     let mode: 'start' | 'end' | 'move' | null = null
-    // Check start endpoints
-    lines.forEach((line, idx) => {
-      if (
-        foundIdx === null &&
-        line.frame === currentFrame &&
-        isPointNear({ x, y }, line.start)
-      ) {
+
+    // Check start endpoints (threshold 10)
+    for (let idx = 0; idx < lines.length; idx++) {
+      const line = lines[idx]
+      if (line.frame === currentFrame && isPointNear({ x, y }, line.start, 10)) {
         foundIdx = idx
         mode = 'start'
+        break
       }
-    })
-    // Check end endpoints
+    }
+    // Check end endpoints (threshold 10)
     if (foundIdx === null) {
-      lines.forEach((line, idx) => {
-        if (
-          foundIdx === null &&
-          line.frame === currentFrame &&
-          isPointNear({ x, y }, line.end)
-        ) {
+      for (let idx = 0; idx < lines.length; idx++) {
+        const line = lines[idx]
+        if (line.frame === currentFrame && isPointNear({ x, y }, line.end, 10)) {
           foundIdx = idx
           mode = 'end'
+          break
         }
-      })
+      }
     }
-    // Check line body
+    // Check line body (threshold 20 for easier selection)
     if (foundIdx === null) {
-      lines.forEach((line, idx) => {
-        if (
-          foundIdx === null &&
-          line.frame === currentFrame &&
-          isPointNear({ x, y }, line)
-        ) {
+      for (let idx = 0; idx < lines.length; idx++) {
+        const line = lines[idx]
+        if (line.frame === currentFrame && isPointNear({ x, y }, line, 20)) {
           foundIdx = idx
           mode = 'move'
+          break
         }
-      })
+      }
     }
+
     if (foundIdx !== null && mode) {
+      // Select and prepare to drag existing line
       setEditingLineIndex(foundIdx)
       setDraggedMode(mode)
       lastMousePositionForLine.current = { x, y }
       setCurrentLine(null)
     } else {
+      // Begin drawing a new line
       setEditingLineIndex(null)
       setDraggedMode(null)
       setCurrentLine({ start: { x, y }, end: { x, y }, frame: currentFrame })
