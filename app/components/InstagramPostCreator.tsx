@@ -919,11 +919,13 @@ export default function InstagramPostCreator() {
       return (
         line.frame === currentFrame &&
         (isPointNear({ x, y }, line) ||
-         isPointNear({ x, y }, line.start) ||
-         isPointNear({ x, y }, line.end))
+          isPointNear({ x, y }, line.start) ||
+          isPointNear({ x, y }, line.end))
       )
     })
     if (clickedIdx !== -1) {
+      // Cancel any new line drawing when selecting existing line
+      setCurrentLine(null)
       const line = lines[clickedIdx]
       setEditingLineIndex(clickedIdx)
       // Determine drag mode: endpoint or entire line
