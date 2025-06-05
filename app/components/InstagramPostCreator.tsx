@@ -996,6 +996,9 @@ export default function InstagramPostCreator() {
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (isPlaying) return
     const canvas = canvasRef.current
+    // If a line is "selected" but we never recorded a start position, skip dragging
+    if (editingLineIndex !== null && !lastMousePositionForLine.current) return
+    
     if (!canvas) return
     const { x, y } = getCanvasCoords(e)
 
@@ -1025,7 +1028,7 @@ export default function InstagramPostCreator() {
       return
     }
 
-    // ─── 2) Dragging a selected line? ───────────────────────────────────────────────
+    // ─── 2) Dragging a selected line? (only if lastMousePositionForLine.current is set) ───────
     if (isDraggingLine && editingLineIndex !== null && draggedMode && lastMousePositionForLine.current) {
       setLines(prev => {
         const arr = [...prev]
