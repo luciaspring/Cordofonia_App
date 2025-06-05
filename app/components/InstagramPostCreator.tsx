@@ -915,33 +915,39 @@ export default function InstagramPostCreator() {
     let foundIdx: number | null = null
     let mode: 'start' | 'end' | 'move' | null = null
 
-    // Check start endpoints using isPointNear
+    // 1. Check start endpoint (distance < lineThickness)
     for (let idx = 0; idx < lines.length; idx++) {
       const line = lines[idx]
-      if (line.frame === currentFrame && isPointNear({ x, y }, line.start, lineThickness / 2)) {
+      if (line.frame !== currentFrame) continue
+      const dxStart = x - line.start.x
+      const dyStart = y - line.start.y
+      if (Math.hypot(dxStart, dyStart) < lineThickness) {
         foundIdx = idx
         mode = 'start'
         break
       }
     }
-
-    // Check end endpoints using isPointNear
+    // 2. Check end endpoint if none found
     if (foundIdx === null) {
       for (let idx = 0; idx < lines.length; idx++) {
         const line = lines[idx]
-        if (line.frame === currentFrame && isPointNear({ x, y }, line.end, lineThickness / 2)) {
+        if (line.frame !== currentFrame) continue
+        const dxEnd = x - line.end.x
+        const dyEnd = y - line.end.y
+        if (Math.hypot(dxEnd, dyEnd) < lineThickness) {
           foundIdx = idx
           mode = 'end'
           break
         }
       }
     }
-
-    // Check line body using isPointNear with line object
+    // 3. Check line body if still none (point-to-line distance < lineThickness)
     if (foundIdx === null) {
       for (let idx = 0; idx < lines.length; idx++) {
         const line = lines[idx]
-        if (line.frame === currentFrame && isPointNear({ x, y }, line, lineThickness / 2)) {
+        if (line.frame !== currentFrame) continue
+        const distToLine = pointToLineDistance({ x, y }, line.start, line.end)
+        if (distToLine < lineThickness) {
           foundIdx = idx
           mode = 'move'
           break
