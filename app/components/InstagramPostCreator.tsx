@@ -118,6 +118,7 @@ export default function InstagramPostCreator() {
   const [tremblingIntensity, setTremblingIntensity] = useState<number>(3)             // preset at 3
   const [frameRate, setFrameRate] = useState<number>(MIN_FRAME_RATE)                   // preset at 10
   const [baseFps, setBaseFps] = useState<number>(35)                                   // preset at 35
+  const [easePower, setEasePower] = useState<number>(5)   // default 5 = quintic
 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [groupRotation, setGroupRotation] = useState(0)
@@ -361,7 +362,7 @@ export default function InstagramPostCreator() {
       const adjustedStagger = linesArr.length > 1 ? maxStaggerDelay / (linesArr.length - 1) : 0
       linesArr.forEach((ln, idx) => {
         let t = Math.max(0, Math.min(1, (fgProgress - idx * adjustedStagger) / animationDuration))
-        t = easeInOutQuint(t)
+        t = easeInOut(t)
         const { start, end } = ln
         const currentEnd = {
           x: start.x + (end.x - start.x) * (animationType === 'grow' ? t : 1 - t),
@@ -390,7 +391,7 @@ export default function InstagramPostCreator() {
       rotation: interpolate(p1.rotation, p2.rotation, t),
       fontSize: interpolate(p1.fontSize, p2.fontSize, t)
     })
-    const t = easeInOutQuint(progress)
+    const t = easeInOut(progress)
 
     // Draw titles with trembling
     titles.forEach((text, idx) => {
@@ -1166,6 +1167,15 @@ export default function InstagramPostCreator() {
     return luminance > 0.5 ? '#000000' : '#FFFFFF'
   }
 
+  // Replace easeInOutQuint with parameterized easeInOut
+  const easeInOut = (t: number): number => {
+    if (t < 0.5) {
+      return 0.5 * Math.pow(2 * t, easePower)
+    } else {
+      return 1 - 0.5 * Math.pow(2 * (1 - t), easePower)
+    }
+  }
+
   // ─── JSX ────────────────────────────────────────────────────────────────────────
   return (
     <div className="bg-gray-100 p-6">
@@ -1376,6 +1386,20 @@ export default function InstagramPostCreator() {
                   if (!isNaN(num)) {
                     handleSettingsChange('frameRate', num)
                   }
+                }}
+              />
+            </div>
+            <div>
+              <Label htmlFor="easePowerSlider">Easing Strength (Power): {easePower}</Label>
+              <Slider
+                id="easePowerSlider"
+                min={1}
+                max={10}
+                step={1}
+                value={[easePower]}
+                onValueChange={([val]) => {
+                  const num = Number(val)
+                  if (!isNaN(num)) setEasePower(num)
                 }}
               />
             </div>
