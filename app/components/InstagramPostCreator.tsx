@@ -91,6 +91,7 @@ export default function InstagramPostCreator() {
   const [lines, setLines] = useState<Line[]>([])
   const [currentLine, setCurrentLine] = useState<Line | null>(null)
   const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null)
+  const [draggedEndpoint, setDraggedEndpoint] = useState<'start' | 'end' | null>(null)
 
   const [titlePositionsFrame1, setTitlePositionsFrame1] = useState<TextPosition[]>([
     { x: 40, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 },
@@ -913,15 +914,30 @@ export default function InstagramPostCreator() {
       setGroupRotation(0)
     }
 
-    const clickedIdx = lines.findIndex(line =>
-      line.frame === currentFrame &&
-      (isPointNear({ x, y }, line) ||
-        isPointNear({ x, y }, line.start) ||
-        isPointNear({ x, y }, line.end))
-    )
+    // Check if clicking near a line's endpoint
+    const clickedIdx = lines.findIndex((line) => {
+      return (
+        line.frame === currentFrame &&
+        (isPointNear({ x, y }, line) ||
+         isPointNear({ x, y }, line.start) ||
+         isPointNear({ x, y }, line.end))
+      )
+    })
     if (clickedIdx !== -1) {
+      const line = lines[clickedIdx]
       setEditingLineIndex(clickedIdx)
+      // Determine if user clicked near start or end
+      if (isPointNear({ x, y }, line.start)) {
+        setDraggedEndpoint('start')
+      } else if (isPointNear({ x, y }, line.end)) {
+        setDraggedEndpoint('end')
+      } else {
+        setDraggedEndpoint(null)
+      }
     } else {
+      // Begin drawing a new line
+      setEditingLineIndex(null)
+      setDraggedEndpoint(null)
       setCurrentLine({ start: { x, y }, end: { x, y }, frame: currentFrame })
     }
     drawCanvas()
@@ -934,6 +950,23 @@ export default function InstagramPostCreator() {
     const rect = canvas.getBoundingClientRect()
     const x = (e.clientX - rect.left) * (canvas.width / rect.width)
     const y = (e.clientY - rect.top) * (canvas.height / rect.height)
+
+    // If dragging a selected line's endpoint, update it directly
+    if (editingLineIndex !== null && draggedEndpoint) {
+      setLines((prev) => {
+        const arr = [...prev]
+        const ln = { ...arr[editingLineIndex] }
+        if (draggedEndpoint === 'start') {
+          ln.start = { x, y }
+        } else if (draggedEndpoint === 'end') {
+          ln.end = { x, y }
+        }
+        arr[editingLineIndex] = ln
+        return arr
+      })
+      drawCanvas()
+      return
+    }
 
     if (selectedTexts.length > 0 && currentFrame === 2) {
       if (isRotating) {
@@ -980,9 +1013,11 @@ export default function InstagramPostCreator() {
   const handleMouseUp = () => {
     if (isPlaying) return
     if (currentLine) {
-      setLines(prev => [...prev, currentLine])
+      setLines((prev) => [...prev, currentLine])
       setCurrentLine(null)
     }
+    // Clear dragged endpoint on mouse up
+    setDraggedEndpoint(null)
     setEditingLineIndex(null)
     setIsResizing(false)
     setIsDragging(false)
