@@ -2,14 +2,14 @@ import { TextPosition, Line, Point, GroupBoundingBox } from '../types'
 
 // Font loading with proper error handling
 let fontLoaded = false
-const sulSansFont = new FontFace('Sul Sans Bold', 'url(/fonts/SulSans-Bold.otf)')
+const sulSansFont = new FontFace('SulSans-Bold', 'url(/fonts/SulSans-Bold.otf)')
 
 sulSansFont.load().then((font) => {
   document.fonts.add(font)
   fontLoaded = true
-  console.log('Sul Sans Bold font loaded successfully')
+  console.log('SulSans-Bold font loaded successfully')
 }).catch((error) => {
-  console.error('Error loading Sul Sans Bold font:', error)
+  console.error('Error loading SulSans-Bold font:', error)
 })
 
 export function getContrastColor(bgColor: string): string {
@@ -116,7 +116,7 @@ export function drawCanvas(
     
     // Set font with proper checking
     if (fontLoaded) {
-      ctx.font = `${pos1.fontSize}px "Sul Sans Bold"`
+      ctx.font = `${pos1.fontSize}px "SulSans-Bold"`
     } else {
       ctx.font = `bold ${pos1.fontSize}px sans-serif`
     }
