@@ -92,7 +92,7 @@ export default function InstagramPostCreator() {
   const [currentLine, setCurrentLine] = useState<Line | null>(null)
   const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null)
   const [draggedMode, setDraggedMode] = useState<'move' | 'start' | 'end' | null>(null)
-  const [lastMousePositionForLine, setLastMousePositionForLine] = useState<Point | null>(null)
+  const lastMousePositionForLine = useRef<Point | null>(null)
 
   const [titlePositionsFrame1, setTitlePositionsFrame1] = useState<TextPosition[]>([
     { x: 40, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 },
@@ -961,7 +961,7 @@ export default function InstagramPostCreator() {
       // Cancel new line drawing
       setCurrentLine(null)
       setEditingLineIndex(foundIdx)
-      setLastMousePositionForLine({ x, y })
+      lastMousePositionForLine.current = { x, y }
       setDraggedMode(mode)
     } else {
       // Begin drawing a new line
@@ -980,7 +980,8 @@ export default function InstagramPostCreator() {
     const x = (e.clientX - rect.left) * (canvas.width / rect.width)
     const y = (e.clientY - rect.top) * (canvas.height / rect.height)
 
-    if (editingLineIndex !== null && draggedMode) {
+    // Drag selected line: either endpoint or entire line
+    if (editingLineIndex !== null && draggedMode && lastMousePositionForLine.current) {
       setLines((prev) => {
         const arr = [...prev]
         const ln = { ...arr[editingLineIndex] }
@@ -988,9 +989,9 @@ export default function InstagramPostCreator() {
           ln.start = { x, y }
         } else if (draggedMode === 'end') {
           ln.end = { x, y }
-        } else if (draggedMode === 'move' && lastMousePositionForLine) {
-          const dx = x - lastMousePositionForLine.x
-          const dy = y - lastMousePositionForLine.y
+        } else if (draggedMode === 'move') {
+          const dx = x - lastMousePositionForLine.current!.x
+          const dy = y - lastMousePositionForLine.current!.y
           ln.start = { x: ln.start.x + dx, y: ln.start.y + dy }
           ln.end = { x: ln.end.x + dx, y: ln.end.y + dy }
         }
@@ -998,7 +999,7 @@ export default function InstagramPostCreator() {
         return arr
       })
       drawCanvas()
-      setLastMousePositionForLine({ x, y })
+      lastMousePositionForLine.current = { x, y }
       return
     }
 
@@ -1052,7 +1053,7 @@ export default function InstagramPostCreator() {
     }
     // Clear drag state
     setDraggedMode(null)
-    setLastMousePositionForLine(null)
+    lastMousePositionForLine.current = null
     setEditingLineIndex(null)
     setIsResizing(false)
     setIsDragging(false)
