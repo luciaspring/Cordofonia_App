@@ -92,7 +92,7 @@ export default function InstagramPostCreator() {
   const [currentLine, setCurrentLine] = useState<Line | null>(null)
   const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null)
   const [draggedMode, setDraggedMode] = useState<'move' | 'start' | 'end' | null>(null)
-  const lastMousePositionForLine = useRef<Point | null>(null)
+  const lastMousePositionForLine = useRef<{ x: number; y: number } | null>(null)
   const [isDraggingLine, setIsDraggingLine] = useState(false)
 
   const [titlePositionsFrame1, setTitlePositionsFrame1] = useState<TextPosition[]>([
@@ -144,7 +144,7 @@ export default function InstagramPostCreator() {
   const lastClickTime = useRef<number>(0)
 
   // Ref to hold Path2D objects for hit testing (body)
-  const linePathsRef = useRef<{ path: Path2D; index: number }[]>([])
+  const linePathsRef = useRef<Path2D[]>([])
 
   // ─── EFFECT HOOKS ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -356,22 +356,22 @@ export default function InstagramPostCreator() {
     ctx.lineWidth = lineThickness
     ctx.lineCap = 'butt'
     ctx.strokeStyle = '#0000FF'
-
-    // Clear previous paths
+    // Reset the stored paths
     linePathsRef.current = []
 
     framelines.forEach((line, idx) => {
-      // Create Path2D for hit testing
+      // Build a fresh Path2D for each line
       const path = new Path2D()
       path.moveTo(line.start.x, line.start.y)
       path.lineTo(line.end.x, line.end.y)
-      // Stroke the path
+      // Stroke it
       ctx.stroke(path)
-      // Store path with original index for hit detection
-      const originalIndex = lines.findIndex((l) => l === framelines[idx])
-      linePathsRef.current.push({ path, index: originalIndex })
+      // Store the Path2D at the same index
+      linePathsRef.current[idx] = path
     })
+
     if (currentLine) {
+      // Draw the in-progress line as well (but we do not store it in linePathsRef)
       const path = new Path2D()
       path.moveTo(currentLine.start.x, currentLine.start.y)
       path.lineTo(currentLine.end.x, currentLine.end.y)
@@ -909,12 +909,13 @@ export default function InstagramPostCreator() {
   // ─── MOUSE DOWN ─────────────────────────────────────────────────────────────────
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (isPlaying) return
+    // Reset any prior line-drag state
     lastMousePositionForLine.current = null
     setIsDraggingLine(false)
 
     const { x, y } = getCanvasCoords(e)
 
-    // ─── 1) TEXT selection (Frame 2 only) ─────────────────────────────────────────
+    // ─── 1) TEXT INTERACTION (Frame 2 only) ───────────────────────────────────────
     if (currentFrame === 2) {
       for (let i = 0; i < titlePositionsFrame2.length; i++) {
         const pos = titlePositionsFrame2[i]
@@ -931,41 +932,44 @@ export default function InstagramPostCreator() {
       }
     }
 
-    // ─── 2) LINE hit test (endpoints first, then body) ─────────────────────────────
+    // ─── 2) LINE HIT-TESTING ───────────────────────────────────────────────────────
     let foundIdx: number | null = null
     let mode: 'start' | 'end' | 'move' | null = null
-    const thresh = lineThickness
 
-    // 2a) Check endpoints within thresh pixels
+    // 2a) Endpoint checks (within lineThickness pixels of start or end)
     for (let i = 0; i < lines.length; i++) {
       const ln = lines[i]
       if (ln.frame !== currentFrame) continue
-      const dStart = Math.hypot(x - ln.start.x, y - ln.start.y)
-      if (dStart <= thresh) {
+
+      const dxStart = x - ln.start.x
+      const dyStart = y - ln.start.y
+      if (Math.hypot(dxStart, dyStart) <= lineThickness) {
         foundIdx = i
         mode = 'start'
         break
       }
-      const dEnd = Math.hypot(x - ln.end.x, y - ln.end.y)
-      if (dEnd <= thresh) {
+
+      const dxEnd = x - ln.end.x
+      const dyEnd = y - ln.end.y
+      if (Math.hypot(dxEnd, dyEnd) <= lineThickness) {
         foundIdx = i
         mode = 'end'
         break
       }
     }
-    // 2b) If no endpoint hit, check body within thresh
+
+    // 2b) Body check via Path2D.isPointInStroke
     if (foundIdx === null) {
+      const canvas = canvasRef.current!
+      const ctx = canvas.getContext('2d')!
+      ctx.lineWidth = lineThickness
+      // `linePathsRef.current` holds a Path2D for each line index
       for (let i = 0; i < lines.length; i++) {
         const ln = lines[i]
         if (ln.frame !== currentFrame) continue
-        // Fast bounding‐box test
-        const minX = Math.min(ln.start.x, ln.end.x) - thresh
-        const maxX = Math.max(ln.start.x, ln.end.x) + thresh
-        const minY = Math.min(ln.start.y, ln.end.y) - thresh
-        const maxY = Math.max(ln.start.y, ln.end.y) + thresh
-        if (x < minX || x > maxX || y < minY || y > maxY) continue
-        const dBody = pointToLineDistance({ x, y }, ln.start, ln.end)
-        if (dBody <= thresh) {
+        const path = linePathsRef.current[i]
+        if (!path) continue
+        if (ctx.isPointInStroke(path, x, y)) {
           foundIdx = i
           mode = 'move'
           break
@@ -974,17 +978,18 @@ export default function InstagramPostCreator() {
     }
 
     if (foundIdx !== null && mode) {
-      // Select and begin dragging that existing line
+      // We clicked on an existing line (endpoint or body)
       setEditingLineIndex(foundIdx)
       setDraggedMode(mode)
       lastMousePositionForLine.current = { x, y }
       setIsDraggingLine(true)
-      setCurrentLine(null) // cancel any "new‐line" in progress
+      // Cancel any "new line" that might have been in progress
+      setCurrentLine(null)
       drawCanvas()
       return
     }
 
-    // ─── 3) No line hit → begin drawing a new line ───────────────────────────────
+    // ─── 3) NO LINE HIT → START A BRAND-NEW LINE ──────────────────────────────────
     setEditingLineIndex(null)
     setDraggedMode(null)
     setIsDraggingLine(false)
