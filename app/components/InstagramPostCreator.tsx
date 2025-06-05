@@ -975,9 +975,13 @@ export default function InstagramPostCreator() {
     const x = (e.clientX - rect.left) * (canvas.width / rect.width)
     const y = (e.clientY - rect.top) * (canvas.height / rect.height)
 
+    // If no initial mouse position for line dragging, skip line logic
+    if (editingLineIndex !== null && draggedMode && !lastMousePositionForLine.current) {
+      return
+    }
+
     // ─── PRIORITY 1: If dragging text, let existing text logic handle it ─────────
     if (selectedTexts.length > 0 && currentFrame === 2 && (isDragging || isResizing || isRotating)) {
-      // existing text drag/resize/rotate logic
       if (isRotating) {
         const groupBox = calculateGroupBoundingBox()
         if (groupBox) rotateGroup(x, y, groupBox)
@@ -1002,7 +1006,7 @@ export default function InstagramPostCreator() {
       return
     }
 
-    // ─── PRIORITY 2: Dragging or editing lines ────────────────────────────────────
+    // ─── PRIORITY 2: Line dragging ─────────────────────────────────────────────────
     if (editingLineIndex !== null && draggedMode && lastMousePositionForLine.current) {
       setLines((prev) => {
         const arr = [...prev]
