@@ -60,7 +60,8 @@ export function useExport(
     mediaRecorderRef.current.start()
 
     // Record for the duration of one full animation cycle
-    setTimeout(() => {
+    // Using window.setTimeout to ensure we use the browser's native implementation
+    window.setTimeout(() => {
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
         mediaRecorderRef.current.stop()
         setIsPlaying(false)
