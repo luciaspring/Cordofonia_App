@@ -66,8 +66,8 @@ const colorOptions = [
 // Preset maximums
 const MAX_LINE_THICKNESS = 10
 const MIN_LINE_THICKNESS = 1
-const MIN_FRAME_RATE = 50
-const MAX_FRAME_RATE = 120
+const MIN_FRAME_RATE = 10
+const BASE_FPS = 60
 
 // Ease In-Out Quint easing function (piecewise)
 const easeInOutQuint = (t: number): number => {
@@ -133,6 +133,7 @@ export default function InstagramPostCreator() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<number | null>(null)
   const startTimeRef = useRef<number | null>(null)
+  const lastDisplayTimeRef = useRef<number>(0)
   const lastMousePosition = useRef<Point | null>(null)
   const isShiftPressed = useRef(false)
   const lastClickTime = useRef<number>(0)
@@ -175,6 +176,7 @@ export default function InstagramPostCreator() {
   useEffect(() => {
     if (isPlaying) {
       startTimeRef.current = null
+      lastDisplayTimeRef.current = 0
       animationRef.current = requestAnimationFrame(animate)
     } else {
       if (animationRef.current) cancelAnimationFrame(animationRef.current)
@@ -183,7 +185,7 @@ export default function InstagramPostCreator() {
     return () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current)
     }
-  }, [isPlaying, isLooping, frameRate])
+  }, [isPlaying, isLooping])
 
   // ─── TEXT DIMENSION UPDATER ──────────────────────────────────────────────────────
   const updateTextDimensions = (ctx: CanvasRenderingContext2D) => {
@@ -1071,10 +1073,11 @@ export default function InstagramPostCreator() {
   const animate = (timestamp: number) => {
     if (!startTimeRef.current) startTimeRef.current = timestamp
     const elapsed = timestamp - startTimeRef.current
-    const msPerFrame = 1000 / frameRate
-    const normalized = elapsed / (msPerFrame * 300)
+
+    // Use a fixed base FPS for progress calculation (so speed is constant)
+    const msPerBaseFrame = 1000 / BASE_FPS
+    const normalized = elapsed / (msPerBaseFrame * 150) // same cycle length as before
     let progress = normalized
-    
     if (progress > 1.4) {
       if (isLooping) {
         startTimeRef.current = timestamp
@@ -1084,12 +1087,18 @@ export default function InstagramPostCreator() {
         setIsPlaying(false)
       }
     }
-    
-    drawCanvas(progress)
-    
+
+    // Throttle visible updates to mimic stop-motion
+    if (timestamp - lastDisplayTimeRef.current >= 1000 / frameRate) {
+      drawCanvas(progress)
+      lastDisplayTimeRef.current = timestamp
+    }
+
+    // Always continue bouncing the loop, even if not currently drawing
     if (isPlaying || isLooping) {
       animationRef.current = requestAnimationFrame(animate)
     } else {
+      // Ensure final static frame draws once
       drawCanvas()
     }
   }
@@ -1133,11 +1142,7 @@ export default function InstagramPostCreator() {
         break
       case 'frameRate':
         setFrameRate(val)
-        // If animation is playing, restart loop with updated frameRate
-        if (animationRef.current) {
-          cancelAnimationFrame(animationRef.current)
-          animationRef.current = requestAnimationFrame(animate)
-        }
+        // Throttling happening inside animate; no need to restart loop
         break
     }
     drawCanvas()
@@ -1321,14 +1326,19 @@ export default function InstagramPostCreator() {
               />
             </div>
             <div>
-              <Label htmlFor="frameRateSlider">Frame Rate ({MIN_FRAME_RATE}–{MAX_FRAME_RATE})</Label>
+              <Label htmlFor="frameRateSlider">Frame Rate ({MIN_FRAME_RATE}–{BASE_FPS})</Label>
               <Slider
                 id="frameRateSlider"
                 min={MIN_FRAME_RATE}
-                max={MAX_FRAME_RATE}
+                max={BASE_FPS}
                 step={1}
                 value={[frameRate]}
-                onValueChange={value => handleSettingsChange('frameRate', value[0])}
+                onValueChange={([v]) => {
+                  const num = Number(v)
+                  if (!isNaN(num)) {
+                    handleSettingsChange('frameRate', num)
+                  }
+                }}
               />
             </div>
           </div>
