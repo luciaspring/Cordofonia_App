@@ -97,6 +97,7 @@ export default function InstagramPostCreator() {
   const [currentFrame, setCurrentFrame] = useState(1)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isLooping, setIsLooping] = useState(false)
+  const [isRecording, setIsRecording] = useState(false)
   const [lines, setLines] = useState<Line[]>([])
   const [currentLine, setCurrentLine] = useState<Line | null>(null)
   const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null)
@@ -149,6 +150,8 @@ export default function InstagramPostCreator() {
   const lastMousePosition = useRef<Point | null>(null)
   const isShiftPressed = useRef(false)
   const lastClickTime = useRef<number>(0)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const recordedChunksRef = useRef<BlobPart[]>([])
 
   // ─── EFFECT HOOKS ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -1202,6 +1205,62 @@ export default function InstagramPostCreator() {
     drawCanvas()
   }
 
+  // ─── EXPORT VIDEO ────────────────────────────────────────────────────────────────
+  const exportVideo = () => {
+    if (!canvasRef.current) return
+
+    // 1) Capture the canvas stream
+    const stream = (canvasRef.current as HTMLCanvasElement).captureStream(baseFps)
+    recordedChunksRef.current = []
+
+    // 2) Create MediaRecorder for WebM
+    const options: MediaRecorderOptions = { mimeType: 'video/webm; codecs=vp9' }
+    const recorder = new MediaRecorder(stream, options)
+    mediaRecorderRef.current = recorder
+
+    recorder.ondataavailable = (event) => {
+      if (event.data && event.data.size > 0) {
+        recordedChunksRef.current.push(event.data)
+      }
+    }
+
+    recorder.onstop = () => {
+      // 3) Build a Blob from the recorded chunks and download
+      const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'animation.webm'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      setIsRecording(false)
+    }
+
+    // 4) Start recording and play the animation
+    recordedChunksRef.current = []
+    setIsRecording(true)
+    recorder.start()
+
+    // If currently paused, start playing to capture frames
+    if (!isPlaying) {
+      setIsPlaying(true)
+      // Stop recording after one full cycle of your animation (1.4 * 1000 / baseFps * number of base frames).
+      // For a 1.4 cycle at baseFps fps: durationMs = (1.4 / 1) * 1000
+      // But since animate() runs at baseFps pacing, record for (1.4 * (1000/baseFps) * baseFps) = 1.4*1000 = 1400ms
+      setTimeout(() => {
+        recorder.stop()
+        setIsPlaying(false)
+      }, 1400)
+    } else {
+      // If already playing, stop after same duration
+      setTimeout(() => {
+        recorder.stop()
+      }, 1400)
+    }
+  }
+
   // ─── UTILITY ────────────────────────────────────────────────────────────────────
   const getContrastColor = (bgColor: string): string => {
     const r = parseInt(bgColor.slice(1, 3), 16)
@@ -1302,7 +1361,11 @@ export default function InstagramPostCreator() {
             <Button onClick={() => setSettingsOpen(true)} className="w-[40px] h-[40px] p-0 rounded bg-black">
               <Settings className="h-5 w-5 text-white" />
             </Button>
-            <Button onClick={() => console.log("Export functionality not implemented")} className="w-[40px] h-[40px] p-0 rounded bg-black">
+            <Button
+              onClick={exportVideo}
+              className="w-[40px] h-[40px] p-0 rounded bg-black"
+              disabled={isRecording}
+            >
               <ShareIcon className="h-5 w-5 text-white" />
             </Button>
           </div>
