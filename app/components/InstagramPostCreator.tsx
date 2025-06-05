@@ -117,6 +117,9 @@ export default function InstagramPostCreator() {
   const [tremblingIntensity, setTremblingIntensity] = useState<number>(5)
   const [frameRate, setFrameRate] = useState<number>(MIN_FRAME_RATE)
 
+  // Base FPS for internal timing (affects animation speed)
+  const [baseFps, setBaseFps] = useState<number>(60)
+
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [groupRotation, setGroupRotation] = useState(0)
   const [initialGroupBox, setInitialGroupBox] = useState<GroupBoundingBox | null>(null)
@@ -1074,8 +1077,8 @@ export default function InstagramPostCreator() {
     if (!startTimeRef.current) startTimeRef.current = timestamp
     const elapsed = timestamp - startTimeRef.current
 
-    // Use a fixed base FPS for progress calculation (so speed is constant)
-    const msPerBaseFrame = 1000 / BASE_FPS
+    // Use baseFps for internal timing
+    const msPerBaseFrame = 1000 / baseFps
     const normalized = elapsed / (msPerBaseFrame * 150) // same cycle length as before
     let progress = normalized
     if (progress > 1.4) {
@@ -1304,11 +1307,11 @@ export default function InstagramPostCreator() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="thicknessSlider">Line Thickness (max {MAX_LINE_THICKNESS})</Label>
+              <Label htmlFor="thicknessSlider">Line Thickness (max 10)</Label>
               <Slider
                 id="thicknessSlider"
-                min={MIN_LINE_THICKNESS}
-                max={MAX_LINE_THICKNESS}
+                min={1}
+                max={10}
                 step={1}
                 value={[lineThickness]}
                 onValueChange={value => handleSettingsChange('lineThickness', value[0])}
@@ -1326,11 +1329,25 @@ export default function InstagramPostCreator() {
               />
             </div>
             <div>
-              <Label htmlFor="frameRateSlider">Frame Rate ({MIN_FRAME_RATE}–{BASE_FPS})</Label>
+              <Label htmlFor="baseFpsSlider">Animation Speed (Base FPS: {baseFps})</Label>
+              <Slider
+                id="baseFpsSlider"
+                min={10}
+                max={120}
+                step={1}
+                value={[baseFps]}
+                onValueChange={([v]) => {
+                  const num = Number(v)
+                  if (!isNaN(num)) setBaseFps(num)
+                }}
+              />
+            </div>
+            <div>
+              <Label htmlFor="frameRateSlider">Frame Rate ({MIN_FRAME_RATE}–120)</Label>
               <Slider
                 id="frameRateSlider"
                 min={MIN_FRAME_RATE}
-                max={BASE_FPS}
+                max={120}
                 step={1}
                 value={[frameRate]}
                 onValueChange={([v]) => {
