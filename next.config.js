@@ -6,17 +6,26 @@ const nextConfig = {
   },
   images: { unoptimized: true },
   webpack: (config, { isServer }) => {
+    // Handle canvas module for client-side only
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
-        canvas: false,
-      };
-      // Add alias for the problematic node-specific Konva file
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        'konva/lib/index-node.js': false,
+        canvas: false
       };
     }
+
+    // Properly handle Konva's Node.js specific imports
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'konva/lib/index-node.js': false,
+      'konva$': 'konva/lib/index.js'
+    };
+
+    // Externalize problematic modules for server build
+    if (isServer) {
+      config.externals = [...(config.externals || []), 'canvas', 'konva'];
+    }
+
     return config;
   },
 };
