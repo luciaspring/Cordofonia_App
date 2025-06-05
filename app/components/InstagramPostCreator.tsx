@@ -912,7 +912,7 @@ export default function InstagramPostCreator() {
 
     const { x, y } = getCanvasCoords(e)
 
-    // 1) TEXT FIRST (Frame 2 only)
+    // ─── 1) TEXT selection (Frame 2 only) ─────────────────────────────────────────
     if (currentFrame === 2) {
       for (let i = 0; i < titlePositionsFrame2.length; i++) {
         const pos = titlePositionsFrame2[i]
@@ -929,41 +929,55 @@ export default function InstagramPostCreator() {
       }
     }
 
-    // 2) LINE HIT TEST (endpoints first, then body)
+    // ─── 2) LINE hit test ──────────────────────────────────────────────────────────
     let foundIdx: number | null = null
     let mode: 'start' | 'end' | 'move' | null = null
+    const threshold = lineThickness
 
-    // 2a) check start/end within 10px of endpoints
     for (let i = 0; i < lines.length; i++) {
       const ln = lines[i]
       if (ln.frame !== currentFrame) continue
+      // 2a) Start endpoint hit?
       const dStart = Math.hypot(x - ln.start.x, y - ln.start.y)
-      if (dStart <= 10) { foundIdx = i; mode = 'start'; break }
+      if (dStart <= threshold) {
+        foundIdx = i
+        mode = 'start'
+        break
+      }
+      // 2b) End endpoint hit?
       const dEnd = Math.hypot(x - ln.end.x, y - ln.end.y)
-      if (dEnd <= 10) { foundIdx = i; mode = 'end'; break }
-    }
-    // 2b) if no endpoint, check body (≤5px perpendicular distance)
-    if (foundIdx === null) {
-      for (let i = 0; i < lines.length; i++) {
-        const ln = lines[i]
-        if (ln.frame !== currentFrame) continue
+      if (dEnd <= threshold) {
+        foundIdx = i
+        mode = 'end'
+        break
+      }
+      // 2c) Body hit via bounding-box then distance
+      const minX = Math.min(ln.start.x, ln.end.x) - threshold
+      const maxX = Math.max(ln.start.x, ln.end.x) + threshold
+      const minY = Math.min(ln.start.y, ln.end.y) - threshold
+      const maxY = Math.max(ln.start.y, ln.end.y) + threshold
+      if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
         const dBody = pointToLineDistance({ x, y }, ln.start, ln.end)
-        if (dBody <= 5) { foundIdx = i; mode = 'move'; break }
+        if (dBody <= threshold) {
+          foundIdx = i
+          mode = 'move'
+          break
+        }
       }
     }
 
     if (foundIdx !== null && mode) {
-      // select and start dragging that line
+      // Select and begin dragging that existing line
       setEditingLineIndex(foundIdx)
       setDraggedMode(mode)
       lastMousePositionForLine.current = { x, y }
       setIsDraggingLine(true)
-      setCurrentLine(null)           // cancel any "new‐line" in progress
+      setCurrentLine(null)   // cancel new-line creation
       drawCanvas()
       return
     }
 
-    // 3) no line hit → begin drawing a brand-new line
+    // ─── 3) No line hit → begin drawing a new line ───────────────────────────────
     setEditingLineIndex(null)
     setDraggedMode(null)
     setIsDraggingLine(false)
@@ -978,7 +992,7 @@ export default function InstagramPostCreator() {
     if (!canvas) return
     const { x, y } = getCanvasCoords(e)
 
-    // 1) If text is being dragged/rotated/resized, let that run first
+    // 1) If dragging text, let that logic run
     if (selectedTexts.length > 0 && currentFrame === 2 && (isDragging || isResizing || isRotating)) {
       if (isRotating) {
         const groupBox = calculateGroupBoundingBox()
@@ -1004,30 +1018,30 @@ export default function InstagramPostCreator() {
       return
     }
 
-    // 2) If a line was selected on mousedown, handle its dragging
+    // 2) If dragging a selected line, update its position/endpoints
     if (isDraggingLine && editingLineIndex !== null && draggedMode && lastMousePositionForLine.current) {
       setLines(prev => {
-        const copy = [...prev]
-        const ln = { ...copy[editingLineIndex] }
+        const arr = [...prev]
+        const ln = { ...arr[editingLineIndex] }
         if (draggedMode === 'start') {
           ln.start = { x, y }
         } else if (draggedMode === 'end') {
           ln.end = { x, y }
-        } else if (draggedMode === 'move') {
-          const dx = x - lastMousePositionForLine.current.x
-          const dy = y - lastMousePositionForLine.current.y
+        } else { // 'move'
+          const dx = x - lastMousePositionForLine.current!.x
+          const dy = y - lastMousePositionForLine.current!.y
           ln.start = { x: ln.start.x + dx, y: ln.start.y + dy }
           ln.end   = { x: ln.end.x + dx,   y: ln.end.y + dy }
         }
-        copy[editingLineIndex] = ln
-        return copy
+        arr[editingLineIndex] = ln
+        return arr
       })
       drawCanvas()
       lastMousePositionForLine.current = { x, y }
       return
     }
 
-    // 3) Otherwise, if we were drawing a new line, update its end coordinate
+    // 3) Otherwise, if drawing a new line, update its end coordinate
     if (currentLine) {
       setCurrentLine(prev => prev ? { ...prev, end: { x, y } } : null)
       drawCanvas()
@@ -1044,7 +1058,7 @@ export default function InstagramPostCreator() {
       setLines(prev => [...prev, currentLine])
       setCurrentLine(null)
     }
-    // finalize line drag if active
+    // finalize line dragging
     if (isDraggingLine) {
       setIsDraggingLine(false)
       setEditingLineIndex(null)
@@ -1053,7 +1067,7 @@ export default function InstagramPostCreator() {
       drawCanvas()
       return
     }
-    // finalize text drag if active
+    // finalize text dragging
     if (selectedTexts.length > 0) {
       setIsDragging(false)
       setIsResizing(false)
