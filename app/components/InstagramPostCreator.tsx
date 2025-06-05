@@ -920,30 +920,38 @@ export default function InstagramPostCreator() {
     // Check start endpoints (threshold 10)
     for (let idx = 0; idx < lines.length; idx++) {
       const line = lines[idx]
-      if (line.frame === currentFrame && isPointNear({ x, y }, line.start, 10)) {
+      if (
+        line.frame === currentFrame &&
+        Math.hypot(x - line.start.x, y - line.start.y) < 10
+      ) {
         foundIdx = idx
         mode = 'start'
         break
       }
     }
+
     // Check end endpoints (threshold 10)
     if (foundIdx === null) {
       for (let idx = 0; idx < lines.length; idx++) {
         const line = lines[idx]
-        if (line.frame === currentFrame && isPointNear({ x, y }, line.end, 10)) {
+        if (
+          line.frame === currentFrame &&
+          Math.hypot(x - line.end.x, y - line.end.y) < 10
+        ) {
           foundIdx = idx
           mode = 'end'
           break
         }
       }
     }
-    // Check line body (explicit point-to-line distance, threshold 20)
+
+    // Check line body (threshold 1 for exact)
     if (foundIdx === null) {
       for (let idx = 0; idx < lines.length; idx++) {
         const line = lines[idx]
         if (
           line.frame === currentFrame &&
-          pointToLineDistance({ x, y }, line.start, line.end) < 20
+          pointToLineDistance({ x, y }, line.start, line.end) < 1
         ) {
           foundIdx = idx
           mode = 'move'
