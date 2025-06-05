@@ -3,10 +3,11 @@
 @tailwind utilities;
 
 @font-face {
-  font-family: 'Sul Sans';
+  font-family: 'Sul Sans Bold';
   src: url('/fonts/SulSans-Bold.otf') format('opentype');
-  font-weight: bold;
+  font-weight: normal;
   font-style: normal;
+  font-display: swap;
 }
  
 @layer base {
@@ -53,14 +54,5 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
-  }
-}
- 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
   }
 }

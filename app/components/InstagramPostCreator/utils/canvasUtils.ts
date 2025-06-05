@@ -1,13 +1,15 @@
 import { TextPosition, Line, Point, GroupBoundingBox } from '../types'
 
-// Add font loading
-const sulSansFont = new FontFace('Sul Sans', 'url(/fonts/SulSans-Bold.otf)')
+// Font loading with proper error handling
+let fontLoaded = false
+const sulSansFont = new FontFace('Sul Sans Bold', 'url(/fonts/SulSans-Bold.otf)')
 
-// Load the font and add it to the document
 sulSansFont.load().then((font) => {
   document.fonts.add(font)
+  fontLoaded = true
+  console.log('Sul Sans Bold font loaded successfully')
 }).catch((error) => {
-  console.error('Error loading Sul Sans font:', error)
+  console.error('Error loading Sul Sans Bold font:', error)
 })
 
 export function getContrastColor(bgColor: string): string {
@@ -98,7 +100,7 @@ export function drawCanvas(
   ctx.fillStyle = getContrastColor(state.backgroundColor)
   ctx.textBaseline = 'top'
 
-  // Draw titles with Sul Sans
+  // Draw titles
   state.titles.forEach((title, index) => {
     const pos1 = state.titlePositionsFrame1[index]
     const pos2 = state.titlePositionsFrame2[index]
@@ -111,12 +113,14 @@ export function drawCanvas(
     ctx.save()
     ctx.translate(x + pos1.width / 2, y + pos1.height / 2)
     ctx.rotate(rotation)
-    // Ensure the font is loaded before using it
-    if (document.fonts.check('bold 16px "Sul Sans"')) {
-      ctx.font = `bold ${pos1.fontSize}px "Sul Sans"`
+    
+    // Set font with proper checking
+    if (fontLoaded) {
+      ctx.font = `${pos1.fontSize}px "Sul Sans Bold"`
     } else {
-      ctx.font = `${pos1.fontSize}px sans-serif` // Fallback
+      ctx.font = `bold ${pos1.fontSize}px sans-serif`
     }
+    
     ctx.fillText(title, -pos1.width / 2, -pos1.height / 2)
     ctx.restore()
   })
