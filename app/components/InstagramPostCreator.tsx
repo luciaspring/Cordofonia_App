@@ -929,36 +929,41 @@ export default function InstagramPostCreator() {
       }
     }
 
-    // ─── 2) LINE hit test ──────────────────────────────────────────────────────────
+    // ─── 2) LINE hit test (endpoints first, then body) ─────────────────────────────
     let foundIdx: number | null = null
     let mode: 'start' | 'end' | 'move' | null = null
-    const threshold = lineThickness
+    const thresh = lineThickness
 
+    // 2a) Check endpoints within thresh pixels
     for (let i = 0; i < lines.length; i++) {
       const ln = lines[i]
       if (ln.frame !== currentFrame) continue
-      // 2a) Start endpoint hit?
       const dStart = Math.hypot(x - ln.start.x, y - ln.start.y)
-      if (dStart <= threshold) {
+      if (dStart <= thresh) {
         foundIdx = i
         mode = 'start'
         break
       }
-      // 2b) End endpoint hit?
       const dEnd = Math.hypot(x - ln.end.x, y - ln.end.y)
-      if (dEnd <= threshold) {
+      if (dEnd <= thresh) {
         foundIdx = i
         mode = 'end'
         break
       }
-      // 2c) Body hit via bounding-box then distance
-      const minX = Math.min(ln.start.x, ln.end.x) - threshold
-      const maxX = Math.max(ln.start.x, ln.end.x) + threshold
-      const minY = Math.min(ln.start.y, ln.end.y) - threshold
-      const maxY = Math.max(ln.start.y, ln.end.y) + threshold
-      if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
+    }
+    // 2b) If no endpoint hit, check body within thresh
+    if (foundIdx === null) {
+      for (let i = 0; i < lines.length; i++) {
+        const ln = lines[i]
+        if (ln.frame !== currentFrame) continue
+        // Fast bounding‐box test
+        const minX = Math.min(ln.start.x, ln.end.x) - thresh
+        const maxX = Math.max(ln.start.x, ln.end.x) + thresh
+        const minY = Math.min(ln.start.y, ln.end.y) - thresh
+        const maxY = Math.max(ln.start.y, ln.end.y) + thresh
+        if (x < minX || x > maxX || y < minY || y > maxY) continue
         const dBody = pointToLineDistance({ x, y }, ln.start, ln.end)
-        if (dBody <= threshold) {
+        if (dBody <= thresh) {
           foundIdx = i
           mode = 'move'
           break
@@ -972,7 +977,7 @@ export default function InstagramPostCreator() {
       setDraggedMode(mode)
       lastMousePositionForLine.current = { x, y }
       setIsDraggingLine(true)
-      setCurrentLine(null)   // cancel new-line creation
+      setCurrentLine(null) // cancel any "new‐line" in progress
       drawCanvas()
       return
     }
@@ -992,7 +997,7 @@ export default function InstagramPostCreator() {
     if (!canvas) return
     const { x, y } = getCanvasCoords(e)
 
-    // 1) If dragging text, let that logic run
+    // ─── 1) TEXT dragging/rotating/resizing (Frame 2 only) ──────────────────────────
     if (selectedTexts.length > 0 && currentFrame === 2 && (isDragging || isResizing || isRotating)) {
       if (isRotating) {
         const groupBox = calculateGroupBoundingBox()
@@ -1018,7 +1023,7 @@ export default function InstagramPostCreator() {
       return
     }
 
-    // 2) If dragging a selected line, update its position/endpoints
+    // ─── 2) Dragging a selected line? ───────────────────────────────────────────────
     if (isDraggingLine && editingLineIndex !== null && draggedMode && lastMousePositionForLine.current) {
       setLines(prev => {
         const arr = [...prev]
@@ -1041,7 +1046,7 @@ export default function InstagramPostCreator() {
       return
     }
 
-    // 3) Otherwise, if drawing a new line, update its end coordinate
+    // ─── 3) Drawing a new line? ────────────────────────────────────────────────────
     if (currentLine) {
       setCurrentLine(prev => prev ? { ...prev, end: { x, y } } : null)
       drawCanvas()
@@ -1058,7 +1063,7 @@ export default function InstagramPostCreator() {
       setLines(prev => [...prev, currentLine])
       setCurrentLine(null)
     }
-    // finalize line dragging
+    // Finalize line dragging
     if (isDraggingLine) {
       setIsDraggingLine(false)
       setEditingLineIndex(null)
@@ -1067,7 +1072,7 @@ export default function InstagramPostCreator() {
       drawCanvas()
       return
     }
-    // finalize text dragging
+    // Finalize text dragging
     if (selectedTexts.length > 0) {
       setIsDragging(false)
       setIsResizing(false)
