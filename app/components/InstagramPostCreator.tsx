@@ -114,7 +114,7 @@ export default function InstagramPostCreator() {
 
   // Preset values for animation controls
   const [lineThickness, setLineThickness] = useState<number>(MAX_LINE_THICKNESS)       // 10
-  const [tremblingIntensity, setTremblingIntensity] = useState<number>(4)             // preset at 4
+  const [tremblingIntensity, setTremblingIntensity] = useState<number>(3)             // preset at 3
   const [frameRate, setFrameRate] = useState<number>(MIN_FRAME_RATE)                   // preset at 10
   const [baseFps, setBaseFps] = useState<number>(35)                                   // preset at 35
 
