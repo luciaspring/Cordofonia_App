@@ -1,5 +1,15 @@
 import { TextPosition, Line, Point, GroupBoundingBox } from '../types'
 
+// Add font loading
+const sulSansFont = new FontFace('Sul Sans', 'url(/fonts/SulSans-Bold.otf)')
+
+// Load the font and add it to the document
+sulSansFont.load().then((font) => {
+  document.fonts.add(font)
+}).catch((error) => {
+  console.error('Error loading Sul Sans font:', error)
+})
+
 export function getContrastColor(bgColor: string): string {
   const r = parseInt(bgColor.slice(1, 3), 16)
   const g = parseInt(bgColor.slice(3, 5), 16)
@@ -101,7 +111,12 @@ export function drawCanvas(
     ctx.save()
     ctx.translate(x + pos1.width / 2, y + pos1.height / 2)
     ctx.rotate(rotation)
-    ctx.font = `${pos1.fontSize}px "Sul Sans"`
+    // Ensure the font is loaded before using it
+    if (document.fonts.check('bold 16px "Sul Sans"')) {
+      ctx.font = `bold ${pos1.fontSize}px "Sul Sans"`
+    } else {
+      ctx.font = `${pos1.fontSize}px sans-serif` // Fallback
+    }
     ctx.fillText(title, -pos1.width / 2, -pos1.height / 2)
     ctx.restore()
   })
