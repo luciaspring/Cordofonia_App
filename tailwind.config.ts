@@ -8,6 +8,9 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        playfair: ['var(--font-playfair-display)'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
