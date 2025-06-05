@@ -886,18 +886,36 @@ export default function InstagramPostCreator() {
   // ─── MOUSE EVENT HANDLERS ───────────────────────────────────────────────────────
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (isPlaying) return
-    lastMousePositionForLine.current = null
     const canvas = canvasRef.current
     if (!canvas) return
     const rect = canvas.getBoundingClientRect()
     const x = (e.clientX - rect.left) * (canvas.width / rect.width)
     const y = (e.clientY - rect.top) * (canvas.height / rect.height)
 
-    // Detect if clicking near an existing line's start, end, or body
+    // ─── PRIORITY 1: Text selection (only on Frame 2) ─────────────────────────────
+    if (currentFrame === 2) {
+      // Check each title position
+      for (let i = 0; i < titlePositionsFrame2.length; i++) {
+        const pos = titlePositionsFrame2[i]
+        const box = getRotatedBoundingBox(pos)
+        if (isPointInRotatedBox(x, y, box)) {
+          handleTextInteraction(pos, (`title${i + 1}` as 'title1' | 'title2'), x, y)
+          return
+        }
+      }
+      // Check subtitle
+      const subBox = getRotatedBoundingBox(subtitlePositionFrame2)
+      if (isPointInRotatedBox(x, y, subBox)) {
+        handleTextInteraction(subtitlePositionFrame2, 'subtitle', x, y)
+        return
+      }
+    }
+
+    // ─── PRIORITY 2: Line selection or new line drawing ─────────────────────────────
+    lastMousePositionForLine.current = null
     let foundIdx: number | null = null
     let mode: 'start' | 'end' | 'move' | null = null
-
-    // Check start points
+    // Check start endpoints
     lines.forEach((line, idx) => {
       if (
         foundIdx === null &&
@@ -908,7 +926,7 @@ export default function InstagramPostCreator() {
         mode = 'start'
       }
     })
-    // Check end points if none found yet
+    // Check end endpoints
     if (foundIdx === null) {
       lines.forEach((line, idx) => {
         if (
@@ -921,28 +939,25 @@ export default function InstagramPostCreator() {
         }
       })
     }
-    // Check body if no endpoints matched
+    // Check line body
     if (foundIdx === null) {
       lines.forEach((line, idx) => {
         if (
           foundIdx === null &&
           line.frame === currentFrame &&
-          isPointNear({ x, y }, line) // body proximity
+          isPointNear({ x, y }, line)
         ) {
           foundIdx = idx
           mode = 'move'
         }
       })
     }
-
     if (foundIdx !== null && mode) {
-      // Select and prepare to drag existing line
       setEditingLineIndex(foundIdx)
       setDraggedMode(mode)
       lastMousePositionForLine.current = { x, y }
       setCurrentLine(null)
     } else {
-      // Start drawing a new line
       setEditingLineIndex(null)
       setDraggedMode(null)
       setCurrentLine({ start: { x, y }, end: { x, y }, frame: currentFrame })
@@ -958,7 +973,34 @@ export default function InstagramPostCreator() {
     const x = (e.clientX - rect.left) * (canvas.width / rect.width)
     const y = (e.clientY - rect.top) * (canvas.height / rect.height)
 
-    // Drag selected line: handle endpoints or move entire line
+    // ─── PRIORITY 1: If dragging text, let existing text logic handle it ─────────
+    if (selectedTexts.length > 0 && currentFrame === 2 && (isDragging || isResizing || isRotating)) {
+      // existing text drag/resize/rotate logic
+      if (isRotating) {
+        const groupBox = calculateGroupBoundingBox()
+        if (groupBox) rotateGroup(x, y, groupBox)
+      } else if (isDragging) {
+        if (selectedTexts.length === 1) {
+          dragSingle(x, y, selectedTexts[0])
+        } else {
+          dragGroup(x, y)
+        }
+      } else if (isResizing && resizeHandle) {
+        if (selectedTexts.length === 1) {
+          const txt = selectedTexts[0]
+          const pos = txt === 'subtitle'
+            ? subtitlePositionFrame2
+            : titlePositionsFrame2[txt === 'title1' ? 0 : 1]
+          resizeSingle(x, y, pos, txt, resizeHandle)
+        } else {
+          resizeGroup(x, y, resizeHandle)
+        }
+      }
+      drawCanvas()
+      return
+    }
+
+    // ─── PRIORITY 2: Dragging or editing lines ────────────────────────────────────
     if (editingLineIndex !== null && draggedMode && lastMousePositionForLine.current) {
       setLines((prev) => {
         const arr = [...prev]
@@ -981,45 +1023,13 @@ export default function InstagramPostCreator() {
       return
     }
 
-    if (selectedTexts.length > 0 && currentFrame === 2) {
-      if (isRotating) {
-        const groupBox = calculateGroupBoundingBox()
-        if (groupBox) rotateGroup(x, y, groupBox)
-      } else if (isDragging) {
-        if (selectedTexts.length === 1) {
-          dragSingle(x, y, selectedTexts[0])
-        } else {
-          dragGroup(x, y)
-        }
-      } else if (isResizing && resizeHandle) {
-        if (selectedTexts.length === 1) {
-          const txt = selectedTexts[0]
-          const pos = txt === 'subtitle'
-            ? subtitlePositionFrame2
-            : titlePositionsFrame2[txt === 'title1' ? 0 : 1]
-          resizeSingle(x, y, pos, txt, resizeHandle)
-        } else {
-          resizeGroup(x, y, resizeHandle)
-        }
-      }
+    // ─── PRIORITY 3: Continue drawing a new line ─────────────────────────────────
+    if (currentLine) {
+      setCurrentLine((prev) => (prev ? { ...prev, end: { x, y } } : null))
       drawCanvas()
-    } else if (currentLine) {
-      setCurrentLine(prev => prev ? { ...prev, end: { x, y } } : null)
-      drawCanvas()
-    } else if (editingLineIndex !== null) {
-      setLines(prev => {
-        const arr = [...prev]
-        const ln = { ...arr[editingLineIndex] }
-        if (isPointNear({ x, y }, ln.start)) {
-          ln.start = { x, y }
-        } else if (isPointNear({ x, y }, ln.end)) {
-          ln.end = { x, y }
-        }
-        arr[editingLineIndex] = ln
-        return arr
-      })
-      drawCanvas()
+      return
     }
+
     updateCursor(canvas, x, y)
   }
 
