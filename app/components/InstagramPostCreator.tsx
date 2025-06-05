@@ -885,8 +885,8 @@ export default function InstagramPostCreator() {
 
   // ─── MOUSE EVENT HANDLERS ───────────────────────────────────────────────────────
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (isPlaying) return
     lastMousePositionForLine.current = null
+    if (isPlaying) return
 
     const canvas = canvasRef.current
     if (!canvas) return
@@ -896,7 +896,6 @@ export default function InstagramPostCreator() {
 
     // ─── PRIORITY 1: Text selection (only on Frame 2) ─────────────────────────────
     if (currentFrame === 2) {
-      // Check each title position
       for (let i = 0; i < titlePositionsFrame2.length; i++) {
         const pos = titlePositionsFrame2[i]
         const box = getRotatedBoundingBox(pos)
@@ -905,7 +904,6 @@ export default function InstagramPostCreator() {
           return
         }
       }
-      // Check subtitle
       const subBox = getRotatedBoundingBox(subtitlePositionFrame2)
       if (isPointInRotatedBox(x, y, subBox)) {
         handleTextInteraction(subtitlePositionFrame2, 'subtitle', x, y)
@@ -917,27 +915,21 @@ export default function InstagramPostCreator() {
     let foundIdx: number | null = null
     let mode: 'start' | 'end' | 'move' | null = null
 
-    // Check start endpoints (threshold 10)
+    // Check start endpoints using isPointNear
     for (let idx = 0; idx < lines.length; idx++) {
       const line = lines[idx]
-      if (
-        line.frame === currentFrame &&
-        Math.hypot(x - line.start.x, y - line.start.y) < 10
-      ) {
+      if (line.frame === currentFrame && isPointNear({ x, y }, line.start, lineThickness / 2)) {
         foundIdx = idx
         mode = 'start'
         break
       }
     }
 
-    // Check end endpoints (threshold 10)
+    // Check end endpoints using isPointNear
     if (foundIdx === null) {
       for (let idx = 0; idx < lines.length; idx++) {
         const line = lines[idx]
-        if (
-          line.frame === currentFrame &&
-          Math.hypot(x - line.end.x, y - line.end.y) < 10
-        ) {
+        if (line.frame === currentFrame && isPointNear({ x, y }, line.end, lineThickness / 2)) {
           foundIdx = idx
           mode = 'end'
           break
@@ -945,14 +937,11 @@ export default function InstagramPostCreator() {
       }
     }
 
-    // Check line body (threshold 1 for exact)
+    // Check line body using isPointNear with line object
     if (foundIdx === null) {
       for (let idx = 0; idx < lines.length; idx++) {
         const line = lines[idx]
-        if (
-          line.frame === currentFrame &&
-          pointToLineDistance({ x, y }, line.start, line.end) < 1
-        ) {
+        if (line.frame === currentFrame && isPointNear({ x, y }, line, lineThickness / 2)) {
           foundIdx = idx
           mode = 'move'
           break
