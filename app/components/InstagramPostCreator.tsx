@@ -894,24 +894,29 @@ export default function InstagramPostCreator() {
     return { ...pos, x: newX, y: newY, rotation: pos.rotation + angle }
   }
 
-  // ─── MOUSE EVENT HANDLERS ───────────────────────────────────────────────────────
+  // ─── UTILITY: get mouse coordinates in canvas space ─────────────────────────────
+  const getCanvasCoords = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current!
+    const rect = canvas.getBoundingClientRect()
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width)
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height)
+    return { x, y }
+  }
+
+  // ─── MOUSE DOWN ─────────────────────────────────────────────────────────────────
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (isPlaying) return
     lastMousePositionForLine.current = null
 
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const rect = canvas.getBoundingClientRect()
-    const x = (e.clientX - rect.left) * (canvas.width / rect.width)
-    const y = (e.clientY - rect.top) * (canvas.height / rect.height)
+    const { x, y } = getCanvasCoords(e)
 
-    // ─── PRIORITY 1: Text selection (only on Frame 2) ─────────────────────────────
+    // Priority 1: text boxes (Frame 2 only)
     if (currentFrame === 2) {
       for (let i = 0; i < titlePositionsFrame2.length; i++) {
         const pos = titlePositionsFrame2[i]
         const box = getRotatedBoundingBox(pos)
         if (isPointInRotatedBox(x, y, box)) {
-          handleTextInteraction(pos, (`title${i + 1}` as 'title1' | 'title2'), x, y)
+          handleTextInteraction(pos, (`title${i+1}` as 'title1'|'title2'), x, y)
           return
         }
       }
@@ -922,51 +927,48 @@ export default function InstagramPostCreator() {
       }
     }
 
-    // ─── PRIORITY 2: Line selection or new line drawing ─────────────────────────────
+    // Priority 2: exactly hit an existing line?
     let foundIdx: number | null = null
-    let mode: 'start' | 'end' | 'move' | null = null
+    let mode: 'start'|'end'|'move'|null = null
 
-    // Simplified hit testing using isPointNear with fixed threshold 10
-    for (let idx = 0; idx < lines.length; idx++) {
-      const line = lines[idx]
-      if (line.frame !== currentFrame) continue
-      // Check start point
-      if (isPointNear({ x, y }, line.start, 10)) {
-        foundIdx = idx
-        mode = 'start'
-        break
+    // Loop through each line in current frame
+    for (let i = 0; i < lines.length; i++) {
+      const ln = lines[i]
+      if (ln.frame !== currentFrame) continue
+      // 2a) endpoint hits within 10px
+      const ds = Math.hypot(x - ln.start.x, y - ln.start.y)
+      if (ds <= 10) {
+        foundIdx = i; mode = 'start'; break
       }
-      // Check end point
-      if (isPointNear({ x, y }, line.end, 10)) {
-        foundIdx = idx
-        mode = 'end'
-        break
+      const de = Math.hypot(x - ln.end.x, y - ln.end.y)
+      if (de <= 10) {
+        foundIdx = i; mode = 'end'; break
       }
-      // Check body
-      if (isPointNear({ x, y }, line, 10)) {
-        foundIdx = idx
-        mode = 'move'
-        break
+      // 2b) body hit: perpendicular distance to the segment
+      const dBody = pointToLineDistance({ x, y }, ln.start, ln.end)
+      if (dBody <= 5) {
+        foundIdx = i; mode = 'move'; break
       }
     }
 
     if (foundIdx !== null && mode) {
-      // Select existing line and prepare to drag
+      // select that line, prepare to drag
       setEditingLineIndex(foundIdx)
       setDraggedMode(mode)
       lastMousePositionForLine.current = { x, y }
-      setCurrentLine(null)
+      setCurrentLine(null) // cancel any "new‐line" creation
       drawCanvas()
       return
     }
 
-    // ─── PRIORITY 3: Begin drawing a new line ──────────────────────────────────────
+    // Priority 3: not on any existing line → begin drawing a brand‐new line
     setEditingLineIndex(null)
     setDraggedMode(null)
     setCurrentLine({ start: { x, y }, end: { x, y }, frame: currentFrame })
     drawCanvas()
   }
 
+  // ─── MOUSE MOVE ─────────────────────────────────────────────────────────────────
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (isPlaying) return
     const canvas = canvasRef.current
@@ -975,12 +977,7 @@ export default function InstagramPostCreator() {
     const x = (e.clientX - rect.left) * (canvas.width / rect.width)
     const y = (e.clientY - rect.top) * (canvas.height / rect.height)
 
-    // If no initial mouse position for line dragging, skip line logic
-    if (editingLineIndex !== null && draggedMode && !lastMousePositionForLine.current) {
-      return
-    }
-
-    // ─── PRIORITY 1: If dragging text, let existing text logic handle it ─────────
+    // If text is currently being dragged/rotated/resized, let that logic run first
     if (selectedTexts.length > 0 && currentFrame === 2 && (isDragging || isResizing || isRotating)) {
       if (isRotating) {
         const groupBox = calculateGroupBoundingBox()
@@ -1006,32 +1003,34 @@ export default function InstagramPostCreator() {
       return
     }
 
-    // ─── PRIORITY 2: Line dragging ─────────────────────────────────────────────────
+    // If a line was selected (editingLineIndex != null) and we're dragging it:
     if (editingLineIndex !== null && draggedMode && lastMousePositionForLine.current) {
-      setLines((prev) => {
-        const arr = [...prev]
-        const ln = { ...arr[editingLineIndex] }
+      setLines(prev => {
+        const copy = [...prev]
+        const ln = { ...copy[editingLineIndex] }
         if (draggedMode === 'start') {
+          // move just the start endpoint
           ln.start = { x, y }
         } else if (draggedMode === 'end') {
           ln.end = { x, y }
         } else if (draggedMode === 'move') {
-          const dx = x - lastMousePositionForLine.current!.x
-          const dy = y - lastMousePositionForLine.current!.y
+          // translate entire segment by the mouse delta
+          const dx = x - lastMousePositionForLine.current.x
+          const dy = y - lastMousePositionForLine.current.y
           ln.start = { x: ln.start.x + dx, y: ln.start.y + dy }
-          ln.end = { x: ln.end.x + dx, y: ln.end.y + dy }
+          ln.end   = { x: ln.end.x + dx,   y: ln.end.y + dy }
         }
-        arr[editingLineIndex] = ln
-        return arr
+        copy[editingLineIndex] = ln
+        return copy
       })
       drawCanvas()
       lastMousePositionForLine.current = { x, y }
       return
     }
 
-    // ─── PRIORITY 3: Continue drawing a new line ─────────────────────────────────
+    // Continue drawing a brand‐new line (if in that mode)
     if (currentLine) {
-      setCurrentLine((prev) => (prev ? { ...prev, end: { x, y } } : null))
+      setCurrentLine(prev => prev ? { ...prev, end: { x, y } } : null)
       drawCanvas()
       return
     }
@@ -1039,22 +1038,17 @@ export default function InstagramPostCreator() {
     updateCursor(canvas, x, y)
   }
 
+  // ─── MOUSE UP ───────────────────────────────────────────────────────────────────
   const handleMouseUp = () => {
     if (isPlaying) return
     if (currentLine) {
-      setLines((prev) => [...prev, currentLine])
+      setLines(prev => [...prev, currentLine])
       setCurrentLine(null)
     }
-    // Clear drag state
+    // clear whatever dragging state we had
     setDraggedMode(null)
     lastMousePositionForLine.current = null
     setEditingLineIndex(null)
-    setIsResizing(false)
-    setIsDragging(false)
-    setIsRotating(false)
-    setResizeHandle(null)
-    setResizeStartPosition(null)
-    lastMousePosition.current = null
     drawCanvas()
   }
 
