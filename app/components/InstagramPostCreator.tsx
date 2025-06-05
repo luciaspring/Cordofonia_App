@@ -241,17 +241,17 @@ export default function InstagramPostCreator() {
       } else if (progress <= 0.6) {
         drawStaticText(ctx, 1)
         drawAnimatedLines(ctx, (progress - 0.3) / 0.3, frame1Lines, [], 'shrink')
-      } else if (progress <= 0.7) {
-        const t = (progress - 0.6) / 0.1   // now text has 0.1 units of timeline
+      } else if (progress <= 0.75) {
+        const t = (progress - 0.6) / 0.15
         drawAnimatedText(ctx, t, 1, 2)
-      } else if (progress <= 1.0) {
+      } else if (progress <= 1.05) {
         drawStaticText(ctx, 2)
-        drawAnimatedLines(ctx, (progress - 0.7) / 0.3, [], frame2Lines, 'grow')
-      } else if (progress <= 1.25) {
-        drawStaticText(ctx, 2)
-        drawAnimatedLines(ctx, (progress - 0.95) / 0.3, [], frame2Lines, 'shrink')
+        drawAnimatedLines(ctx, (progress - 0.75) / 0.3, [], frame2Lines, 'grow')
       } else if (progress <= 1.35) {
-        const t = (progress - 1.25) / 0.1   // adjust final type-tween
+        drawStaticText(ctx, 2)
+        drawAnimatedLines(ctx, (progress - 1.05) / 0.3, [], frame2Lines, 'shrink')
+      } else if (progress <= 1.4) {
+        const t = (progress - 1.35) / 0.05
         drawAnimatedText(ctx, t, 2, 1)
       }
       return
@@ -1086,7 +1086,7 @@ export default function InstagramPostCreator() {
 
     // Use baseFps for internal timing
     const msPerBaseFrame = 1000 / baseFps
-    const normalized = elapsed / (msPerBaseFrame * 150) // same cycle length as before
+    const normalized = elapsed / (msPerBaseFrame * 150) // same overall cycle length
     let progress = normalized
     if (progress > 1.4) {
       if (isLooping) {
@@ -1100,15 +1100,43 @@ export default function InstagramPostCreator() {
 
     // Throttle visible updates to mimic stop-motion
     if (timestamp - lastDisplayTimeRef.current >= 1000 / frameRate) {
-      drawCanvas(progress)
+      // Frame 1: grow lines (0.0 → 0.3)
+      if (progress <= 0.3) {
+        drawStaticText(ctx, 1)
+        drawAnimatedLines(ctx, progress / 0.3, frame1Lines, [], 'grow')
+
+      // Frame 1: shrink lines (0.3 → 0.6)
+      } else if (progress <= 0.6) {
+        drawStaticText(ctx, 1)
+        drawAnimatedLines(ctx, (progress - 0.3) / 0.3, frame1Lines, [], 'shrink')
+
+      // Text tween from Frame 1 → Frame 2 (0.6 → 0.75)  ←— extended to 0.15
+      } else if (progress <= 0.75) {
+        const t = (progress - 0.6) / 0.15
+        drawAnimatedText(ctx, t, 1, 2)
+
+      // Frame 2: grow lines (0.75 → 1.05)
+      } else if (progress <= 1.05) {
+        drawStaticText(ctx, 2)
+        drawAnimatedLines(ctx, (progress - 0.75) / 0.3, [], frame2Lines, 'grow')
+
+      // Frame 2: shrink lines (1.05 → 1.35)
+      } else if (progress <= 1.35) {
+        drawStaticText(ctx, 2)
+        drawAnimatedLines(ctx, (progress - 1.05) / 0.3, [], frame2Lines, 'shrink')
+
+      // Text tween from Frame 2 → Frame 1 (1.35 → 1.4)
+      } else if (progress <= 1.4) {
+        const t = (progress - 1.35) / 0.05
+        drawAnimatedText(ctx, t, 2, 1)
+      }
+
       lastDisplayTimeRef.current = timestamp
     }
 
-    // Always continue bouncing the loop, even if not currently drawing
     if (isPlaying || isLooping) {
       animationRef.current = requestAnimationFrame(animate)
     } else {
-      // Ensure final static frame draws once
       drawCanvas()
     }
   }
