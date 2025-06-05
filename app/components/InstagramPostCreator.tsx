@@ -142,6 +142,9 @@ export default function InstagramPostCreator() {
   const isShiftPressed = useRef(false)
   const lastClickTime = useRef<number>(0)
 
+  // Ref to hold Path2D objects for hit testing (body)
+  const linePathsRef = useRef<{ path: Path2D; index: number }[]>([])
+
   // ─── EFFECT HOOKS ───────────────────────────────────────────────────────────────
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -351,19 +354,27 @@ export default function InstagramPostCreator() {
   const drawLines = (ctx: CanvasRenderingContext2D, framelines: Line[]) => {
     ctx.lineWidth = lineThickness
     ctx.lineCap = 'butt'
-    ctx.lineJoin = 'round'
     ctx.strokeStyle = '#0000FF'
-    framelines.forEach(line => {
-      ctx.beginPath()
-      ctx.moveTo(line.start.x, line.start.y)
-      ctx.lineTo(line.end.x, line.end.y)
-      ctx.stroke()
+
+    // Clear previous paths
+    linePathsRef.current = []
+
+    framelines.forEach((line, idx) => {
+      // Create Path2D for hit testing
+      const path = new Path2D()
+      path.moveTo(line.start.x, line.start.y)
+      path.lineTo(line.end.x, line.end.y)
+      // Stroke the path
+      ctx.stroke(path)
+      // Store path with original index for hit detection
+      const originalIndex = lines.findIndex((l) => l === framelines[idx])
+      linePathsRef.current.push({ path, index: originalIndex })
     })
     if (currentLine) {
-      ctx.beginPath()
-      ctx.moveTo(currentLine.start.x, currentLine.start.y)
-      ctx.lineTo(currentLine.end.x, currentLine.end.y)
-      ctx.stroke()
+      const path = new Path2D()
+      path.moveTo(currentLine.start.x, currentLine.start.y)
+      path.lineTo(currentLine.end.x, currentLine.end.y)
+      ctx.stroke(path)
     }
   }
 
@@ -911,26 +922,27 @@ export default function InstagramPostCreator() {
       }
     }
 
-    // ─── PRIORITY 2: Line selection or new line drawing ─────────────────────────────
+    // ─── PRIORITY 2: Line selection via Path2D hit test ───────────────────────────
     let foundIdx: number | null = null
     let mode: 'start' | 'end' | 'move' | null = null
 
+    // First, try Path2D stroke hit test for body
     const ctx = canvas.getContext('2d')
     if (ctx) {
       ctx.lineWidth = lineThickness
-      lines.forEach((line, idx) => {
-        if (foundIdx !== null || line.frame !== currentFrame) return
-        ctx.beginPath()
-        ctx.moveTo(line.start.x, line.start.y)
-        ctx.lineTo(line.end.x, line.end.y)
-        if (ctx.isPointInStroke(x, y)) {
-          foundIdx = idx
+      for (const { path, index } of linePathsRef.current) {
+        if (foundIdx !== null) break
+        const line = lines[index]
+        if (line.frame !== currentFrame) continue
+        if (ctx.isPointInStroke(path, x, y)) {
+          foundIdx = index
           mode = 'move'
+          break
         }
-      })
+      }
     }
 
-    // Check endpoints if body not found
+    // If body not hit, check endpoints manually (threshold = lineThickness)
     if (foundIdx === null) {
       for (let idx = 0; idx < lines.length; idx++) {
         const line = lines[idx]
