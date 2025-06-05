@@ -914,28 +914,45 @@ export default function InstagramPostCreator() {
       setGroupRotation(0)
     }
 
-    // Check if clicking near a line or its endpoints
-    const clickedIdx = lines.findIndex((line) => {
-      return (
-        line.frame === currentFrame &&
-        (isPointNear({ x, y }, line) ||
-          isPointNear({ x, y }, line.start) ||
-          isPointNear({ x, y }, line.end))
-      )
-    })
-    if (clickedIdx !== -1) {
-      // Cancel any new line drawing when selecting existing line
-      setCurrentLine(null)
-      const line = lines[clickedIdx]
-      setEditingLineIndex(clickedIdx)
-      // Determine drag mode: endpoint or entire line
-      if (isPointNear({ x, y }, line.start)) {
-        setDraggedMode('start')
-      } else if (isPointNear({ x, y }, line.end)) {
-        setDraggedMode('end')
-      } else {
-        setDraggedMode('move')
+    // Check for clicking near an existing line's endpoints or body
+    let foundIdx: number | null = null
+    let mode: 'start' | 'end' | 'move' | null = null
+
+    // 1. check start points
+    lines.forEach((line, idx) => {
+      if (foundIdx === null && line.frame === currentFrame && isPointNear({ x, y }, line.start)) {
+        foundIdx = idx
+        mode = 'start'
       }
+    })
+    // 2. if no start, check end points
+    if (foundIdx === null) {
+      lines.forEach((line, idx) => {
+        if (foundIdx === null && line.frame === currentFrame && isPointNear({ x, y }, line.end)) {
+          foundIdx = idx
+          mode = 'end'
+        }
+      })
+    }
+    // 3. if no endpoints, check body
+    if (foundIdx === null) {
+      lines.forEach((line, idx) => {
+        if (
+          foundIdx === null &&
+          line.frame === currentFrame &&
+          isPointNear({ x, y }, line)
+        ) {
+          foundIdx = idx
+          mode = 'move'
+        }
+      })
+    }
+
+    if (foundIdx !== null && mode !== null) {
+      // Cancel new line drawing
+      setCurrentLine(null)
+      setEditingLineIndex(foundIdx)
+      setDraggedMode(mode)
     } else {
       // Begin drawing a new line
       setEditingLineIndex(null)
@@ -953,7 +970,6 @@ export default function InstagramPostCreator() {
     const x = (e.clientX - rect.left) * (canvas.width / rect.width)
     const y = (e.clientY - rect.top) * (canvas.height / rect.height)
 
-    // Drag selected line: either endpoint or entire line
     if (editingLineIndex !== null && draggedMode) {
       setLines((prev) => {
         const arr = [...prev]
