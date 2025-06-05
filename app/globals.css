@@ -4,7 +4,7 @@
 
 @font-face {
   font-family: 'Sul Sans';
-  src: url('/fonts/SulSans-Bold.ttf') format('truetype');
+  src: url('/fonts/SulSans-Bold.otf') format('opentype');
   font-weight: bold;
   font-style: normal;
 }
