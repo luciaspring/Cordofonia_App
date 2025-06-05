@@ -9,7 +9,7 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        playfair: ['var(--font-playfair-display)'],
+        custom: ['YourFontName', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
