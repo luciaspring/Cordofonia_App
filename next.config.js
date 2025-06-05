@@ -1,19 +1,37 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'export',
+  images: { unoptimized: true },
   webpack: (config, { isServer }) => {
-    if (isServer) {
-      // Mark `canvas` as external on the server-side to prevent WebAssembly memory issues
-      config.externals.push('canvas')
+    if (!isServer) {
+      // Handle canvas module on client-side
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        canvas: false
+      };
+      
+      // Handle Konva node-specific file
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        'konva/lib/index-node.js': false
+      };
     }
     
-    return config
-  },
-  // Enable strict mode for better development experience
-  reactStrictMode: true,
-  // Disable server components since we're using client-side canvas operations
-  experimental: {
-    serverActions: false
-  }
-}
+    // Optimize WebAssembly memory usage
+    config.experiments = {
+      ...config.experiments,
+      asyncWebAssembly: true,
+      layers: true
+    };
 
-module.exports = nextConfig
+    // Increase memory limit for WebAssembly
+    config.performance = {
+      ...config.performance,
+      hints: false
+    };
+
+    return config;
+  }
+};
+
+module.exports = nextConfig;
