@@ -250,17 +250,17 @@ export default function InstagramPostCreator() {
       } else if (progress <= 0.6) {
         drawStaticText(ctx, 1)
         drawAnimatedLines(ctx, (progress - 0.3) / 0.3, frame1Lines, [], 'shrink')
-      } else if (progress <= 0.75) {           // ← changed from 0.7 → 0.75
-        const t = (progress - 0.6) / 0.15       // ← window length 0.15 instead of 0.1
+      } else if (progress <= 0.7) {             // 0.6 → 0.7 (0.10 window)
+        const t = (progress - 0.6) / 0.10
         drawAnimatedText(ctx, t, 1, 2)
-      } else if (progress <= 1.05) {            // ← changed from 1.0 → 1.05
+      } else if (progress <= 1.0) {             // 0.7 → 1.0 (0.3 window)
         drawStaticText(ctx, 2)
-        drawAnimatedLines(ctx, (progress - 0.75) / 0.3, [], frame2Lines, 'grow')
-      } else if (progress <= 1.35) {            // ← changed from 1.3 → 1.35
+        drawAnimatedLines(ctx, (progress - 0.7) / 0.3, [], frame2Lines, 'grow')
+      } else if (progress <= 1.3) {             // 1.0 → 1.3 (0.3 window)
         drawStaticText(ctx, 2)
-        drawAnimatedLines(ctx, (progress - 1.05) / 0.3, [], frame2Lines, 'shrink')
-      } else if (progress <= 1.4) {
-        const t = (progress - 1.35) / 0.05      // ← window length 0.05 
+        drawAnimatedLines(ctx, (progress - 1.0) / 0.3, [], frame2Lines, 'shrink')
+      } else if (progress <= 1.4) {             // 1.3 → 1.4 (0.10 window)
+        const t = (progress - 1.3) / 0.10
         drawAnimatedText(ctx, t, 2, 1)
       }
       return
@@ -1130,18 +1130,18 @@ export default function InstagramPostCreator() {
         drawStaticText(ctx, 1)
         drawAnimatedLines(ctx, (progress - 0.3) / 0.3, frame1Lines, [], 'shrink')
 
-      // Text tween from Frame 1 → Frame 2 (0.6 → 0.75)  ←— extended to 0.15
-      } else if (progress <= 0.75) {           // ← changed from 0.7 → 0.75
-        const t = (progress - 0.6) / 0.15       // ← window length 0.15 instead of 0.1
+      // Text tween from Frame 1 → Frame 2 (0.6 → 0.7)
+      } else if (progress <= 0.7) {             // 0.6 → 0.7 (0.10 window)
+        const t = (progress - 0.6) / 0.10
         drawAnimatedText(ctx, t, 1, 2)
-      } else if (progress <= 1.05) {            // ← changed from 1.0 → 1.05
+      } else if (progress <= 1.0) {             // 0.7 → 1.0 (0.3 window)
         drawStaticText(ctx, 2)
-        drawAnimatedLines(ctx, (progress - 0.75) / 0.3, [], frame2Lines, 'grow')
-      } else if (progress <= 1.35) {            // ← changed from 1.3 → 1.35
+        drawAnimatedLines(ctx, (progress - 0.7) / 0.3, [], frame2Lines, 'grow')
+      } else if (progress <= 1.3) {             // 1.0 → 1.3 (0.3 window)
         drawStaticText(ctx, 2)
-        drawAnimatedLines(ctx, (progress - 1.05) / 0.3, [], frame2Lines, 'shrink')
-      } else if (progress <= 1.4) {
-        const t = (progress - 1.35) / 0.05      // ← window length 0.05 
+        drawAnimatedLines(ctx, (progress - 1.0) / 0.3, [], frame2Lines, 'shrink')
+      } else if (progress <= 1.4) {             // 1.3 → 1.4 (0.10 window)
+        const t = (progress - 1.3) / 0.10
         drawAnimatedText(ctx, t, 2, 1)
       }
 
