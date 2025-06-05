@@ -3,9 +3,9 @@
 @tailwind utilities;
 
 @font-face {
-  font-family: 'YourFontName';
-  src: url('/fonts/your-font-file.ttf') format('truetype');
-  font-weight: normal;
+  font-family: 'Sul Sans';
+  src: url('/fonts/SulSans-Bold.ttf') format('truetype');
+  font-weight: bold;
   font-style: normal;
 }
  
