@@ -118,17 +118,10 @@ export default function InstagramPostCreator() {
   const lastClickTime = useRef<number>(0)
 
   // ─── NEW: Path2D & line-drag state ───────────────────────────────────────────────
-  // We store Path2D for each committed line to use isPointInStroke
-  // linePathsRef.current[idx] corresponds to the path for lines[idx]
-  const linePathsRef = useRef<Path2D[]>([])
-  // When dragging an existing line:
-  // editingLineIndex = index in `lines` of the line being dragged
+  const linePathsRef = useRef<Path2D[]>([])       // stores Path2D for each drawn line
   const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null)
-  // draggedMode = 'start' | 'end' | 'move'
   const [draggedMode, setDraggedMode] = useState<'move' | 'start' | 'end' | null>(null)
-  // lastMousePositionForLine records the canvas coords when dragging began
   const lastMousePositionForLine = useRef<{ x: number; y: number } | null>(null)
-  // true if we are currently dragging an existing line
   const [isDraggingLine, setIsDraggingLine] = useState(false)
 
   // ─── EFFECT: Track Shift key ─────────────────────────────────────────────────────
@@ -168,7 +161,7 @@ export default function InstagramPostCreator() {
   useEffect(() => {
     if (isPlaying) {
       startTimeRef.current = null
-      animationRef.current = requestAnimationFrame(animate)
+      animationRef.current = requestAnimationFrame(animateLoop)
     } else {
       if (animationRef.current) cancelAnimationFrame(animationRef.current)
       drawCanvas()
@@ -273,7 +266,7 @@ export default function InstagramPostCreator() {
     ctx.fillStyle = backgroundColor
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
 
-    // Draw static lines/text
+    // Static lines/text
     const framelines = lines.filter(l => l.frame === currentFrame)
     drawLines(ctx, framelines)
     drawStaticText(ctx, currentFrame)
@@ -662,7 +655,8 @@ export default function InstagramPostCreator() {
   }
 
   // ─── ANIMATION LOOP ─────────────────────────────────────────────────────────────
-  const animate = (timestamp: number) => {
+  // **Note: this is the *only* `animateLoop` function**
+  const animateLoop = (timestamp: number) => {
     if (!startTimeRef.current) startTimeRef.current = timestamp
     const elapsed = timestamp - startTimeRef.current
     const msPerFrame = 1000 / frameRate
@@ -679,7 +673,7 @@ export default function InstagramPostCreator() {
     }
     drawCanvas(progress)
     if (isPlaying || isLooping) {
-      animationRef.current = requestAnimationFrame(animate)
+      animationRef.current = requestAnimationFrame(animateLoop)
     } else {
       drawCanvas()
     }
@@ -1048,29 +1042,48 @@ export default function InstagramPostCreator() {
     canvas.style.cursor = 'default'
   }
 
-  // ─── ANIMATION LOOP ─────────────────────────────────────────────────────────────
-  const animate = (timestamp: number) => {
-    if (!startTimeRef.current) startTimeRef.current = timestamp
-    const elapsed = timestamp - startTimeRef.current
-    const msPerFrame = 1000 / frameRate
-    const normalized = elapsed / (msPerFrame * 150)
-    let progress = normalized
-    if (progress > 1.4) {
-      if (isLooping) {
-        startTimeRef.current = timestamp
-        progress = 0
-      } else {
-        progress = 1.4
-        setIsPlaying(false)
-      }
+  // ─── HELPER: test if a point is inside a rotated polygon ─────────────────────────
+  function isPointInRotatedBox(x: number, y: number, box: Point[]) {
+    let inside = false
+    for (let i = 0, j = box.length - 1; i < box.length; j = i++) {
+      const xi = box[i].x
+      const yi = box[i].y
+      const xj = box[j].x
+      const yj = box[j].y
+      const intersect = (yi > y) !== (yj > y) &&
+        x < ((xj - xi) * (y - yi)) / (yj - yi) + xi
+      if (intersect) inside = !inside
     }
-    drawCanvas(progress)
-    if (isPlaying || isLooping) {
-      animationRef.current = requestAnimationFrame(animate)
-    } else {
-      drawCanvas()
-    }
+    return inside
   }
+
+  // ─── HELPER: get bounding box corners for a rotated TextPosition ───────────────
+  function getRotatedBoundingBox(pos: TextPosition): Point[] {
+    const cx = pos.x + pos.width / 2
+    const cy = pos.y + pos.height / 2
+    const w = pos.width
+    const h = pos.height
+    const corners = [
+      { x: -w / 2, y: -h / 2 },
+      { x: w / 2, y: -h / 2 },
+      { x: w / 2, y: h / 2 },
+      { x: -w / 2, y: h / 2 }
+    ]
+    return corners.map(c => {
+      const rx = c.x * Math.cos(pos.rotation) - c.y * Math.sin(pos.rotation)
+      const ry = c.x * Math.sin(pos.rotation) + c.y * Math.cos(pos.rotation)
+      return { x: rx + cx, y: ry + cy }
+    })
+  }
+
+  // ─── FRAME CONTROLS & PLAY/LOOP ─────────────────────────────────────────────────
+  const handleFrameChange = (frame: number) => {
+    setCurrentFrame(frame)
+    setSelectedTexts([])
+    drawCanvas()
+  }
+  const togglePlay = () => setIsPlaying(prev => !prev)
+  const toggleLoop = () => setIsLooping(prev => !prev)
 
   // ─── JSX ────────────────────────────────────────────────────────────────────────
   return (
@@ -1261,4 +1274,45 @@ export default function InstagramPostCreator() {
       </Dialog>
     </div>
   )
+
+  // ─── UTILITY FUNCTIONS ────────────────────────────────────────────────────────────
+  function getContrastColor(bgColor: string): string {
+    const r = parseInt(bgColor.slice(1, 3), 16)
+    const g = parseInt(bgColor.slice(3, 5), 16)
+    const b = parseInt(bgColor.slice(5, 7), 16)
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+    return luminance > 0.5 ? '#000000' : '#FFFFFF'
+  }
+
+  function isPointInRotatedBox(x: number, y: number, box: Point[]): boolean {
+    let inside = false
+    for (let i = 0, j = box.length - 1; i < box.length; j = i++) {
+      const xi = box[i].x
+      const yi = box[i].y
+      const xj = box[j].x
+      const yj = box[j].y
+      const intersect = (yi > y) !== (yj > y)
+        && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi
+      if (intersect) inside = !inside
+    }
+    return inside
+  }
+
+  function getRotatedBoundingBox(pos: TextPosition): Point[] {
+    const cx = pos.x + pos.width / 2
+    const cy = pos.y + pos.height / 2
+    const w = pos.width
+    const h = pos.height
+    const corners = [
+      { x: -w / 2, y: -h / 2 },
+      { x: w / 2, y: -h / 2 },
+      { x: w / 2, y: h / 2 },
+      { x: -w / 2, y: h / 2 }
+    ]
+    return corners.map(c => {
+      const rx = c.x * Math.cos(pos.rotation) - c.y * Math.sin(pos.rotation)
+      const ry = c.x * Math.sin(pos.rotation) + c.y * Math.cos(pos.rotation)
+      return { x: rx + cx, y: ry + cy }
+    })
+  }
 }
