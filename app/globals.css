@@ -5,7 +5,7 @@
 @font-face {
   font-family: 'SulSans-Bold';
   src: url('/fonts/SulSans-Bold.otf') format('opentype');
-  font-weight: normal;
+  font-weight: bold;
   font-style: normal;
   font-display: swap;
 }

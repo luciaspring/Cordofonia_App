@@ -2,8 +2,11 @@ import { TextPosition, Line, Point, GroupBoundingBox } from '../types'
 
 // Font loading with proper error handling
 let fontLoaded = false
-const sulSansFont = new FontFace('SulSans-Bold', 'url(/fonts/SulSans-Bold.otf)')
+const sulSansFont = new FontFace('SulSans-Bold', 'url(/fonts/SulSans-Bold.otf)', {
+  weight: 'bold'
+})
 
+// Load font and set up error handling
 sulSansFont.load().then((font) => {
   document.fonts.add(font)
   fontLoaded = true
@@ -100,44 +103,52 @@ export function drawCanvas(
   ctx.fillStyle = getContrastColor(state.backgroundColor)
   ctx.textBaseline = 'top'
 
-  // Draw titles
-  state.titles.forEach((title, index) => {
-    const pos1 = state.titlePositionsFrame1[index]
-    const pos2 = state.titlePositionsFrame2[index]
-    
-    // Calculate interpolated position
-    const x = pos1.x + (pos2.x - pos1.x) * progress
-    const y = pos1.y + (pos2.y - pos1.y) * progress
-    const rotation = pos1.rotation + (pos2.rotation - pos1.rotation) * progress
-    
+  // Wait for font to load before drawing text
+  const drawText = () => {
+    // Draw titles
+    state.titles.forEach((title, index) => {
+      const pos1 = state.titlePositionsFrame1[index]
+      const pos2 = state.titlePositionsFrame2[index]
+      
+      // Calculate interpolated position
+      const x = pos1.x + (pos2.x - pos1.x) * progress
+      const y = pos1.y + (pos2.y - pos1.y) * progress
+      const rotation = pos1.rotation + (pos2.rotation - pos1.rotation) * progress
+      
+      ctx.save()
+      ctx.translate(x + pos1.width / 2, y + pos1.height / 2)
+      ctx.rotate(rotation)
+      ctx.font = fontLoaded ? `${pos1.fontSize}px "SulSans-Bold"` : `bold ${pos1.fontSize}px sans-serif`
+      ctx.fillText(title, -pos1.width / 2, -pos1.height / 2)
+      ctx.restore()
+    })
+
+    // Draw subtitle
+    const subPos1 = state.subtitlePositionFrame1
+    const subPos2 = state.subtitlePositionFrame2
+    const subX = subPos1.x + (subPos2.x - subPos1.x) * progress
+    const subY = subPos1.y + (subPos2.y - subPos1.y) * progress
+    const subRotation = subPos1.rotation + (subPos2.rotation - subPos1.rotation) * progress
+
     ctx.save()
-    ctx.translate(x + pos1.width / 2, y + pos1.height / 2)
-    ctx.rotate(rotation)
-    
-    // Set font with proper checking
-    if (fontLoaded) {
-      ctx.font = `${pos1.fontSize}px "SulSans-Bold"`
-    } else {
-      ctx.font = `bold ${pos1.fontSize}px sans-serif`
-    }
-    
-    ctx.fillText(title, -pos1.width / 2, -pos1.height / 2)
+    ctx.translate(subX + subPos1.width / 2, subY + subPos1.height / 2)
+    ctx.rotate(subRotation)
+    ctx.font = `${subPos1.fontSize}px sans-serif`
+    ctx.fillText(state.subtitle, -subPos1.width / 2, -subPos1.height / 2)
     ctx.restore()
-  })
+  }
 
-  // Draw subtitle
-  const subPos1 = state.subtitlePositionFrame1
-  const subPos2 = state.subtitlePositionFrame2
-  const subX = subPos1.x + (subPos2.x - subPos1.x) * progress
-  const subY = subPos1.y + (subPos2.y - subPos1.y) * progress
-  const subRotation = subPos1.rotation + (subPos2.rotation - subPos1.rotation) * progress
-
-  ctx.save()
-  ctx.translate(subX + subPos1.width / 2, subY + subPos1.height / 2)
-  ctx.rotate(subRotation)
-  ctx.font = `${subPos1.fontSize}px sans-serif`
-  ctx.fillText(state.subtitle, -subPos1.width / 2, -subPos1.height / 2)
-  ctx.restore()
+  // Draw text immediately if font is loaded, otherwise wait for it
+  if (fontLoaded) {
+    drawText()
+  } else {
+    document.fonts.ready.then(() => {
+      if (document.fonts.check('12px "SulSans-Bold"')) {
+        fontLoaded = true
+        drawText()
+      }
+    })
+  }
 
   // Draw lines
   ctx.strokeStyle = getContrastColor(state.backgroundColor)
