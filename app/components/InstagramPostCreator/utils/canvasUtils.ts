@@ -2,16 +2,24 @@ import { TextPosition, Line, Point, GroupBoundingBox } from '../types'
 
 // Font loading with proper error handling
 let fontLoaded = false
-const sulSansFont = new FontFace('SulSans-Bold', 'url(/fonts/SulSans-Bold.otf)')
 
 // Load font and set up error handling
-sulSansFont.load().then((font) => {
-  document.fonts.add(font)
-  fontLoaded = true
-  console.log('SulSans-Bold font loaded successfully')
-}).catch((error) => {
-  console.error('Error loading SulSans-Bold font:', error)
-})
+async function loadFont() {
+  try {
+    const sulSansFont = new FontFace('SulSans-Bold', 'url(/fonts/SulSans-Bold.otf)')
+    const font = await sulSansFont.load()
+    document.fonts.add(font)
+    fontLoaded = true
+    console.log('SulSans-Bold font loaded successfully')
+  } catch (error) {
+    console.error('Error loading SulSans-Bold font:', error)
+  }
+}
+
+// Initialize font loading
+if (typeof window !== 'undefined') {
+  loadFont()
+}
 
 export function getContrastColor(bgColor: string): string {
   const r = parseInt(bgColor.slice(1, 3), 16)
@@ -101,7 +109,6 @@ export function drawCanvas(
   ctx.fillStyle = getContrastColor(state.backgroundColor)
   ctx.textBaseline = 'top'
 
-  // Wait for font to load before drawing text
   const drawText = () => {
     // Draw titles
     state.titles.forEach((title, index) => {
@@ -116,7 +123,7 @@ export function drawCanvas(
       ctx.save()
       ctx.translate(x + pos1.width / 2, y + pos1.height / 2)
       ctx.rotate(rotation)
-      ctx.font = `${pos1.fontSize}px "SulSans-Bold"`
+      ctx.font = `${pos1.fontSize}px SulSans-Bold`
       ctx.fillText(title, -pos1.width / 2, -pos1.height / 2)
       ctx.restore()
     })
@@ -131,17 +138,17 @@ export function drawCanvas(
     ctx.save()
     ctx.translate(subX + subPos1.width / 2, subY + subPos1.height / 2)
     ctx.rotate(subRotation)
-    ctx.font = `${subPos1.fontSize}px "SulSans-Bold"`
+    ctx.font = `${subPos1.fontSize}px SulSans-Bold`
     ctx.fillText(state.subtitle, -subPos1.width / 2, -subPos1.height / 2)
     ctx.restore()
   }
 
-  // Draw text immediately if font is loaded, otherwise wait for it
   if (fontLoaded) {
     drawText()
   } else {
+    // If font isn't loaded yet, wait for it
     document.fonts.ready.then(() => {
-      if (document.fonts.check('12px "SulSans-Bold"')) {
+      if (document.fonts.check('12px SulSans-Bold')) {
         fontLoaded = true
         drawText()
       }
