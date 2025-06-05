@@ -896,8 +896,8 @@ export default function InstagramPostCreator() {
 
   // ─── MOUSE EVENT HANDLERS ───────────────────────────────────────────────────────
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    lastMousePositionForLine.current = null
     if (isPlaying) return
+    lastMousePositionForLine.current = null
 
     const canvas = canvasRef.current
     if (!canvas) return
@@ -922,53 +922,45 @@ export default function InstagramPostCreator() {
       }
     }
 
-    // ─── PRIORITY 2: Line selection (point-to-segment) ─────────────────────────────
+    // ─── PRIORITY 2: Line selection or new line drawing ─────────────────────────────
     let foundIdx: number | null = null
     let mode: 'start' | 'end' | 'move' | null = null
 
-    // 1. Check nearest line endpoint first (within 10px)
+    // Simplified hit testing using isPointNear with fixed threshold 10
     for (let idx = 0; idx < lines.length; idx++) {
       const line = lines[idx]
       if (line.frame !== currentFrame) continue
-      const ds = Math.hypot(x - line.start.x, y - line.start.y)
-      if (ds <= 10) {
+      // Check start point
+      if (isPointNear({ x, y }, line.start, 10)) {
         foundIdx = idx
         mode = 'start'
         break
       }
-      const de = Math.hypot(x - line.end.x, y - line.end.y)
-      if (de <= 10) {
+      // Check end point
+      if (isPointNear({ x, y }, line.end, 10)) {
         foundIdx = idx
         mode = 'end'
         break
       }
-    }
-
-    // 2. If no endpoint, check the body (within 5px of segment)
-    if (foundIdx === null) {
-      for (let idx = 0; idx < lines.length; idx++) {
-        const line = lines[idx]
-        if (line.frame !== currentFrame) continue
-        const dSeg = pointToLineDistance({ x, y }, line.start, line.end)
-        if (dSeg <= 5) {
-          foundIdx = idx
-          mode = 'move'
-          break
-        }
+      // Check body
+      if (isPointNear({ x, y }, line, 10)) {
+        foundIdx = idx
+        mode = 'move'
+        break
       }
     }
 
     if (foundIdx !== null && mode) {
-      // Select existing line and prepare for drag
+      // Select existing line and prepare to drag
       setEditingLineIndex(foundIdx)
       setDraggedMode(mode)
       lastMousePositionForLine.current = { x, y }
-      setCurrentLine(null)  // prevent starting a new line
+      setCurrentLine(null)
       drawCanvas()
       return
     }
 
-    // ─── PRIORITY 3: Begin drawing a new line if none selected ────────────────────
+    // ─── PRIORITY 3: Begin drawing a new line ──────────────────────────────────────
     setEditingLineIndex(null)
     setDraggedMode(null)
     setCurrentLine({ start: { x, y }, end: { x, y }, frame: currentFrame })
