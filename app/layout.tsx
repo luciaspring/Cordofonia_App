@@ -1,8 +1,11 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import localFont from 'next/font/local';
 
-const inter = Inter({ subsets: ['latin'] });
+const sulSans = localFont({
+  src: '../public/fonts/SulSans-Bold.otf',
+  variable: '--font-sul-sans'
+});
 
 export const metadata: Metadata = {
   title: 'Instagram Post Creator',
@@ -16,7 +19,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={`${sulSans.variable}`}>{children}</body>
     </html>
   );
 }

@@ -9,7 +9,7 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        'sul-sans': ['Sul Sans', 'sans-serif'],
+        'sul-sans': ['var(--font-sul-sans)'],
       },
       colors: {
         border: "hsl(var(--border))",
