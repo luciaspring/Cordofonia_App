@@ -241,12 +241,12 @@ export default function InstagramPostCreator() {
       } else if (progress <= 0.6) {
         drawStaticText(ctx, 1)
         drawAnimatedLines(ctx, (progress - 0.3) / 0.3, frame1Lines, [], 'shrink')
-      } else if (progress <= 0.65) {
-        const t = (progress - 0.6) / 0.05      // shorten type-tween window
+      } else if (progress <= 0.7) {
+        const t = (progress - 0.6) / 0.1   // now text has 0.1 units of timeline
         drawAnimatedText(ctx, t, 1, 2)
-      } else if (progress <= 0.95) {
+      } else if (progress <= 1.0) {
         drawStaticText(ctx, 2)
-        drawAnimatedLines(ctx, (progress - 0.65) / 0.3, [], frame2Lines, 'grow')
+        drawAnimatedLines(ctx, (progress - 0.7) / 0.3, [], frame2Lines, 'grow')
       } else if (progress <= 1.25) {
         drawStaticText(ctx, 2)
         drawAnimatedLines(ctx, (progress - 0.95) / 0.3, [], frame2Lines, 'shrink')
