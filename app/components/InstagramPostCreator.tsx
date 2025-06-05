@@ -93,13 +93,13 @@ export default function InstagramPostCreator() {
   const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null)
 
   const [titlePositionsFrame1, setTitlePositionsFrame1] = useState<TextPosition[]>([
-    { x: 40, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 },
-    { x: 40, y: 550, width: 1000, height: 200, rotation: 0, fontSize: 180 }
+    { x: 40, y: 400, width: 400, height: 80, rotation: 0, fontSize: 72 },
+    { x: 40, y: 550, width: 400, height: 80, rotation: 0, fontSize: 72 }
   ])
 
   const [titlePositionsFrame2, setTitlePositionsFrame2] = useState<TextPosition[]>([
-    { x: 40, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 },
-    { x: 40, y: 550, width: 1000, height: 200, rotation: 0, fontSize: 180 }
+    { x: 40, y: 400, width: 400, height: 80, rotation: 0, fontSize: 72 },
+    { x: 40, y: 550, width: 400, height: 80, rotation: 0, fontSize: 72 }
   ])
 
   const [subtitlePositionFrame1, setSubtitlePositionFrame1] = useState<TextPosition>({ x: 40, y: 1000, width: 1000, height: 30, rotation: 0, fontSize: 36 })
@@ -139,6 +139,12 @@ export default function InstagramPostCreator() {
   const lastMousePosition = useRef<Point | null>(null)
   const isShiftPressed = useRef(false)
   const lastClickTime = useRef<number>(0)
+
+  // ─── REFS & STATE FOR LINE HIT-TESTING ─────────────────────────────────────────
+  const linePathsRef = useRef<Path2D[]>([])
+  const [draggedMode, setDraggedMode] = useState<'move' | 'start' | 'end' | null>(null)
+  const lastMousePositionForLine = useRef<{ x: number; y: number } | null>(null)
+  const [isDraggingLine, setIsDraggingLine] = useState(false)
 
   // ─── EFFECT HOOKS ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -279,37 +285,33 @@ export default function InstagramPostCreator() {
 
   // ─── STATIC TEXT DRAW WITH TREMBLING ─────────────────────────────────────────────
   const drawStaticText = (ctx: CanvasRenderingContext2D, frame: number) => {
-    const positions = frame === 1 ? titlePositionsFrame1 : titlePositionsFrame2
-    const subPos = frame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
-
-    // Draw titles with random tremble
-    positions.forEach((pos, idx) => {
-      const tremX = (Math.random() - 0.5) * tremblingIntensity
-      const tremY = (Math.random() - 0.5) * tremblingIntensity
-      ctx.save()
-      ctx.translate(pos.x + pos.width / 2 + tremX, pos.y + pos.height / 2 + tremY)
-      ctx.rotate(pos.rotation)
-      ctx.font = `bold ${pos.fontSize}px Arial`
-      ctx.fillStyle = getContrastColor(backgroundColor)
-      ctx.textBaseline = 'middle'
-      ctx.textAlign = 'center'
-      ctx.fillText(titles[idx], 0, 0)
-      ctx.restore()
-    })
-
-    // Draw subtitle with random tremble
-    const tremXsub = (Math.random() - 0.5) * tremblingIntensity
-    const tremYsub = (Math.random() - 0.5) * tremblingIntensity
-    ctx.save()
-    ctx.translate(subPos.x + subPos.width / 2 + tremXsub, subPos.y + subPos.height / 2 + tremYsub)
-    ctx.rotate(subPos.rotation)
-    ctx.font = `bold ${subPos.fontSize}px Arial`
-    ctx.fillStyle = getContrastColor(backgroundColor)
-    ctx.textBaseline = 'middle'
-    ctx.textAlign = 'center'
-    ctx.fillText(subtitle, 0, 0)
-    ctx.restore()
-  }
+    const tPosArray = frame === 1 ? titlePositionsFrame1 : titlePositionsFrame2;
+    tPosArray.forEach((pos, i) => {
+      const tremX = (Math.random() - 0.5) * tremblingIntensity;
+      const tremY = (Math.random() - 0.5) * tremblingIntensity;
+      ctx.save();
+      ctx.translate(pos.x + pos.width / 2 + tremX, pos.y + pos.height / 2 + tremY);
+      ctx.rotate(pos.rotation);
+      ctx.font = `bold ${pos.fontSize}px Arial`;
+      ctx.fillStyle = getContrastColor(backgroundColor);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(titles[i], 0, 0);
+      ctx.restore();
+    });
+    const subPos = frame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2;
+    const tremXsub = (Math.random() - 0.5) * tremblingIntensity;
+    const tremYsub = (Math.random() - 0.5) * tremblingIntensity;
+    ctx.save();
+    ctx.translate(subPos.x + subPos.width / 2 + tremXsub, subPos.y + subPos.height / 2 + tremYsub);
+    ctx.rotate(subPos.rotation);
+    ctx.font = `bold ${subPos.fontSize}px Arial`;
+    ctx.fillStyle = getContrastColor(backgroundColor);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(subtitle, 0, 0);
+    ctx.restore();
+  };
 
   const drawRotatedText = (ctx: CanvasRenderingContext2D, pos: TextPosition, text: string) => {
     ctx.save()
@@ -861,28 +863,26 @@ export default function InstagramPostCreator() {
   // ─── MOUSE EVENT HANDLERS ───────────────────────────────────────────────────────
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (isPlaying) return
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const rect = canvas.getBoundingClientRect()
-    const x = (e.clientX - rect.left) * (canvas.width / rect.width)
-    const y = (e.clientY - rect.top) * (canvas.height / rect.height)
+    lastMousePosition.current = null
+    setIsDraggingLine(false)
 
-    lastMousePosition.current = { x, y }
+    const { x, y } = getCanvasCoords(e)
 
-    const positions = currentFrame === 1 ? titlePositionsFrame1 : titlePositionsFrame2
-    const subPos = currentFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
-
-    for (let i = 0; i < positions.length; i++) {
-      const rotatedBox = getRotatedBoundingBox(positions[i])
-      if (isPointInRotatedBox(x, y, rotatedBox)) {
-        handleTextInteraction(positions[i], `title${i + 1}` as 'title1' | 'title2', x, y)
+    // ─── 1) TEXT INTERACTION (Frame 2 only) ───────────────────────────────────────
+    if (currentFrame === 2) {
+      for (let i = 0; i < titlePositionsFrame2.length; i++) {
+        const pos = titlePositionsFrame2[i]
+        const box = getRotatedBoundingBox(pos)
+        if (isPointInRotatedBox(x, y, box)) {
+          handleTextInteraction(pos, (`title${i + 1}` as 'title1' | 'title2'), x, y)
+          return
+        }
+      }
+      const subBox = getRotatedBoundingBox(subtitlePositionFrame2)
+      if (isPointInRotatedBox(x, y, subBox)) {
+        handleTextInteraction(subtitlePositionFrame2, 'subtitle', x, y)
         return
       }
-    }
-    const subBox = getRotatedBoundingBox(subPos)
-    if (isPointInRotatedBox(x, y, subBox)) {
-      handleTextInteraction(subPos, 'subtitle', x, y)
-      return
     }
 
     if (!isShiftPressed.current) {
@@ -1164,6 +1164,17 @@ export default function InstagramPostCreator() {
     const b = parseInt(bgColor.slice(5, 7), 16)
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
     return luminance > 0.5 ? '#000000' : '#FFFFFF'
+  }
+
+  // ─── UTILITY: convert MouseEvent to canvas pixel coords ─────────────────────────
+  const getCanvasCoords = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current!
+    const rect = canvas.getBoundingClientRect()
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
+    const x = e.nativeEvent.offsetX * scaleX
+    const y = e.nativeEvent.offsetY * scaleY
+    return { x, y }
   }
 
   // ─── JSX ────────────────────────────────────────────────────────────────────────
