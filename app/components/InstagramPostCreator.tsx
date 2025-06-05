@@ -78,6 +78,15 @@ const easeInOutQuint = (t: number): number => {
   }
 }
 
+// Replace parameterized easing with fixed power-6 easing
+const easeInOutCustom = (t: number): number => {
+  if (t < 0.5) {
+    return 32 * Math.pow(t, 6)
+  } else {
+    return 1 - Math.pow(-2 * t + 2, 6) / 2
+  }
+}
+
 // ─── COMPONENT ───────────────────────────────────────────────────────────────────
 
 export default function InstagramPostCreator() {
@@ -232,8 +241,8 @@ export default function InstagramPostCreator() {
     ctx.fillRect(0, 0, canvas.width, canvas.height)
 
     if (isPlaying) {
-      const frame1Lines = lines.filter(l => l.frame === 1)
-      const frame2Lines = lines.filter(l => l.frame === 2)
+      const frame1Lines = lines.filter((l) => l.frame === 1)
+      const frame2Lines = lines.filter((l) => l.frame === 2)
 
       if (progress <= 0.3) {
         drawStaticText(ctx, 1)
@@ -241,17 +250,17 @@ export default function InstagramPostCreator() {
       } else if (progress <= 0.6) {
         drawStaticText(ctx, 1)
         drawAnimatedLines(ctx, (progress - 0.3) / 0.3, frame1Lines, [], 'shrink')
-      } else if (progress <= 0.75) {
-        const t = (progress - 0.6) / 0.15
+      } else if (progress <= 0.75) {           // ← changed from 0.7 → 0.75
+        const t = (progress - 0.6) / 0.15       // ← window length 0.15 instead of 0.1
         drawAnimatedText(ctx, t, 1, 2)
-      } else if (progress <= 1.05) {
+      } else if (progress <= 1.05) {            // ← changed from 1.0 → 1.05
         drawStaticText(ctx, 2)
         drawAnimatedLines(ctx, (progress - 0.75) / 0.3, [], frame2Lines, 'grow')
-      } else if (progress <= 1.35) {
+      } else if (progress <= 1.35) {            // ← changed from 1.3 → 1.35
         drawStaticText(ctx, 2)
         drawAnimatedLines(ctx, (progress - 1.05) / 0.3, [], frame2Lines, 'shrink')
       } else if (progress <= 1.4) {
-        const t = (progress - 1.35) / 0.05
+        const t = (progress - 1.35) / 0.05      // ← window length 0.05 
         drawAnimatedText(ctx, t, 2, 1)
       }
       return
@@ -362,7 +371,7 @@ export default function InstagramPostCreator() {
       const adjustedStagger = linesArr.length > 1 ? maxStaggerDelay / (linesArr.length - 1) : 0
       linesArr.forEach((ln, idx) => {
         let t = Math.max(0, Math.min(1, (fgProgress - idx * adjustedStagger) / animationDuration))
-        t = easeInOut(t)
+        t = easeInOutCustom(t)
         const { start, end } = ln
         const currentEnd = {
           x: start.x + (end.x - start.x) * (animationType === 'grow' ? t : 1 - t),
@@ -391,7 +400,7 @@ export default function InstagramPostCreator() {
       rotation: interpolate(p1.rotation, p2.rotation, t),
       fontSize: interpolate(p1.fontSize, p2.fontSize, t)
     })
-    const t = easeInOut(progress)
+    const t = easeInOutCustom(progress)
 
     // Draw titles with trembling
     titles.forEach((text, idx) => {
@@ -1100,6 +1109,17 @@ export default function InstagramPostCreator() {
 
     // Throttle visible updates to mimic stop-motion
     if (timestamp - lastDisplayTimeRef.current >= 1000 / frameRate) {
+      const canvas = canvasRef.current
+      if (!canvas) return
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+
+      ctx.fillStyle = backgroundColor
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+      const frame1Lines = lines.filter(l => l.frame === 1)
+      const frame2Lines = lines.filter(l => l.frame === 2)
+
       // Frame 1: grow lines (0.0 → 0.3)
       if (progress <= 0.3) {
         drawStaticText(ctx, 1)
@@ -1111,23 +1131,17 @@ export default function InstagramPostCreator() {
         drawAnimatedLines(ctx, (progress - 0.3) / 0.3, frame1Lines, [], 'shrink')
 
       // Text tween from Frame 1 → Frame 2 (0.6 → 0.75)  ←— extended to 0.15
-      } else if (progress <= 0.75) {
-        const t = (progress - 0.6) / 0.15
+      } else if (progress <= 0.75) {           // ← changed from 0.7 → 0.75
+        const t = (progress - 0.6) / 0.15       // ← window length 0.15 instead of 0.1
         drawAnimatedText(ctx, t, 1, 2)
-
-      // Frame 2: grow lines (0.75 → 1.05)
-      } else if (progress <= 1.05) {
+      } else if (progress <= 1.05) {            // ← changed from 1.0 → 1.05
         drawStaticText(ctx, 2)
         drawAnimatedLines(ctx, (progress - 0.75) / 0.3, [], frame2Lines, 'grow')
-
-      // Frame 2: shrink lines (1.05 → 1.35)
-      } else if (progress <= 1.35) {
+      } else if (progress <= 1.35) {            // ← changed from 1.3 → 1.35
         drawStaticText(ctx, 2)
         drawAnimatedLines(ctx, (progress - 1.05) / 0.3, [], frame2Lines, 'shrink')
-
-      // Text tween from Frame 2 → Frame 1 (1.35 → 1.4)
       } else if (progress <= 1.4) {
-        const t = (progress - 1.35) / 0.05
+        const t = (progress - 1.35) / 0.05      // ← window length 0.05 
         drawAnimatedText(ctx, t, 2, 1)
       }
 
@@ -1193,16 +1207,6 @@ export default function InstagramPostCreator() {
     const b = parseInt(bgColor.slice(5, 7), 16)
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
     return luminance > 0.5 ? '#000000' : '#FFFFFF'
-  }
-
-  // Replace easeInOutQuint with parameterized easeInOut
-  const easeInOut = (t: number): number => {
-    const p = easePower * 1.5   // amplify the exponent for a stronger curve
-    if (t < 0.5) {
-      return 0.5 * Math.pow(2 * t, p)
-    } else {
-      return 1 - 0.5 * Math.pow(2 * (1 - t), p)
-    }
   }
 
   // ─── JSX ────────────────────────────────────────────────────────────────────────
