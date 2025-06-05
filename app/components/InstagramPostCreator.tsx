@@ -157,6 +157,29 @@ export default function InstagramPostCreator() {
   }, [])
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Delete' && editingLineIndex !== null) {
+        setLines(prev => {
+          const arr = [...prev]
+          arr.splice(editingLineIndex, 1)
+          return arr
+        })
+        setEditingLineIndex(null)
+        // Redraw after removal
+        const canvas = canvasRef.current
+        if (canvas) {
+          const ctx = canvas.getContext('2d')
+          if (ctx) drawCanvas()
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [editingLineIndex])
+
+  useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
