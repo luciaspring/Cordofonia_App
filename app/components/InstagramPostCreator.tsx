@@ -69,24 +69,6 @@ const MIN_LINE_THICKNESS = 1
 const MIN_FRAME_RATE = 10
 const BASE_FPS = 60
 
-// Ease In-Out Quint easing function (piecewise)
-const easeInOutQuint = (t: number): number => {
-  if (t < 0.5) {
-    return 16 * Math.pow(t, 5)
-  } else {
-    return 1 - Math.pow(-2 * t + 2, 5) / 2
-  }
-}
-
-// Replace parameterized easing with fixed power-6 easing
-const easeInOutCustom = (t: number): number => {
-  if (t < 0.5) {
-    return 32 * Math.pow(t, 6)
-  } else {
-    return 1 - Math.pow(-2 * t + 2, 6) / 2
-  }
-}
-
 // ─── COMPONENT ───────────────────────────────────────────────────────────────────
 
 export default function InstagramPostCreator() {
@@ -128,7 +110,7 @@ export default function InstagramPostCreator() {
   const [tremblingIntensity, setTremblingIntensity] = useState<number>(3)             // preset at 3
   const [frameRate, setFrameRate] = useState<number>(MIN_FRAME_RATE)                   // preset at 10
   const [baseFps, setBaseFps] = useState<number>(35)                                   // preset at 35
-  const [easePower, setEasePower] = useState<number>(6) // default power for easing
+  const [easePower, setEasePower] = useState<number>(6)                                // default easing strength
 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [groupRotation, setGroupRotation] = useState(0)
@@ -152,6 +134,16 @@ export default function InstagramPostCreator() {
   const lastClickTime = useRef<number>(0)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const recordedChunksRef = useRef<BlobPart[]>([])
+
+  // Ease In-Out easing with adjustable power
+  const easeInOut = (t: number): number => {
+    const p = easePower
+    if (t < 0.5) {
+      return Math.pow(2, p - 1) * Math.pow(t, p)
+    } else {
+      return 1 - Math.pow(-2 * t + 2, p) / 2
+    }
+  }
 
   // ─── EFFECT HOOKS ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -376,7 +368,7 @@ export default function InstagramPostCreator() {
       const adjustedStagger = linesArr.length > 1 ? maxStaggerDelay / (linesArr.length - 1) : 0
       linesArr.forEach((ln, idx) => {
         let t = Math.max(0, Math.min(1, (fgProgress - idx * adjustedStagger) / animationDuration))
-        t = easeInOutCustom(t)
+        t = easeInOut(t)
         const { start, end } = ln
         const currentEnd = {
           x: start.x + (end.x - start.x) * (animationType === 'grow' ? t : 1 - t),
@@ -405,7 +397,7 @@ export default function InstagramPostCreator() {
       rotation: interpolate(p1.rotation, p2.rotation, t),
       fontSize: interpolate(p1.fontSize, p2.fontSize, t)
     })
-    const t = easeInOutCustom(progress)
+    const t = easeInOut(progress)
 
     // Draw titles with trembling
     titles.forEach((text, idx) => {
@@ -1482,17 +1474,14 @@ export default function InstagramPostCreator() {
               />
             </div>
             <div>
-              <Label htmlFor="easePowerSlider">Easing Strength (Power): {easePower}</Label>
+              <Label htmlFor="easePowerSlider">Easing Strength</Label>
               <Slider
                 id="easePowerSlider"
                 min={1}
-                max={20}
+                max={10}
                 step={1}
                 value={[easePower]}
-                onValueChange={([val]) => {
-                  const num = Number(val)
-                  if (!isNaN(num)) setEasePower(num)
-                }}
+                onValueChange={([v]) => setEasePower(v)}
               />
             </div>
           </div>
