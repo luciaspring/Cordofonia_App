@@ -273,10 +273,7 @@ export default function InstagramPostCreator() {
     ctx.fillStyle = backgroundColor
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
 
-    // Draw static lines/text or animate
-    if (isPlaying) return
-
-    // Static:
+    // Draw static lines/text
     const framelines = lines.filter(l => l.frame === currentFrame)
     drawLines(ctx, framelines)
     drawStaticText(ctx, currentFrame)
@@ -1051,6 +1048,7 @@ export default function InstagramPostCreator() {
     canvas.style.cursor = 'default'
   }
 
+  // ─── ANIMATION LOOP ─────────────────────────────────────────────────────────────
   const animate = (timestamp: number) => {
     if (!startTimeRef.current) startTimeRef.current = timestamp
     const elapsed = timestamp - startTimeRef.current
@@ -1157,7 +1155,9 @@ export default function InstagramPostCreator() {
               Frame 2
             </Button>
             <Button onClick={togglePlay} className="w-[40px] h-[40px] p-0 rounded-full bg-black">
-              {isPlaying ? <PauseIcon className="h-5 w-5 text-white" /> : <PlayIcon className="h-5 w-5 text-white" />}
+              {isPlaying
+                ? <PauseIcon className="h-5 w-5 text-white" />
+                : <PlayIcon className="h-5 w-5 text-white" />}
             </Button>
             <Button onClick={toggleLoop} className={`w-[40px] h-[40px] p-0 rounded bg-black ${isLooping ? 'ring-2 ring-blue-500' : ''}`}>
               <RotateCcwIcon className="h-5 w-5 text-white" />
