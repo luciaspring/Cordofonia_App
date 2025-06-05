@@ -1235,7 +1235,7 @@ export default function InstagramPostCreator() {
       setIsRecording(false)
     }
 
-    // Start recording and force-play two full cycles (1 cycle = 1.4 s). Two cycles = 2.8 s.
+    // Start recording:
     recordedChunksRef.current = []
     setIsRecording(true)
     recorder.start()
@@ -1244,11 +1244,15 @@ export default function InstagramPostCreator() {
       setIsPlaying(true)
     }
 
-    // Stop after ~2800 ms so you capture both Frame 1 and Frame 2 animations
+    // Compute one cycle's real-time length: (1000 / baseFps) * 150 ms
+    const oneCycleMs = (1000 / baseFps) * 150
+    // Record two cycles:
+    const totalRecordingMs = oneCycleMs * 2
+
     setTimeout(() => {
       recorder.stop()
       setIsPlaying(false)
-    }, 2800)
+    }, totalRecordingMs)
   }
 
   // ─── UTILITY ────────────────────────────────────────────────────────────────────
