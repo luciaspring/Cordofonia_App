@@ -895,7 +895,7 @@ export default function InstagramPostCreator() {
     return { ...pos, x: newX, y: newY, rotation: pos.rotation + angle }
   }
 
-  // ─── UTILITY: get mouse coordinates in canvas space ─────────────────────────────
+  // ─── HELPER: convert MouseEvent to canvas coordinates ─────────────────────────
   const getCanvasCoords = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current!
     const rect = canvas.getBoundingClientRect()
@@ -908,15 +908,16 @@ export default function InstagramPostCreator() {
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (isPlaying) return
     lastMousePositionForLine.current = null
+    setIsDraggingLine(false)
+
     const { x, y } = getCanvasCoords(e)
 
-    // 1) Text selection/deselection (Frame 2 only)
+    // 1) TEXT FIRST (Frame 2 only)
     if (currentFrame === 2) {
       for (let i = 0; i < titlePositionsFrame2.length; i++) {
         const pos = titlePositionsFrame2[i]
         const box = getRotatedBoundingBox(pos)
         if (isPointInRotatedBox(x, y, box)) {
-          // initiate dragging/rotating/resizing text
           handleTextInteraction(pos, (`title${i + 1}` as 'title1' | 'title2'), x, y)
           return
         }
@@ -928,49 +929,41 @@ export default function InstagramPostCreator() {
       }
     }
 
-    // 2) Line hit testing
+    // 2) LINE HIT TEST (endpoints first, then body)
     let foundIdx: number | null = null
     let mode: 'start' | 'end' | 'move' | null = null
 
-    // loop through lines in current frame
+    // 2a) check start/end within 10px of endpoints
     for (let i = 0; i < lines.length; i++) {
       const ln = lines[i]
       if (ln.frame !== currentFrame) continue
-      // a) start endpoint within 10px
       const dStart = Math.hypot(x - ln.start.x, y - ln.start.y)
-      if (dStart <= 10) {
-        foundIdx = i
-        mode = 'start'
-        break
-      }
-      // b) end endpoint within 10px
+      if (dStart <= 10) { foundIdx = i; mode = 'start'; break }
       const dEnd = Math.hypot(x - ln.end.x, y - ln.end.y)
-      if (dEnd <= 10) {
-        foundIdx = i
-        mode = 'end'
-        break
-      }
-      // c) body within 5px (perpendicular distance)
-      const dBody = pointToLineDistance({ x, y }, ln.start, ln.end)
-      if (dBody <= 5) {
-        foundIdx = i
-        mode = 'move'
-        break
+      if (dEnd <= 10) { foundIdx = i; mode = 'end'; break }
+    }
+    // 2b) if no endpoint, check body (≤5px perpendicular distance)
+    if (foundIdx === null) {
+      for (let i = 0; i < lines.length; i++) {
+        const ln = lines[i]
+        if (ln.frame !== currentFrame) continue
+        const dBody = pointToLineDistance({ x, y }, ln.start, ln.end)
+        if (dBody <= 5) { foundIdx = i; mode = 'move'; break }
       }
     }
 
     if (foundIdx !== null && mode) {
-      // select that existing line
+      // select and start dragging that line
       setEditingLineIndex(foundIdx)
       setDraggedMode(mode)
       lastMousePositionForLine.current = { x, y }
       setIsDraggingLine(true)
-      setCurrentLine(null) // cancel any "new-line" in progress
+      setCurrentLine(null)           // cancel any "new‐line" in progress
       drawCanvas()
       return
     }
 
-    // 3) start drawing a brand-new line
+    // 3) no line hit → begin drawing a brand-new line
     setEditingLineIndex(null)
     setDraggedMode(null)
     setIsDraggingLine(false)
@@ -985,7 +978,7 @@ export default function InstagramPostCreator() {
     if (!canvas) return
     const { x, y } = getCanvasCoords(e)
 
-    // 1) Text dragging/rotating/resizing logic (Frame 2 only)
+    // 1) If text is being dragged/rotated/resized, let that run first
     if (selectedTexts.length > 0 && currentFrame === 2 && (isDragging || isResizing || isRotating)) {
       if (isRotating) {
         const groupBox = calculateGroupBoundingBox()
@@ -1011,11 +1004,11 @@ export default function InstagramPostCreator() {
       return
     }
 
-    // 2) If a line is selected and we are dragging it, update that line
+    // 2) If a line was selected on mousedown, handle its dragging
     if (isDraggingLine && editingLineIndex !== null && draggedMode && lastMousePositionForLine.current) {
       setLines(prev => {
-        const newArr = [...prev]
-        const ln = { ...newArr[editingLineIndex] }
+        const copy = [...prev]
+        const ln = { ...copy[editingLineIndex] }
         if (draggedMode === 'start') {
           ln.start = { x, y }
         } else if (draggedMode === 'end') {
@@ -1024,17 +1017,17 @@ export default function InstagramPostCreator() {
           const dx = x - lastMousePositionForLine.current.x
           const dy = y - lastMousePositionForLine.current.y
           ln.start = { x: ln.start.x + dx, y: ln.start.y + dy }
-          ln.end = { x: ln.end.x + dx,   y: ln.end.y + dy }
+          ln.end   = { x: ln.end.x + dx,   y: ln.end.y + dy }
         }
-        newArr[editingLineIndex] = ln
-        return newArr
+        copy[editingLineIndex] = ln
+        return copy
       })
       drawCanvas()
       lastMousePositionForLine.current = { x, y }
       return
     }
 
-    // 3) If drawing a new line, update its end point
+    // 3) Otherwise, if we were drawing a new line, update its end coordinate
     if (currentLine) {
       setCurrentLine(prev => prev ? { ...prev, end: { x, y } } : null)
       drawCanvas()
@@ -1051,7 +1044,7 @@ export default function InstagramPostCreator() {
       setLines(prev => [...prev, currentLine])
       setCurrentLine(null)
     }
-    // end line dragging
+    // finalize line drag if active
     if (isDraggingLine) {
       setIsDraggingLine(false)
       setEditingLineIndex(null)
@@ -1060,7 +1053,7 @@ export default function InstagramPostCreator() {
       drawCanvas()
       return
     }
-    // if text was being dragged, clear text drag flags
+    // finalize text drag if active
     if (selectedTexts.length > 0) {
       setIsDragging(false)
       setIsResizing(false)
