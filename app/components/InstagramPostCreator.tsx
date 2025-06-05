@@ -271,17 +271,19 @@ export default function InstagramPostCreator() {
     drawStaticText(ctx, currentFrame)
 
     if (currentFrame === 2 && selectedTexts.length > 0) {
-      const groupBox = calculateGroupBoundingBox()
-      if (groupBox) {
-        drawGroupBoundingBox(ctx, groupBox)
+      if (selectedTexts.length > 1) {
+        const groupBox = calculateGroupBoundingBox()
+        if (groupBox) {
+          drawGroupBoundingBox(ctx, groupBox)
+        }
       } else {
-        titlePositionsFrame2.forEach((pos, idx) => {
-          if (selectedTexts.includes(`title${idx + 1}` as 'title1' | 'title2')) {
-            drawBoundingBox(ctx, pos)
-          }
-        })
-        if (selectedTexts.includes('subtitle')) {
+        // Only one selected: draw its own bounding box
+        const sel = selectedTexts[0]
+        if (sel === 'subtitle') {
           drawBoundingBox(ctx, subtitlePositionFrame2)
+        } else {
+          const idx = sel === 'title1' ? 0 : 1
+          drawBoundingBox(ctx, titlePositionsFrame2[idx])
         }
       }
     }
