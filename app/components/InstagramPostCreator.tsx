@@ -118,7 +118,7 @@ export default function InstagramPostCreator() {
   const [tremblingIntensity, setTremblingIntensity] = useState<number>(3)             // preset at 3
   const [frameRate, setFrameRate] = useState<number>(MIN_FRAME_RATE)                   // preset at 10
   const [baseFps, setBaseFps] = useState<number>(35)                                   // preset at 35
-  const [easePower, setEasePower] = useState<number>(8) // default power for easing
+  const [easePower, setEasePower] = useState<number>(6) // default power for easing
 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [groupRotation, setGroupRotation] = useState(0)
@@ -241,17 +241,17 @@ export default function InstagramPostCreator() {
       } else if (progress <= 0.6) {
         drawStaticText(ctx, 1)
         drawAnimatedLines(ctx, (progress - 0.3) / 0.3, frame1Lines, [], 'shrink')
-      } else if (progress <= 0.7) {
-        const t = (progress - 0.6) / 0.1
+      } else if (progress <= 0.65) {
+        const t = (progress - 0.6) / 0.05      // shorten type-tween window
         drawAnimatedText(ctx, t, 1, 2)
-      } else if (progress <= 1.0) {
+      } else if (progress <= 0.95) {
         drawStaticText(ctx, 2)
-        drawAnimatedLines(ctx, (progress - 0.7) / 0.3, [], frame2Lines, 'grow')
-      } else if (progress <= 1.3) {
+        drawAnimatedLines(ctx, (progress - 0.65) / 0.3, [], frame2Lines, 'grow')
+      } else if (progress <= 1.25) {
         drawStaticText(ctx, 2)
-        drawAnimatedLines(ctx, (progress - 1.0) / 0.3, [], frame2Lines, 'shrink')
-      } else if (progress <= 1.4) {
-        const t = (progress - 1.3) / 0.1
+        drawAnimatedLines(ctx, (progress - 0.95) / 0.3, [], frame2Lines, 'shrink')
+      } else if (progress <= 1.35) {
+        const t = (progress - 1.25) / 0.1   // adjust final type-tween
         drawAnimatedText(ctx, t, 2, 1)
       }
       return
