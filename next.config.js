@@ -7,13 +7,11 @@ const nextConfig = {
   images: { unoptimized: true },
   webpack: (config, { isServer }) => {
     if (!isServer) {
-      // Handle canvas module for client-side only
       config.resolve.fallback = {
         ...config.resolve.fallback,
         canvas: false
       };
       
-      // Properly handle Konva's Node.js specific imports
       config.resolve.alias = {
         ...config.resolve.alias,
         'konva/lib/index-node.js': false,
@@ -21,7 +19,6 @@ const nextConfig = {
       };
     }
 
-    // Externalize problematic modules for server build
     if (isServer) {
       config.externals = [...(config.externals || []), 'canvas', 'konva'];
     }
