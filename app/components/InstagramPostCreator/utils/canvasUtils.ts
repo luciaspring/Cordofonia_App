@@ -2,9 +2,7 @@ import { TextPosition, Line, Point, GroupBoundingBox } from '../types'
 
 // Font loading with proper error handling
 let fontLoaded = false
-const sulSansFont = new FontFace('SulSans-Bold', 'url(/fonts/SulSans-Bold.otf)', {
-  weight: 'bold'
-})
+const sulSansFont = new FontFace('SulSans-Bold', 'url(/fonts/SulSans-Bold.otf)')
 
 // Load font and set up error handling
 sulSansFont.load().then((font) => {
@@ -118,7 +116,7 @@ export function drawCanvas(
       ctx.save()
       ctx.translate(x + pos1.width / 2, y + pos1.height / 2)
       ctx.rotate(rotation)
-      ctx.font = fontLoaded ? `${pos1.fontSize}px "SulSans-Bold"` : `bold ${pos1.fontSize}px sans-serif`
+      ctx.font = `${pos1.fontSize}px "SulSans-Bold"`
       ctx.fillText(title, -pos1.width / 2, -pos1.height / 2)
       ctx.restore()
     })
@@ -133,7 +131,7 @@ export function drawCanvas(
     ctx.save()
     ctx.translate(subX + subPos1.width / 2, subY + subPos1.height / 2)
     ctx.rotate(subRotation)
-    ctx.font = `${subPos1.fontSize}px sans-serif`
+    ctx.font = `${subPos1.fontSize}px "SulSans-Bold"`
     ctx.fillText(state.subtitle, -subPos1.width / 2, -subPos1.height / 2)
     ctx.restore()
   }
