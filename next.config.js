@@ -11,6 +11,11 @@ const nextConfig = {
         ...config.resolve.fallback,
         canvas: false,
       };
+      // Add alias for the problematic node-specific Konva file
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        'konva/lib/index-node.js': false,
+      };
     }
     return config;
   },
