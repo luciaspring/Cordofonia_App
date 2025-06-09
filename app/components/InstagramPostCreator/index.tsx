@@ -1,55 +1,12 @@
-// app/components/InstagramPostCreator.tsx
-'use client'
-
 import React, { useState, useRef, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
-import { PlayIcon, PauseIcon, RotateCcwIcon, ShareIcon, Settings } from 'lucide-react'
+import { PlayIcon, PauseIcon, RotateCcwIcon, Settings, ShareIcon } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-
-// ─── TYPES & INTERFACES ─────────────────────────────────────────────────────────
-
-interface Point {
-  x: number
-  y: number
-}
-
-interface Line {
-  start: Point
-  end: Point
-  frame: number
-}
-
-interface TextPosition {
-  x: number
-  y: number
-  width: number
-  height: number
-  rotation: number
-  fontSize: number
-  aspectRatio?: number
-}
-
-interface GroupBoundingBox {
-  x: number
-  y: number
-  width: number
-  height: number
-  rotation: number
-}
-
-interface RigidBoundingBox {
-  x: number
-  y: number
-  width: number
-  height: number
-  rotation: number
-  centerX: number
-  centerY: number
-}
+import { Point, Line, TextPosition, GroupBoundingBox } from './types'
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────────
 
@@ -667,6 +624,7 @@ export default function InstagramPostCreator() {
         ...prev,
         x: prev.x + dx,
         y: prev.y + dy
+      
       }))
     } else {
       setTitlePositionsFrame2(prev => {

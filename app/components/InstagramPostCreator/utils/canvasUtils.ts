@@ -161,8 +161,8 @@ export function drawCanvas(
   state.lines.forEach(line => {
     if (line.frame === state.currentFrame) {
       ctx.beginPath()
-      ctx.moveTo(line.points[0].x, line.points[0].y)
-      ctx.lineTo(line.points[1].x, line.points[1].y)
+      ctx.moveTo(line.start.x, line.start.y)
+      ctx.lineTo(line.end.x, line.end.y)
       ctx.stroke()
     }
   })

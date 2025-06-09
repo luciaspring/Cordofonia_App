@@ -6,15 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
-import {
-  PlayIcon,
-  PauseIcon,
-  RotateCcwIcon,
-  ArrowUturnLeft,
-  Settings,
-  ShareIcon
-} from 'lucide-react'
+import { PlayIcon, PauseIcon, RotateCcwIcon, ShareIcon, Settings } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 // ─── TYPES & INTERFACES ─────────────────────────────────────────────────────────
 
@@ -47,6 +41,16 @@ interface GroupBoundingBox {
   rotation: number
 }
 
+interface RigidBoundingBox {
+  x: number
+  y: number
+  width: number
+  height: number
+  rotation: number
+  centerX: number
+  centerY: number
+}
+
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────────
 
 const colorOptions = [
@@ -61,15 +65,16 @@ const colorOptions = [
 
 // Preset maximums
 const MAX_LINE_THICKNESS = 10
+const MIN_LINE_THICKNESS = 1
 const MIN_FRAME_RATE = 10
 const BASE_FPS = 60
 
-// Ease-in/out Quint, with adjustable “power”
-const easeInOutQuint = (t: number, power: number): number => {
+// Ease In-Out Quint easing function (piecewise)
+const easeInOutQuint = (t: number): number => {
   if (t < 0.5) {
-    return 0.5 * Math.pow(2 * t, power)
+    return 16 * Math.pow(t, 5)
   } else {
-    return 1 - 0.5 * Math.pow(2 * (1 - t), power)
+    return 1 - Math.pow(-2 * t + 2, 5) / 2
   }
 }
 
@@ -91,16 +96,14 @@ export default function InstagramPostCreator() {
     { x: 40, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 },
     { x: 40, y: 550, width: 1000, height: 200, rotation: 0, fontSize: 180 }
   ])
+
   const [titlePositionsFrame2, setTitlePositionsFrame2] = useState<TextPosition[]>([
     { x: 40, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 },
     { x: 40, y: 550, width: 1000, height: 200, rotation: 0, fontSize: 180 }
   ])
-  const [subtitlePositionFrame1, setSubtitlePositionFrame1] = useState<TextPosition>({
-    x: 40, y: 1000, width: 1000, height: 30, rotation: 0, fontSize: 36
-  })
-  const [subtitlePositionFrame2, setSubtitlePositionFrame2] = useState<TextPosition>({
-    x: 40, y: 1000, width: 1000, height: 30, rotation: 0, fontSize: 36
-  })
+
+  const [subtitlePositionFrame1, setSubtitlePositionFrame1] = useState<TextPosition>({ x: 40, y: 1000, width: 1000, height: 30, rotation: 0, fontSize: 36 })
+  const [subtitlePositionFrame2, setSubtitlePositionFrame2] = useState<TextPosition>({ x: 40, y: 1000, width: 1000, height: 30, rotation: 0, fontSize: 36 })
 
   const [selectedTexts, setSelectedTexts] = useState<('title1' | 'title2' | 'subtitle')[]>([])
   const [resizeHandle, setResizeHandle] = useState<string | null>(null)
@@ -110,12 +113,11 @@ export default function InstagramPostCreator() {
   const [editingPosition, setEditingPosition] = useState<TextPosition | null>(null)
   const [editingBaseFontSize, setEditingBaseFontSize] = useState<number | null>(null)
 
-  // Preset values for animation controls:
-  const [lineThickness, setLineThickness] = useState<number>(MAX_LINE_THICKNESS)  // 10
-  const [tremblingIntensity, setTremblingIntensity] = useState<number>(3)       // 3
-  const [frameRate, setFrameRate] = useState<number>(MIN_FRAME_RATE)            // 10
-  const [baseFps, setBaseFps] = useState<number>(35)                            // 35
-  const [easePower, setEasePower] = useState<number>(6)                         // default 6
+  // Preset values for animation controls
+  const [lineThickness, setLineThickness] = useState<number>(MAX_LINE_THICKNESS)       // 10
+  const [tremblingIntensity, setTremblingIntensity] = useState<number>(3)             // preset at 3
+  const [frameRate, setFrameRate] = useState<number>(MIN_FRAME_RATE)                   // preset at 10
+  const [baseFps, setBaseFps] = useState<number>(35)                                   // preset at 35
 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [groupRotation, setGroupRotation] = useState(0)
@@ -123,6 +125,13 @@ export default function InstagramPostCreator() {
   const [isResizing, setIsResizing] = useState(false)
   const [resizeStartPosition, setResizeStartPosition] = useState<Point | null>(null)
 
+  const [initialGroupState, setInitialGroupState] = useState<{
+    box: GroupBoundingBox
+    centerX: number
+    centerY: number
+  } | null>(null)
+
+  // Ref's for animation and mouse tracking
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<number | null>(null)
   const startTimeRef = useRef<number | null>(null)
@@ -163,8 +172,7 @@ export default function InstagramPostCreator() {
     lines,
     lineThickness,
     tremblingIntensity,
-    frameRate,
-    easePower
+    frameRate
   ])
 
   useEffect(() => {
@@ -188,13 +196,10 @@ export default function InstagramPostCreator() {
       const metrics = ctx.measureText(text)
       return {
         width: metrics.width,
-        height:
-          metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent ||
-          fontSize * 0.8
+        height: metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent || fontSize * 0.8
       }
     }
 
-    // Re-calc title widths/heights for frame 1 & 2
     setTitlePositionsFrame1(prev =>
       prev.map((pos, i) => {
         const { width, height } = measureText(titles[i], pos.fontSize)
@@ -209,7 +214,6 @@ export default function InstagramPostCreator() {
         return { ...pos, width, height, aspectRatio }
       })
     )
-    // Re-calc subtitle width/height for both frames
     const { width: sw, height: sh } = measureText(subtitle, subtitlePositionFrame2.fontSize)
     const subAR = sw / sh
     setSubtitlePositionFrame1(prev => ({ ...prev, width: sw, height: sh, aspectRatio: subAR }))
@@ -223,7 +227,6 @@ export default function InstagramPostCreator() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    // fill background
     ctx.fillStyle = backgroundColor
     ctx.fillRect(0, 0, canvas.width, canvas.height)
 
@@ -253,12 +256,10 @@ export default function InstagramPostCreator() {
       return
     }
 
-    // Static‐mode: draw only the current frame
     const framelines = lines.filter(l => l.frame === currentFrame)
     drawLines(ctx, framelines)
     drawStaticText(ctx, currentFrame)
 
-    // If Frame 2 & text selected, draw bounding‐boxes
     if (currentFrame === 2 && selectedTexts.length > 0) {
       const groupBox = calculateGroupBoundingBox()
       if (groupBox) {
@@ -281,7 +282,7 @@ export default function InstagramPostCreator() {
     const positions = frame === 1 ? titlePositionsFrame1 : titlePositionsFrame2
     const subPos = frame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
 
-    // Titles tremble + draw
+    // Draw titles with random tremble
     positions.forEach((pos, idx) => {
       const tremX = (Math.random() - 0.5) * tremblingIntensity
       const tremY = (Math.random() - 0.5) * tremblingIntensity
@@ -296,7 +297,7 @@ export default function InstagramPostCreator() {
       ctx.restore()
     })
 
-    // Subtitle tremble + draw
+    // Draw subtitle with random tremble
     const tremXsub = (Math.random() - 0.5) * tremblingIntensity
     const tremYsub = (Math.random() - 0.5) * tremblingIntensity
     ctx.save()
@@ -307,6 +308,18 @@ export default function InstagramPostCreator() {
     ctx.textBaseline = 'middle'
     ctx.textAlign = 'center'
     ctx.fillText(subtitle, 0, 0)
+    ctx.restore()
+  }
+
+  const drawRotatedText = (ctx: CanvasRenderingContext2D, pos: TextPosition, text: string) => {
+    ctx.save()
+    ctx.translate(pos.x + pos.width / 2, pos.y + pos.height / 2)
+    ctx.rotate(pos.rotation)
+    ctx.font = `bold ${pos.fontSize}px Arial`
+    ctx.fillStyle = getContrastColor(backgroundColor)
+    ctx.textBaseline = 'middle'
+    ctx.textAlign = 'center'
+    ctx.fillText(text, 0, 0)
     ctx.restore()
   }
 
@@ -348,7 +361,7 @@ export default function InstagramPostCreator() {
       const adjustedStagger = linesArr.length > 1 ? maxStaggerDelay / (linesArr.length - 1) : 0
       linesArr.forEach((ln, idx) => {
         let t = Math.max(0, Math.min(1, (fgProgress - idx * adjustedStagger) / animationDuration))
-        t = easeInOutQuint(t, easePower)
+        t = easeInOutQuint(t)
         const { start, end } = ln
         const currentEnd = {
           x: start.x + (end.x - start.x) * (animationType === 'grow' ? t : 1 - t),
@@ -377,9 +390,9 @@ export default function InstagramPostCreator() {
       rotation: interpolate(p1.rotation, p2.rotation, t),
       fontSize: interpolate(p1.fontSize, p2.fontSize, t)
     })
-    const t = easeInOutQuint(progress, easePower)
+    const t = easeInOutQuint(progress)
 
-    // Draw titles
+    // Draw titles with trembling
     titles.forEach((text, idx) => {
       const pos1 = fromFrame === 1 ? titlePositionsFrame1[idx] : titlePositionsFrame2[idx]
       const pos2 = toFrame === 1 ? titlePositionsFrame1[idx] : titlePositionsFrame2[idx]
@@ -398,7 +411,7 @@ export default function InstagramPostCreator() {
       ctx.restore()
     })
 
-    // Draw subtitle
+    // Draw subtitle with trembling
     const sub1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
     const sub2 = toFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
     const midSub = interpolatePos(sub1, sub2, t)
@@ -479,13 +492,12 @@ export default function InstagramPostCreator() {
   // ─── BOUNDING BOX CALCULATORS ───────────────────────────────────────────────────
   const calculateGroupBoundingBox = (): GroupBoundingBox | null => {
     if (selectedTexts.length === 0) return null
-    const selectedPositions: TextPosition[] = titlePositionsFrame2.filter((_, idx) =>
-      selectedTexts.includes(`title${idx + 1}` as 'title1' | 'title2')
-    )
+    const selectedPositions: TextPosition[] = titlePositionsFrame2
+      .filter((_, idx) => selectedTexts.includes(`title${idx + 1}` as 'title1' | 'title2'))
     if (selectedTexts.includes('subtitle')) {
       selectedPositions.push(subtitlePositionFrame2)
     }
-    if (selectedPositions.length === 0) return null
+    if (!selectedPositions.length) return null
 
     let minX = Math.min(...selectedPositions.map(p => p.x))
     let minY = Math.min(...selectedPositions.map(p => p.y))
@@ -563,7 +575,8 @@ export default function InstagramPostCreator() {
       const yi = box[i].y
       const xj = box[j].x
       const yj = box[j].y
-      const intersect = (yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi
+      const intersect = (yi > y) !== (yj > y) &&
+        x < ((xj - xi) * (y - yi)) / (yj - yi) + xi
       if (intersect) inside = !inside
     }
     return inside
@@ -605,7 +618,11 @@ export default function InstagramPostCreator() {
     })
   }
 
-  const isPointNear = (point: Point, target: Point | Line, threshold = 10): boolean => {
+  const isPointNear = (
+    point: Point,
+    target: Point | Line,
+    threshold = 10
+  ): boolean => {
     if ('x' in target && 'y' in target) {
       const dx = point.x - target.x
       const dy = point.y - target.y
@@ -650,6 +667,7 @@ export default function InstagramPostCreator() {
         ...prev,
         x: prev.x + dx,
         y: prev.y + dy
+      
       }))
     } else {
       setTitlePositionsFrame2(prev => {
@@ -671,10 +689,9 @@ export default function InstagramPostCreator() {
     const dx = x - lastMousePosition.current.x
     const dy = y - lastMousePosition.current.y
     setTitlePositionsFrame2(prev =>
-      prev.map((pos, idx) =>
-        selectedTexts.includes(`title${idx + 1}` as 'title1' | 'title2')
-          ? { ...pos, x: pos.x + dx, y: pos.y + dy }
-          : pos
+      prev.map((pos, idx) => selectedTexts.includes(`title${idx + 1}` as 'title1' | 'title2')
+        ? { ...pos, x: pos.x + dx, y: pos.y + dy }
+        : pos
       )
     )
     if (selectedTexts.includes('subtitle')) {
@@ -826,7 +843,12 @@ export default function InstagramPostCreator() {
     lastMousePosition.current = { x, y }
   }
 
-  const rotateAroundPoint = (pos: TextPosition, cx: number, cy: number, angle: number): TextPosition => {
+  const rotateAroundPoint = (
+    pos: TextPosition,
+    cx: number,
+    cy: number,
+    angle: number
+  ): TextPosition => {
     const dx = pos.x + pos.width / 2 - cx
     const dy = pos.y + pos.height / 2 - cy
     const dist = Math.hypot(dx, dy)
@@ -949,13 +971,13 @@ export default function InstagramPostCreator() {
     drawCanvas()
   }
 
-  // Double‐click opens “Edit Position” modal
+  // Capture base font size when opening modal
   const handleTextDoubleClick = (pos: TextPosition) => {
     setEditingPosition(pos)
     setEditingBaseFontSize(pos.fontSize)
   }
 
-  // Select, drag, resize, rotate logic
+  // Update handleTextInteraction to use new double click handler
   const handleTextInteraction = (
     position: TextPosition,
     textType: 'title1' | 'title2' | 'subtitle',
@@ -1017,14 +1039,9 @@ export default function InstagramPostCreator() {
 
   const updateCursor = (canvas: HTMLCanvasElement, x: number, y: number) => {
     const groupBox = calculateGroupBoundingBox()
-    if (
-      groupBox &&
-      currentFrame === 2 &&
-      isPointInRotatedBox(x, y, getRotatedGroupBoundingBox(groupBox))
-    ) {
+    if (groupBox && currentFrame === 2 && isPointInRotatedBox(x, y, getRotatedGroupBoundingBox(groupBox))) {
       if (isPointNearRotationArea(x, y, groupBox)) {
-        canvas.style.cursor =
-          'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16.8\' height=\'16.8\' viewBox=\'0 0 24 24\' fill=\'none\'%3E%3Cg stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M20.49 15a9 9 0 1 1-2.12-9.36L23 10\' stroke=\'%23FFFFFF\' stroke-width=\'4.8\'/%3E%3Cpath d=\'M20.49 15a9 9 0 1 1-2.12-9.36L23 10\' stroke=\'%23000000\' stroke-width=\'2.4\'/%3E%3Cpolyline points=\'23 4 23 10 17 10\' stroke=\'%23FFFFFF\' stroke-width=\'4.8\'/%3E%3Cpolyline points=\'23 4 23 10 17 10\' stroke=\'%23000000\' stroke-width=\'2.4\'/%3E%3C/g%3E%3C/svg%3E") 8 8, auto'
+        canvas.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16.8\' height=\'16.8\' viewBox=\'0 0 24 24\' fill=\'none\'%3E%3Cg stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M20.49 15a9 9 0 1 1-2.12-9.36L23 10\' stroke=\'%23FFFFFF\' stroke-width=\'4.8\'/%3E%3Cpath d=\'M20.49 15a9 9 0 1 1-2.12-9.36L23 10\' stroke=\'%23000000\' stroke-width=\'2.4\'/%3E%3Cpolyline points=\'23 4 23 10 17 10\' stroke=\'%23FFFFFF\' stroke-width=\'4.8\'/%3E%3Cpolyline points=\'23 4 23 10 17 10\' stroke=\'%23000000\' stroke-width=\'2.4\'/%3E%3C/g%3E%3C/svg%3E") 8 8, auto'
         return
       }
       const handle = getResizeHandle(x, y, groupBox)
@@ -1036,18 +1053,16 @@ export default function InstagramPostCreator() {
       return
     }
 
-    const positions =
-      currentFrame === 1
-        ? [titlePositionsFrame1[0], titlePositionsFrame1[1], subtitlePositionFrame1]
-        : [titlePositionsFrame2[0], titlePositionsFrame2[1], subtitlePositionFrame2]
+    const positions = currentFrame === 1
+      ? [titlePositionsFrame1[0], titlePositionsFrame1[1], subtitlePositionFrame1]
+      : [titlePositionsFrame2[0], titlePositionsFrame2[1], subtitlePositionFrame2]
 
     for (let i = 0; i < positions.length; i++) {
       const pos = positions[i]
       if (isPointInRotatedBox(x, y, getRotatedBoundingBox(pos))) {
         if (currentFrame === 2) {
           if (isPointNearRotationArea(x, y, pos)) {
-            canvas.style.cursor =
-              'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16.8\' height=\'16.8\' viewBox=\'0 0 24 24\' fill=\'none\'%3E%3Cg stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M20.49 15a9 9 0 1 1-2.12-9.36L23 10\' stroke=\'%23FFFFFF\' stroke-width=\'4.8\'/%3E%3Cpath d=\'M20.49 15a9 9 0 1 1-2.12-9.36L23 10\' stroke=\'%23000000\' stroke-width=\'2.4\'/%3E%3Cpolyline points=\'23 4 23 10 17 10\' stroke=\'%23FFFFFF\' stroke-width=\'4.8\'/%3E%3Cpolyline points=\'23 4 23 10 17 10\' stroke=\'%23000000\' stroke-width=\'2.4\'/%3E%3C/g%3E%3C/svg%3E") 8 8, auto'
+            canvas.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16.8\' height=\'16.8\' viewBox=\'0 0 24 24\' fill=\'none\'%3E%3Cg stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M20.49 15a9 9 0 1 1-2.12-9.36L23 10\' stroke=\'%23FFFFFF\' stroke-width=\'4.8\'/%3E%3Cpath d=\'M20.49 15a9 9 0 1 1-2.12-9.36L23 10\' stroke=\'%23000000\' stroke-width=\'2.4\'/%3E%3Cpolyline points=\'23 4 23 10 17 10\' stroke=\'%23FFFFFF\' stroke-width=\'4.8\'/%3E%3Cpolyline points=\'23 4 23 10 17 10\' stroke=\'%23000000\' stroke-width=\'2.4\'/%3E%3C/g%3E%3C/svg%3E") 8 8, auto'
             return
           }
           const handle = getResizeHandle(x, y, pos)
@@ -1069,9 +1084,9 @@ export default function InstagramPostCreator() {
     if (!startTimeRef.current) startTimeRef.current = timestamp
     const elapsed = timestamp - startTimeRef.current
 
-    // Use baseFps for timing
+    // Use baseFps for internal timing
     const msPerBaseFrame = 1000 / baseFps
-    const normalized = elapsed / (msPerBaseFrame * 150) // same cycle length
+    const normalized = elapsed / (msPerBaseFrame * 150) // same cycle length as before
     let progress = normalized
     if (progress > 1.4) {
       if (isLooping) {
@@ -1083,15 +1098,17 @@ export default function InstagramPostCreator() {
       }
     }
 
-    // Throttle updates to “frameRate”
+    // Throttle visible updates to mimic stop-motion
     if (timestamp - lastDisplayTimeRef.current >= 1000 / frameRate) {
       drawCanvas(progress)
       lastDisplayTimeRef.current = timestamp
     }
 
+    // Always continue bouncing the loop, even if not currently drawing
     if (isPlaying || isLooping) {
       animationRef.current = requestAnimationFrame(animate)
     } else {
+      // Ensure final static frame draws once
       drawCanvas()
     }
   }
@@ -1102,6 +1119,7 @@ export default function InstagramPostCreator() {
     setSelectedTexts([])
     drawCanvas()
   }
+
   const togglePlay = () => setIsPlaying(prev => !prev)
   const toggleLoop = () => setIsLooping(prev => !prev)
 
@@ -1134,9 +1152,7 @@ export default function InstagramPostCreator() {
         break
       case 'frameRate':
         setFrameRate(val)
-        break
-      case 'easePower':
-        setEasePower(val)
+        // Throttling happening inside animate; no need to restart loop
         break
     }
     drawCanvas()
@@ -1153,74 +1169,46 @@ export default function InstagramPostCreator() {
 
   // ─── JSX ────────────────────────────────────────────────────────────────────────
   return (
-    <div className="bg-gray-50 p-8 rounded-xl shadow-lg">
-      <h1 className="text-2xl font-bold mb-6">
-        Cordofonia Instagram Posts Creator Tool
-      </h1>
-      <div className="flex space-x-8">
-        {/* LEFT PANEL: Inputs & Color Picker */}
-        <div className="w-[300px] bg-white p-6 rounded-lg shadow-sm">
-          {/* 1. Write a title */}
-          <div className="mb-6">
-            <div className="flex items-baseline space-x-1">
-              <span className="text-gray-500 font-medium">1.</span>
-              <Label htmlFor="title1" className="text-gray-700 font-medium">
-                Write a title
-              </Label>
-            </div>
-            <div className="mt-2 space-y-3">
-              <Input
-                id="title1"
-                value={titles[0]}
-                onChange={e => setTitles([e.target.value, titles[1]])}
-                className="w-full bg-gray-100 border border-gray-200 text-gray-800 rounded-lg px-3 py-2"
-                placeholder="John"
-              />
-              <Input
-                id="title2"
-                value={titles[1]}
-                onChange={e => setTitles([titles[0], e.target.value])}
-                className="w-full bg-gray-100 border border-gray-200 text-gray-800 rounded-lg px-3 py-2"
-                placeholder="Doe"
-              />
-            </div>
-          </div>
-
-          {/* 2. Write the instrument */}
-          <div className="mb-6">
-            <div className="flex items-baseline space-x-1">
-              <span className="text-gray-500 font-medium">2.</span>
-              <Label htmlFor="subtitle" className="text-gray-700 font-medium">
-                Write the instrument
-              </Label>
-            </div>
-            <div className="mt-2">
-              <Input
-                id="subtitle"
-                value={subtitle.replace(/^Instrumento:\s*/, '')}
-                onChange={e => setSubtitle(`Instrumento: ${e.target.value}`)}
-                className="w-full bg-gray-100 border border-gray-200 text-gray-800 rounded-lg px-3 py-2"
-                placeholder="Kora"
-              />
-            </div>
-          </div>
-
-          {/* 3. Pick a Color */}
+    <div className="bg-gray-100 p-6">
+      <h1 className="text-2xl font-bold mb-6">Instagram Post Creator</h1>
+      <div className="flex space-x-6">
+        {/* ─── LEFT PANEL: Text Inputs & Color Picker */}
+        <div className="w-[300px] space-y-5">
           <div>
-            <div className="flex items-baseline space-x-1">
-              <span className="text-gray-500 font-medium">3.</span>
-              <Label className="text-gray-700 font-medium">Pick a Color</Label>
-            </div>
-            <div className="mt-3 flex space-x-3">
+            <Label htmlFor="title1" className="text-sm text-gray-600">Title 1</Label>
+            <Input
+              id="title1"
+              value={titles[0]}
+              onChange={e => setTitles([e.target.value, titles[1]])}
+              className="mt-1 bg-white rounded text-lg h-10"
+            />
+          </div>
+          <div>
+            <Label htmlFor="title2" className="text-sm text-gray-600">Title 2</Label>
+            <Input
+              id="title2"
+              value={titles[1]}
+              onChange={e => setTitles([titles[0], e.target.value])}
+              className="mt-1 bg-white rounded text-lg h-10"
+            />
+          </div>
+          <div>
+            <Label htmlFor="subtitle" className="text-sm text-gray-600">Subtitle</Label>
+            <Input
+              id="subtitle"
+              value={subtitle}
+              onChange={e => setSubtitle(e.target.value)}
+              className="mt-1 bg-white rounded text-lg h-10"
+            />
+          </div>
+          <div>
+            <Label className="text-sm text-gray-600">Background Color</Label>
+            <div className="flex flex-wrap gap-2 mt-2">
               {colorOptions.map(c => (
                 <button
                   key={c.value}
                   onClick={() => setBackgroundColor(c.value)}
-                  className={`
-                    w-8 h-8 rounded-full 
-                    ${backgroundColor === c.value ? 'ring-2 ring-black' : 'border border-gray-200'}
-                    focus:outline-none
-                  `}
+                  className="w-8 h-8 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   style={{ backgroundColor: c.value }}
                   aria-label={c.name}
                 />
@@ -1229,12 +1217,11 @@ export default function InstagramPostCreator() {
           </div>
         </div>
 
-        {/* RIGHT PANEL: Canvas & Controls */}
-        <div className="flex-1 flex flex-col bg-white p-6 rounded-lg shadow-sm">
-          {/* Canvas (fixed 1080×1350) */}
+        {/* ─── RIGHT PANEL: Canvas & Controls */}
+        <div className="w-[600px] flex flex-col">
           <div
-            className="relative bg-white rounded-lg overflow-hidden border border-gray-200"
-            style={{ width: '540px', height: '675px' }}
+            className="w-[540px] h-[675px] bg-white rounded-lg shadow-lg mb-4 relative overflow-hidden"
+            style={{ backgroundColor }}
           >
             <canvas
               ref={canvasRef}
@@ -1247,67 +1234,33 @@ export default function InstagramPostCreator() {
               onMouseLeave={handleMouseUp}
             />
           </div>
-
-          {/* Bottom Controls */}
-          <div className="mt-6 bg-gray-100 p-4 rounded-b-lg flex items-center justify-between">
-            <div className="flex space-x-3">
-              <Button
-                variant={currentFrame === 1 ? 'default' : 'outline'}
-                onClick={() => handleFrameChange(1)}
-                className="px-6 py-2 font-medium rounded-lg"
-              >
-                Frame 1
-              </Button>
-              <Button
-                variant={currentFrame === 2 ? 'default' : 'outline'}
-                onClick={() => handleFrameChange(2)}
-                className="px-6 py-2 font-medium rounded-lg"
-              >
-                Frame 2
-              </Button>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={togglePlay}
-                className="bg-black hover:bg-gray-800 text-white rounded-full p-3 focus:outline-none shadow"
-              >
-                {isPlaying ? (
-                  <PauseIcon className="w-5 h-5" />
-                ) : (
-                  <PlayIcon className="w-5 h-5" />
-                )}
-              </button>
-              <button
-                onClick={() => {
-                  setIsPlaying(false)
-                  setIsLooping(false)
-                  drawCanvas()
-                }}
-                className="bg-gray-200 hover:bg-gray-300 rounded-full p-3 focus:outline-none shadow"
-              >
-                <ArrowUturnLeft className="w-5 h-5 text-gray-700" />
-              </button>
-              <button
-                onClick={toggleLoop}
-                className={`rounded-full p-3 focus:outline-none shadow ${
-                  isLooping ? 'bg-black text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-                }`}
-              >
-                <RotateCcwIcon className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => setSettingsOpen(true)}
-                className="bg-gray-200 hover:bg-gray-300 rounded-full p-3 focus:outline-none shadow"
-              >
-                <Settings className="w-5 h-5 text-gray-700" />
-              </button>
-              <button
-                onClick={() => console.log('Export not implemented')}
-                className="bg-gray-200 hover:bg-gray-300 rounded-full p-3 focus:outline-none shadow"
-              >
-                <ShareIcon className="w-5 h-5 text-gray-700" />
-              </button>
-            </div>
+          <div className="flex space-x-2 w-[540px]">
+            <Button
+              variant={currentFrame === 1 ? "default" : "outline"}
+              onClick={() => handleFrameChange(1)}
+              className="flex-1 h-[40px] rounded"
+            >
+              Frame 1
+            </Button>
+            <Button
+              variant={currentFrame === 2 ? "default" : "outline"}
+              onClick={() => handleFrameChange(2)}
+              className="flex-1 h-[40px] rounded"
+            >
+              Frame 2
+            </Button>
+            <Button onClick={togglePlay} className="w-[40px] h-[40px] p-0 rounded-full bg-black">
+              {isPlaying ? <PauseIcon className="h-5 w-5 text-white" /> : <PlayIcon className="h-5 w-5 text-white" />}
+            </Button>
+            <Button onClick={toggleLoop} className={`w-[40px] h-[40px] p-0 rounded bg-black ${isLooping ? 'ring-2 ring-blue-500' : ''}`}>
+              <RotateCcwIcon className="h-5 w-5 text-white" />
+            </Button>
+            <Button onClick={() => setSettingsOpen(true)} className="w-[40px] h-[40px] p-0 rounded bg-black">
+              <Settings className="h-5 w-5 text-white" />
+            </Button>
+            <Button onClick={() => console.log("Export functionality not implemented")} className="w-[40px] h-[40px] p-0 rounded bg-black">
+              <ShareIcon className="h-5 w-5 text-white" />
+            </Button>
           </div>
         </div>
       </div>
@@ -1319,56 +1272,36 @@ export default function InstagramPostCreator() {
             <DialogTitle>Edit Position</DialogTitle>
           </DialogHeader>
           {editingPosition && editingBaseFontSize !== null && (
-            <div className="space-y-4 p-4">
+            <div className="space-y-4">
               <div>
-                <Label htmlFor="xPos" className="block text-gray-700">
-                  X Position
-                </Label>
+                <Label htmlFor="xPos">X Position</Label>
                 <Input
                   id="xPos"
                   type="number"
                   value={editingPosition.x}
-                  onChange={e =>
-                    setEditingPosition({ ...editingPosition, x: Number(e.target.value) })
-                  }
-                  className="mt-1 w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2"
+                  onChange={e => setEditingPosition({ ...editingPosition, x: Number(e.target.value) })}
                 />
               </div>
               <div>
-                <Label htmlFor="yPos" className="block text-gray-700">
-                  Y Position
-                </Label>
+                <Label htmlFor="yPos">Y Position</Label>
                 <Input
                   id="yPos"
                   type="number"
                   value={editingPosition.y}
-                  onChange={e =>
-                    setEditingPosition({ ...editingPosition, y: Number(e.target.value) })
-                  }
-                  className="mt-1 w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2"
+                  onChange={e => setEditingPosition({ ...editingPosition, y: Number(e.target.value) })}
                 />
               </div>
               <div>
-                <Label htmlFor="rotation" className="block text-gray-700">
-                  Rotation (degrees)
-                </Label>
+                <Label htmlFor="rotation">Rotation (degrees)</Label>
                 <Input
                   id="rotation"
                   type="number"
                   value={editingPosition.rotation * (180 / Math.PI)}
-                  onChange={e =>
-                    setEditingPosition({
-                      ...editingPosition,
-                      rotation: Number(e.target.value) * (Math.PI / 180)
-                    })
-                  }
-                  className="mt-1 w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2"
+                  onChange={e => setEditingPosition({ ...editingPosition, rotation: Number(e.target.value) * (Math.PI / 180) })}
                 />
               </div>
               <div>
-                <Label htmlFor="scale" className="block text-gray-700">
-                  Scale (%)
-                </Label>
+                <Label htmlFor="scale">Scale (%)</Label>
                 <Input
                   id="scale"
                   type="number"
@@ -1380,12 +1313,9 @@ export default function InstagramPostCreator() {
                       fontSize: editingBaseFontSize * scale
                     })
                   }}
-                  className="mt-1 w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2"
                 />
               </div>
-              <Button onClick={() => updatePosition(editingPosition)} className="mt-4 w-full">
-                Update
-              </Button>
+              <Button onClick={() => updatePosition(editingPosition)}>Update</Button>
             </div>
           )}
         </DialogContent>
@@ -1397,44 +1327,32 @@ export default function InstagramPostCreator() {
           <DialogHeader>
             <DialogTitle>Settings</DialogTitle>
           </DialogHeader>
-          <div className="space-y-6 p-4">
-            {/* Line Thickness */}
+          <div className="space-y-4">
             <div>
-              <Label htmlFor="thicknessSlider" className="block text-gray-700">
-                Line Thickness (max 10)
-              </Label>
+              <Label htmlFor="thicknessSlider">Line Thickness (max 10)</Label>
               <Slider
                 id="thicknessSlider"
                 min={1}
                 max={10}
                 step={1}
                 value={[lineThickness]}
-                onValueChange={([v]) => handleSettingsChange('lineThickness', v)}
-                className="mt-2 w-full"
+                onValueChange={value => handleSettingsChange('lineThickness', value[0])}
               />
             </div>
-
-            {/* Trembling Intensity */}
             <div>
-              <Label htmlFor="trembleSlider" className="block text-gray-700">
-                Trembling Intensity
-              </Label>
+              <Label htmlFor="trembleSlider">Trembling Intensity (0-10)</Label>
               <Slider
                 id="trembleSlider"
                 min={0}
                 max={10}
                 step={1}
                 value={[tremblingIntensity]}
-                onValueChange={([v]) => handleSettingsChange('tremblingIntensity', v)}
-                className="mt-2 w-full"
+                onValueChange={value => handleSettingsChange('tremblingIntensity', value[0])}
               />
+              <div className="text-sm text-gray-500 mt-1">Current: {tremblingIntensity}</div>
             </div>
-
-            {/* Base FPS */}
             <div>
-              <Label htmlFor="baseFpsSlider" className="block text-gray-700">
-                Animation Speed (Base FPS: {baseFps})
-              </Label>
+              <Label htmlFor="baseFpsSlider">Animation Speed (Base FPS: {baseFps})</Label>
               <Slider
                 id="baseFpsSlider"
                 min={10}
@@ -1443,41 +1361,24 @@ export default function InstagramPostCreator() {
                 value={[baseFps]}
                 onValueChange={([v]) => {
                   const num = Number(v)
-                  if (!isNaN(num)) handleSettingsChange('baseFps', num)
+                  if (!isNaN(num)) setBaseFps(num)
                 }}
-                className="mt-2 w-full"
               />
             </div>
-
-            {/* Frame Rate */}
             <div>
-              <Label htmlFor="frameRateSlider" className="block text-gray-700">
-                Frame Rate ({MIN_FRAME_RATE}–120)
-              </Label>
+              <Label htmlFor="frameRateSlider">Frame Rate ({MIN_FRAME_RATE}–120)</Label>
               <Slider
                 id="frameRateSlider"
                 min={MIN_FRAME_RATE}
                 max={120}
                 step={1}
                 value={[frameRate]}
-                onValueChange={([v]) => handleSettingsChange('frameRate', v)}
-                className="mt-2 w-full"
-              />
-            </div>
-
-            {/* Ease Power */}
-            <div>
-              <Label htmlFor="easePowerSlider" className="block text-gray-700">
-                Easing Strength (Power): {easePower}
-              </Label>
-              <Slider
-                id="easePowerSlider"
-                min={1}
-                max={20}
-                step={1}
-                value={[easePower]}
-                onValueChange={([v]) => handleSettingsChange('easePower', v)}
-                className="mt-2 w-full"
+                onValueChange={([v]) => {
+                  const num = Number(v)
+                  if (!isNaN(num)) {
+                    handleSettingsChange('frameRate', num)
+                  }
+                }}
               />
             </div>
           </div>
