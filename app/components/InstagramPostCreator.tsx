@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
+import { Switch } from "@/components/ui/switch"
 import { PlayIcon, PauseIcon, RotateCcwIcon, ShareIcon, Settings } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -84,7 +85,7 @@ export default function InstagramPostCreator() {
   // ─── STATE HOOKS ────────────────────────────────────────────────────────────────
   const [titles, setTitles] = useState<string[]>(['John', 'Doe'])
   const [subtitle, setSubtitle] = useState('Instrumento: Kora')
-  const [backgroundColor, setBackgroundColor] = useState('#E0B0FF')
+  const [backgroundColor, setBackgroundColor] = useState('#F6A69B')
   const [currentFrame, setCurrentFrame] = useState(1)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isLooping, setIsLooping] = useState(false)
@@ -93,17 +94,17 @@ export default function InstagramPostCreator() {
   const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null)
 
   const [titlePositionsFrame1, setTitlePositionsFrame1] = useState<TextPosition[]>([
-    { x: 40, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 },
-    { x: 40, y: 550, width: 1000, height: 200, rotation: 0, fontSize: 180 }
+    { x: 40, y: 100, width: 1000, height: 200, rotation: 0, fontSize: 180 },
+    { x: 40, y: 300, width: 1000, height: 200, rotation: 0, fontSize: 180 }
   ])
 
   const [titlePositionsFrame2, setTitlePositionsFrame2] = useState<TextPosition[]>([
-    { x: 40, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 },
-    { x: 40, y: 550, width: 1000, height: 200, rotation: 0, fontSize: 180 }
+    { x: 40, y: 100, width: 1000, height: 200, rotation: 0, fontSize: 180 },
+    { x: 40, y: 300, width: 1000, height: 200, rotation: 0, fontSize: 180 }
   ])
 
-  const [subtitlePositionFrame1, setSubtitlePositionFrame1] = useState<TextPosition>({ x: 40, y: 1000, width: 1000, height: 30, rotation: 0, fontSize: 36 })
-  const [subtitlePositionFrame2, setSubtitlePositionFrame2] = useState<TextPosition>({ x: 40, y: 1000, width: 1000, height: 30, rotation: 0, fontSize: 36 })
+  const [subtitlePositionFrame1, setSubtitlePositionFrame1] = useState<TextPosition>({ x: 40, y: 500, width: 1000, height: 30, rotation: 0, fontSize: 36 })
+  const [subtitlePositionFrame2, setSubtitlePositionFrame2] = useState<TextPosition>({ x: 40, y: 500, width: 1000, height: 30, rotation: 0, fontSize: 36 })
 
   const [selectedTexts, setSelectedTexts] = useState<('title1' | 'title2' | 'subtitle')[]>([])
   const [resizeHandle, setResizeHandle] = useState<string | null>(null)
@@ -114,11 +115,12 @@ export default function InstagramPostCreator() {
   const [editingBaseFontSize, setEditingBaseFontSize] = useState<number | null>(null)
 
   // Preset values for animation controls
-  const [lineThickness, setLineThickness] = useState<number>(MAX_LINE_THICKNESS)       // 10
-  const [tremblingIntensity, setTremblingIntensity] = useState<number>(3)             // preset at 3
-  const [tremblingSpeed, setTremblingSpeed] = useState<number>(30)                    // preset at 30 updates per second
-  const [frameRate, setFrameRate] = useState<number>(MIN_FRAME_RATE)                   // preset at 10
-  const [baseFps, setBaseFps] = useState<number>(35)                                   // preset at 35
+  const [lineThickness, setLineThickness] = useState<number>(MAX_LINE_THICKNESS)
+  const [tremblingIntensity, setTremblingIntensity] = useState<number>(3)
+  const [tremblingSpeed, setTremblingSpeed] = useState<number>(30)
+  const [tremblingAffectsText, setTremblingAffectsText] = useState<boolean>(true)
+  const [frameRate, setFrameRate] = useState<number>(MIN_FRAME_RATE)
+  const [baseFps, setBaseFps] = useState<number>(35)
 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [groupRotation, setGroupRotation] = useState(0)
@@ -141,7 +143,7 @@ export default function InstagramPostCreator() {
   const isShiftPressed = useRef(false)
   const lastClickTime = useRef<number>(0)
 
-  // Trembling effect refs
+  // Trembling control refs
   const trembleOffsetsRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
   const lastTrembleUpdateRef = useRef<number>(0)
 
@@ -178,6 +180,7 @@ export default function InstagramPostCreator() {
     lineThickness,
     tremblingIntensity,
     tremblingSpeed,
+    tremblingAffectsText,
     frameRate
   ])
 
@@ -194,6 +197,18 @@ export default function InstagramPostCreator() {
       if (animationRef.current) cancelAnimationFrame(animationRef.current)
     }
   }, [isPlaying, isLooping])
+
+  // ─── TREMBLING CONTROL ──────────────────────────────────────────────────────────
+  const updateTrembleOffsets = (timestamp: number) => {
+    const msPerUpdate = 1000 / tremblingSpeed
+    if (timestamp - lastTrembleUpdateRef.current >= msPerUpdate) {
+      trembleOffsetsRef.current = {
+        x: (Math.random() - 0.5) * tremblingIntensity,
+        y: (Math.random() - 0.5) * tremblingIntensity
+      }
+      lastTrembleUpdateRef.current = timestamp
+    }
+  }
 
   // ─── TEXT DIMENSION UPDATER ──────────────────────────────────────────────────────
   const updateTextDimensions = (ctx: CanvasRenderingContext2D) => {
@@ -226,29 +241,15 @@ export default function InstagramPostCreator() {
     setSubtitlePositionFrame2(prev => ({ ...prev, width: sw, height: sh, aspectRatio: subAR }))
   }
 
-  // ─── TREMBLING EFFECT UPDATER ────────────────────────────────────────────────────
-  const updateTrembleOffsets = (timestamp: number) => {
-    const trembleInterval = 1000 / tremblingSpeed // milliseconds between updates
-    if (timestamp - lastTrembleUpdateRef.current >= trembleInterval) {
-      trembleOffsetsRef.current = {
-        x: (Math.random() - 0.5) * tremblingIntensity,
-        y: (Math.random() - 0.5) * tremblingIntensity
-      }
-      lastTrembleUpdateRef.current = timestamp
-    }
-  }
-
   // ─── DRAWING ROUTINES ────────────────────────────────────────────────────────────
-  const drawCanvas = (progress: number = 0, timestamp: number = 0) => {
+  const drawCanvas = (progress: number = 0) => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    // Update trembling offsets based on speed
-    if (tremblingIntensity > 0) {
-      updateTrembleOffsets(timestamp)
-    }
+    // Update trembling offsets
+    updateTrembleOffsets(performance.now())
 
     ctx.fillStyle = backgroundColor
     ctx.fillRect(0, 0, canvas.width, canvas.height)
@@ -305,14 +306,14 @@ export default function InstagramPostCreator() {
     const positions = frame === 1 ? titlePositionsFrame1 : titlePositionsFrame2
     const subPos = frame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
 
-    // Get current trembling offsets
-    const tremX = trembleOffsetsRef.current.x
-    const tremY = trembleOffsetsRef.current.y
+    // Get trembling offsets (only if trembling affects text)
+    const textTremX = tremblingAffectsText ? trembleOffsetsRef.current.x : 0
+    const textTremY = tremblingAffectsText ? trembleOffsetsRef.current.y : 0
 
-    // Draw titles with trembling
+    // Draw titles with optional trembling
     positions.forEach((pos, idx) => {
       ctx.save()
-      ctx.translate(pos.x + pos.width / 2 + tremX, pos.y + pos.height / 2 + tremY)
+      ctx.translate(pos.x + pos.width / 2 + textTremX, pos.y + pos.height / 2 + textTremY)
       ctx.rotate(pos.rotation)
       ctx.font = `bold ${pos.fontSize}px Arial`
       ctx.fillStyle = getContrastColor(backgroundColor)
@@ -322,9 +323,9 @@ export default function InstagramPostCreator() {
       ctx.restore()
     })
 
-    // Draw subtitle with trembling
+    // Draw subtitle with optional trembling
     ctx.save()
-    ctx.translate(subPos.x + subPos.width / 2 + tremX, subPos.y + subPos.height / 2 + tremY)
+    ctx.translate(subPos.x + subPos.width / 2 + textTremX, subPos.y + subPos.height / 2 + textTremY)
     ctx.rotate(subPos.rotation)
     ctx.font = `bold ${subPos.fontSize}px Arial`
     ctx.fillStyle = getContrastColor(backgroundColor)
@@ -335,8 +336,11 @@ export default function InstagramPostCreator() {
   }
 
   const drawRotatedText = (ctx: CanvasRenderingContext2D, pos: TextPosition, text: string) => {
+    const textTremX = tremblingAffectsText ? trembleOffsetsRef.current.x : 0
+    const textTremY = tremblingAffectsText ? trembleOffsetsRef.current.y : 0
+
     ctx.save()
-    ctx.translate(pos.x + pos.width / 2, pos.y + pos.height / 2)
+    ctx.translate(pos.x + pos.width / 2 + textTremX, pos.y + pos.height / 2 + textTremY)
     ctx.rotate(pos.rotation)
     ctx.font = `bold ${pos.fontSize}px Arial`
     ctx.fillStyle = getContrastColor(backgroundColor)
@@ -352,20 +356,20 @@ export default function InstagramPostCreator() {
     ctx.lineJoin = 'round'
     ctx.strokeStyle = '#0000FF'
 
-    // Get current trembling offsets
-    const tremX = trembleOffsetsRef.current.x
-    const tremY = trembleOffsetsRef.current.y
+    // Lines always get trembling
+    const lineTremX = trembleOffsetsRef.current.x
+    const lineTremY = trembleOffsetsRef.current.y
 
     framelines.forEach(line => {
       ctx.beginPath()
-      ctx.moveTo(line.start.x + tremX, line.start.y + tremY)
-      ctx.lineTo(line.end.x + tremX, line.end.y + tremY)
+      ctx.moveTo(line.start.x + lineTremX, line.start.y + lineTremY)
+      ctx.lineTo(line.end.x + lineTremX, line.end.y + lineTremY)
       ctx.stroke()
     })
     if (currentLine) {
       ctx.beginPath()
-      ctx.moveTo(currentLine.start.x + tremX, currentLine.start.y + tremY)
-      ctx.lineTo(currentLine.end.x + tremX, currentLine.end.y + tremY)
+      ctx.moveTo(currentLine.start.x + lineTremX, currentLine.start.y + lineTremY)
+      ctx.lineTo(currentLine.end.x + lineTremX, currentLine.end.y + lineTremY)
       ctx.stroke()
     }
   }
@@ -385,9 +389,9 @@ export default function InstagramPostCreator() {
     const animationDuration = 0.3
     const maxStaggerDelay = 0.2
 
-    // Get current trembling offsets
-    const tremX = trembleOffsetsRef.current.x
-    const tremY = trembleOffsetsRef.current.y
+    // Lines always get trembling
+    const lineTremX = trembleOffsetsRef.current.x
+    const lineTremY = trembleOffsetsRef.current.y
 
     const drawFrameLines = (linesArr: Line[], fgProgress: number) => {
       const adjustedStagger = linesArr.length > 1 ? maxStaggerDelay / (linesArr.length - 1) : 0
@@ -400,8 +404,8 @@ export default function InstagramPostCreator() {
           y: start.y + (end.y - start.y) * (animationType === 'grow' ? t : 1 - t)
         }
         ctx.beginPath()
-        ctx.moveTo(start.x + tremX, start.y + tremY)
-        ctx.lineTo(currentEnd.x + tremX, currentEnd.y + tremY)
+        ctx.moveTo(start.x + lineTremX, start.y + lineTremY)
+        ctx.lineTo(currentEnd.x + lineTremX, currentEnd.y + lineTremY)
         ctx.stroke()
       })
     }
@@ -422,18 +426,18 @@ export default function InstagramPostCreator() {
     })
     const t = easeInOutQuint(progress)
 
-    // Get current trembling offsets
-    const tremX = trembleOffsetsRef.current.x
-    const tremY = trembleOffsetsRef.current.y
+    // Get trembling offsets (only if trembling affects text)
+    const textTremX = tremblingAffectsText ? trembleOffsetsRef.current.x : 0
+    const textTremY = tremblingAffectsText ? trembleOffsetsRef.current.y : 0
 
-    // Draw titles with trembling
+    // Draw titles with optional trembling
     titles.forEach((text, idx) => {
       const pos1 = fromFrame === 1 ? titlePositionsFrame1[idx] : titlePositionsFrame2[idx]
       const pos2 = toFrame === 1 ? titlePositionsFrame1[idx] : titlePositionsFrame2[idx]
       const midPos = interpolatePos(pos1, pos2, t)
 
       ctx.save()
-      ctx.translate(midPos.x + midPos.width / 2 + tremX, midPos.y + midPos.height / 2 + tremY)
+      ctx.translate(midPos.x + midPos.width / 2 + textTremX, midPos.y + midPos.height / 2 + textTremY)
       ctx.rotate(midPos.rotation)
       ctx.font = `bold ${midPos.fontSize}px Arial`
       ctx.fillStyle = getContrastColor(backgroundColor)
@@ -443,13 +447,13 @@ export default function InstagramPostCreator() {
       ctx.restore()
     })
 
-    // Draw subtitle with trembling
+    // Draw subtitle with optional trembling
     const sub1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
     const sub2 = toFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
     const midSub = interpolatePos(sub1, sub2, t)
 
     ctx.save()
-    ctx.translate(midSub.x + midSub.width / 2 + tremX, midSub.y + midSub.height / 2 + tremY)
+    ctx.translate(midSub.x + midSub.width / 2 + textTremX, midSub.y + midSub.height / 2 + textTremY)
     ctx.rotate(midSub.rotation)
     ctx.font = `bold ${midSub.fontSize}px Arial`
     ctx.fillStyle = getContrastColor(backgroundColor)
@@ -697,7 +701,6 @@ export default function InstagramPostCreator() {
         ...prev,
         x: prev.x + dx,
         y: prev.y + dy
-      
       }))
     } else {
       setTitlePositionsFrame2(prev => {
@@ -1114,9 +1117,12 @@ export default function InstagramPostCreator() {
     if (!startTimeRef.current) startTimeRef.current = timestamp
     const elapsed = timestamp - startTimeRef.current
 
+    // Update trembling offsets during animation
+    updateTrembleOffsets(timestamp)
+
     // Use baseFps for internal timing
     const msPerBaseFrame = 1000 / baseFps
-    const normalized = elapsed / (msPerBaseFrame * 150) // same cycle length as before
+    const normalized = elapsed / (msPerBaseFrame * 150)
     let progress = normalized
     if (progress > 1.4) {
       if (isLooping) {
@@ -1130,16 +1136,14 @@ export default function InstagramPostCreator() {
 
     // Throttle visible updates to mimic stop-motion
     if (timestamp - lastDisplayTimeRef.current >= 1000 / frameRate) {
-      drawCanvas(progress, timestamp)
+      drawCanvas(progress)
       lastDisplayTimeRef.current = timestamp
     }
 
-    // Always continue bouncing the loop, even if not currently drawing
     if (isPlaying || isLooping) {
       animationRef.current = requestAnimationFrame(animate)
     } else {
-      // Ensure final static frame draws once
-      drawCanvas(0, timestamp)
+      drawCanvas()
     }
   }
 
@@ -1172,19 +1176,22 @@ export default function InstagramPostCreator() {
     drawCanvas()
   }
 
-  const handleSettingsChange = (name: string, val: number) => {
+  const handleSettingsChange = (name: string, val: number | boolean) => {
     switch (name) {
       case 'lineThickness':
-        setLineThickness(val)
+        setLineThickness(val as number)
         break
       case 'tremblingIntensity':
-        setTremblingIntensity(val)
+        setTremblingIntensity(val as number)
         break
       case 'tremblingSpeed':
-        setTremblingSpeed(val)
+        setTremblingSpeed(val as number)
+        break
+      case 'tremblingAffectsText':
+        setTremblingAffectsText(val as boolean)
         break
       case 'frameRate':
-        setFrameRate(val)
+        setFrameRate(val as number)
         break
     }
     drawCanvas()
@@ -1201,110 +1208,126 @@ export default function InstagramPostCreator() {
 
   // ─── JSX ────────────────────────────────────────────────────────────────────────
   return (
-    <div className="bg-gray-100 p-6">
-      <h1 className="text-2xl font-bold mb-6">Instagram Post Creator</h1>
-      <div className="flex space-x-6">
-        {/* ─── LEFT PANEL: Text Inputs & Color Picker */}
-        <div className="w-[300px] space-y-5">
-          <div>
-            <Label htmlFor="title1" className="text-sm text-gray-600">Title 1</Label>
-            <Input
-              id="title1"
-              value={titles[0]}
-              onChange={e => setTitles([e.target.value, titles[1]])}
-              className="mt-1 bg-white rounded text-lg h-10"
-            />
-          </div>
-          <div>
-            <Label htmlFor="title2" className="text-sm text-gray-600">Title 2</Label>
-            <Input
-              id="title2"
-              value={titles[1]}
-              onChange={e => setTitles([titles[0], e.target.value])}
-              className="mt-1 bg-white rounded text-lg h-10"
-            />
-          </div>
-          <div>
-            <Label htmlFor="subtitle" className="text-sm text-gray-600">Subtitle</Label>
-            <Input
-              id="subtitle"
-              value={subtitle}
-              onChange={e => setSubtitle(e.target.value)}
-              className="mt-1 bg-white rounded text-lg h-10"
-            />
-          </div>
-          <div>
-            <Label className="text-sm text-gray-600">Background Color</Label>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {colorOptions.map(c => (
-                <button
-                  key={c.value}
-                  onClick={() => setBackgroundColor(c.value)}
-                  className="w-8 h-8 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  style={{ backgroundColor: c.value }}
-                  aria-label={c.name}
-                />
-              ))}
-            </div>
-          </div>
+    <div className="bg-white rounded-lg shadow-lg flex w-full h-[90vh] overflow-hidden">
+      {/* LEFT PANEL */}
+      <div className="w-1/3 border-r border-gray-200 px-8 py-6 space-y-8 overflow-auto">
+        <h2 className="text-xl font-semibold mb-4">Cordofonia Instagram<br/>Posts Creator Tool</h2>
+
+        <div className="space-y-4">
+          <p className="text-gray-600">1. Write a title</p>
+          <Input
+            value={titles[0]}
+            onChange={e => setTitles([e.target.value, titles[1]])}
+            className="w-full bg-gray-100 border-gray-300 text-lg h-10"
+          />
+          <Input
+            value={titles[1]}
+            onChange={e => setTitles([titles[0], e.target.value])}
+            className="w-full bg-gray-100 border-gray-300 text-lg h-10"
+          />
         </div>
 
-        {/* ─── RIGHT PANEL: Canvas & Controls */}
-        <div className="w-[600px] flex flex-col">
-          <div
-            className="w-[540px] h-[675px] bg-white rounded-lg shadow-lg mb-4 relative overflow-hidden"
-            style={{ backgroundColor }}
-          >
-            <canvas
-              ref={canvasRef}
-              width={1080}
-              height={1350}
-              className="absolute inset-0 w-full h-full"
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
-            />
+        <div className="space-y-4">
+          <p className="text-gray-600">2. Write the instrument</p>
+          <Input
+            value={subtitle.replace('Instrumento: ', '')}
+            onChange={e => setSubtitle(`Instrumento: ${e.target.value}`)}
+            className="w-full bg-gray-100 border-gray-300 text-lg h-10"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-gray-600">3. Pick a Color</p>
+          <div className="flex items-center space-x-2">
+            {colorOptions.map(c => (
+              <button
+                key={c.value}
+                onClick={() => setBackgroundColor(c.value)}
+                className={`w-8 h-8 rounded ${backgroundColor === c.value ? 'ring-2 ring-black' : 'border border-gray-300'}`}
+                style={{ backgroundColor: c.value }}
+                aria-label={c.name}
+              />
+            ))}
           </div>
-          <div className="flex space-x-2 w-[540px]">
+        </div>
+      </div>
+
+      {/* RIGHT PANEL */}
+      <div className="w-2/3 flex flex-col">
+        <div className="flex-1 relative" style={{ backgroundColor }}>
+          <canvas
+            ref={canvasRef}
+            width={1080}
+            height={1350}
+            className="absolute inset-0 w-full h-full"
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+          />
+        </div>
+
+        {/* CONTROLS BAR */}
+        <div className="flex items-center justify-between px-8 py-4 bg-gray-50 border-t border-gray-200">
+          <div className="space-x-2">
             <Button
               variant={currentFrame === 1 ? "default" : "outline"}
               onClick={() => handleFrameChange(1)}
-              className="flex-1 h-[40px] rounded"
+              className="px-6 py-2 rounded bg-gray-200 hover:bg-gray-300"
             >
               Frame 1
             </Button>
             <Button
               variant={currentFrame === 2 ? "default" : "outline"}
               onClick={() => handleFrameChange(2)}
-              className="flex-1 h-[40px] rounded"
+              className="px-6 py-2 rounded bg-gray-200 hover:bg-gray-300"
             >
               Frame 2
             </Button>
-            <Button onClick={togglePlay} className="w-[40px] h-[40px] p-0 rounded-full bg-black">
-              {isPlaying ? <PauseIcon className="h-5 w-5 text-white" /> : <PlayIcon className="h-5 w-5 text-white" />}
+          </div>
+
+          <div className="flex space-x-4 items-center">
+            <Button
+              onClick={togglePlay}
+              className="w-12 h-12 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
+            >
+              {isPlaying
+                ? <PauseIcon className="w-6 h-6 text-black"/>
+                : <PlayIcon className="w-6 h-6 text-black"/>}
             </Button>
-            <Button onClick={toggleLoop} className={`w-[40px] h-[40px] p-0 rounded bg-black ${isLooping ? 'ring-2 ring-blue-500' : ''}`}>
-              <RotateCcwIcon className="h-5 w-5 text-white" />
+
+            <Button
+              onClick={toggleLoop}
+              className={`w-12 h-12 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center ${isLooping ? 'ring-2 ring-black' : ''}`}
+            >
+              <RotateCcwIcon className="w-6 h-6 text-black"/>
             </Button>
-            <Button onClick={() => setSettingsOpen(true)} className="w-[40px] h-[40px] p-0 rounded bg-black">
-              <Settings className="h-5 w-5 text-white" />
+
+            <Button
+              onClick={() => setSettingsOpen(true)}
+              className="w-12 h-12 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
+            >
+              <Settings className="w-6 h-6 text-black"/>
             </Button>
-            <Button onClick={() => console.log("Export functionality not implemented")} className="w-[40px] h-[40px] p-0 rounded bg-black">
-              <ShareIcon className="h-5 w-5 text-white" />
+
+            <Button
+              onClick={() => console.log("Export not implemented")}
+              className="w-12 h-12 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
+            >
+              <ShareIcon className="w-6 h-6 text-black"/>
             </Button>
           </div>
         </div>
       </div>
 
-      {/* ─── POSITION MODAL ───────────────────────────────────────────────────────────── */}
+      {/* POSITION MODAL */}
       <Dialog open={positionModalOpen} onOpenChange={setPositionModalOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Position</DialogTitle>
           </DialogHeader>
           {editingPosition && editingBaseFontSize !== null && (
-            <div className="space-y-4">
+            <div className="space-y-4 p-4">
               <div>
                 <Label htmlFor="xPos">X Position</Label>
                 <Input
@@ -1312,6 +1335,7 @@ export default function InstagramPostCreator() {
                   type="number"
                   value={editingPosition.x}
                   onChange={e => setEditingPosition({ ...editingPosition, x: Number(e.target.value) })}
+                  className="w-full bg-gray-100 border-gray-300"
                 />
               </div>
               <div>
@@ -1321,15 +1345,17 @@ export default function InstagramPostCreator() {
                   type="number"
                   value={editingPosition.y}
                   onChange={e => setEditingPosition({ ...editingPosition, y: Number(e.target.value) })}
+                  className="w-full bg-gray-100 border-gray-300"
                 />
               </div>
               <div>
-                <Label htmlFor="rotation">Rotation (degrees)</Label>
+                <Label htmlFor="rotation">Rotation (deg)</Label>
                 <Input
                   id="rotation"
                   type="number"
                   value={editingPosition.rotation * (180 / Math.PI)}
                   onChange={e => setEditingPosition({ ...editingPosition, rotation: Number(e.target.value) * (Math.PI / 180) })}
+                  className="w-full bg-gray-100 border-gray-300"
                 />
               </div>
               <div>
@@ -1345,21 +1371,24 @@ export default function InstagramPostCreator() {
                       fontSize: editingBaseFontSize * scale
                     })
                   }}
+                  className="w-full bg-gray-100 border-gray-300"
                 />
               </div>
-              <Button onClick={() => updatePosition(editingPosition)}>Update</Button>
+              <Button onClick={() => updatePosition(editingPosition)} className="mt-4 w-full bg-black text-white">
+                Update
+              </Button>
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* ─── SETTINGS MODAL ───────────────────────────────────────────────────────────── */}
+      {/* SETTINGS MODAL */}
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Settings</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 p-4">
             <div>
               <Label htmlFor="thicknessSlider">Line Thickness (max 10)</Label>
               <Slider
@@ -1372,7 +1401,7 @@ export default function InstagramPostCreator() {
               />
             </div>
             <div>
-              <Label htmlFor="trembleSlider">Trembling Intensity (0-10)</Label>
+              <Label htmlFor="trembleSlider">Trembling Intensity</Label>
               <Slider
                 id="trembleSlider"
                 min={0}
@@ -1381,22 +1410,28 @@ export default function InstagramPostCreator() {
                 value={[tremblingIntensity]}
                 onValueChange={value => handleSettingsChange('tremblingIntensity', value[0])}
               />
-              <div className="text-sm text-gray-500 mt-1">Current: {tremblingIntensity}</div>
             </div>
             <div>
-              <Label htmlFor="tremblingSpeedSlider">Trembling Speed (1-60 updates/sec)</Label>
+              <Label htmlFor="trembleSpeedSlider">Trembling Speed (updates/sec)</Label>
               <Slider
-                id="tremblingSpeedSlider"
+                id="trembleSpeedSlider"
                 min={1}
                 max={60}
                 step={1}
                 value={[tremblingSpeed]}
                 onValueChange={value => handleSettingsChange('tremblingSpeed', value[0])}
               />
-              <div className="text-sm text-gray-500 mt-1">Current: {tremblingSpeed} updates/sec</div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="trembleTextToggle"
+                checked={tremblingAffectsText}
+                onCheckedChange={value => handleSettingsChange('tremblingAffectsText', value)}
+              />
+              <Label htmlFor="trembleTextToggle">Trembling affects text (OFF = lines only)</Label>
             </div>
             <div>
-              <Label htmlFor="baseFpsSlider">Animation Speed (Base FPS: {baseFps})</Label>
+              <Label htmlFor="baseFpsSlider">Animation Speed (Base FPS {baseFps})</Label>
               <Slider
                 id="baseFpsSlider"
                 min={10}
