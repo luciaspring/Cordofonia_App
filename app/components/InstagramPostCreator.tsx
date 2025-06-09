@@ -117,10 +117,9 @@ export default function InstagramPostCreator() {
   // Preset values for animation controls
   const [lineThickness, setLineThickness] = useState<number>(MAX_LINE_THICKNESS)
   const [tremblingIntensity, setTremblingIntensity] = useState<number>(3)
-  const [tremblingSpeed, setTremblingSpeed] = useState<number>(30)
-  const [tremblingAffectsText, setTremblingAffectsText] = useState<boolean>(true)
   const [frameRate, setFrameRate] = useState<number>(MIN_FRAME_RATE)
   const [baseFps, setBaseFps] = useState<number>(35)
+  const [tremblingAffectsText, setTremblingAffectsText] = useState<boolean>(true)
 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [groupRotation, setGroupRotation] = useState(0)
@@ -142,10 +141,6 @@ export default function InstagramPostCreator() {
   const lastMousePosition = useRef<Point | null>(null)
   const isShiftPressed = useRef(false)
   const lastClickTime = useRef<number>(0)
-
-  // Trembling control refs
-  const trembleOffsetsRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
-  const lastTrembleUpdateRef = useRef<number>(0)
 
   // ─── EFFECT HOOKS ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -179,9 +174,8 @@ export default function InstagramPostCreator() {
     lines,
     lineThickness,
     tremblingIntensity,
-    tremblingSpeed,
-    tremblingAffectsText,
-    frameRate
+    frameRate,
+    tremblingAffectsText
   ])
 
   useEffect(() => {
@@ -197,18 +191,6 @@ export default function InstagramPostCreator() {
       if (animationRef.current) cancelAnimationFrame(animationRef.current)
     }
   }, [isPlaying, isLooping])
-
-  // ─── TREMBLING CONTROL ──────────────────────────────────────────────────────────
-  const updateTrembleOffsets = (timestamp: number) => {
-    const msPerUpdate = 1000 / tremblingSpeed
-    if (timestamp - lastTrembleUpdateRef.current >= msPerUpdate) {
-      trembleOffsetsRef.current = {
-        x: (Math.random() - 0.5) * tremblingIntensity,
-        y: (Math.random() - 0.5) * tremblingIntensity
-      }
-      lastTrembleUpdateRef.current = timestamp
-    }
-  }
 
   // ─── TEXT DIMENSION UPDATER ──────────────────────────────────────────────────────
   const updateTextDimensions = (ctx: CanvasRenderingContext2D) => {
@@ -247,9 +229,6 @@ export default function InstagramPostCreator() {
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
-
-    // Update trembling offsets
-    updateTrembleOffsets(performance.now())
 
     ctx.fillStyle = backgroundColor
     ctx.fillRect(0, 0, canvas.width, canvas.height)
@@ -306,14 +285,12 @@ export default function InstagramPostCreator() {
     const positions = frame === 1 ? titlePositionsFrame1 : titlePositionsFrame2
     const subPos = frame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
 
-    // Get trembling offsets (only if trembling affects text)
-    const textTremX = tremblingAffectsText ? trembleOffsetsRef.current.x : 0
-    const textTremY = tremblingAffectsText ? trembleOffsetsRef.current.y : 0
-
-    // Draw titles with optional trembling
+    // Draw titles with conditional trembling
     positions.forEach((pos, idx) => {
+      const tremX = tremblingAffectsText ? (Math.random() - 0.5) * tremblingIntensity : 0
+      const tremY = tremblingAffectsText ? (Math.random() - 0.5) * tremblingIntensity : 0
       ctx.save()
-      ctx.translate(pos.x + pos.width / 2 + textTremX, pos.y + pos.height / 2 + textTremY)
+      ctx.translate(pos.x + pos.width / 2 + tremX, pos.y + pos.height / 2 + tremY)
       ctx.rotate(pos.rotation)
       ctx.font = `bold ${pos.fontSize}px Arial`
       ctx.fillStyle = getContrastColor(backgroundColor)
@@ -323,9 +300,11 @@ export default function InstagramPostCreator() {
       ctx.restore()
     })
 
-    // Draw subtitle with optional trembling
+    // Draw subtitle with conditional trembling
+    const tremXsub = tremblingAffectsText ? (Math.random() - 0.5) * tremblingIntensity : 0
+    const tremYsub = tremblingAffectsText ? (Math.random() - 0.5) * tremblingIntensity : 0
     ctx.save()
-    ctx.translate(subPos.x + subPos.width / 2 + textTremX, subPos.y + subPos.height / 2 + textTremY)
+    ctx.translate(subPos.x + subPos.width / 2 + tremXsub, subPos.y + subPos.height / 2 + tremYsub)
     ctx.rotate(subPos.rotation)
     ctx.font = `bold ${subPos.fontSize}px Arial`
     ctx.fillStyle = getContrastColor(backgroundColor)
@@ -336,11 +315,10 @@ export default function InstagramPostCreator() {
   }
 
   const drawRotatedText = (ctx: CanvasRenderingContext2D, pos: TextPosition, text: string) => {
-    const textTremX = tremblingAffectsText ? trembleOffsetsRef.current.x : 0
-    const textTremY = tremblingAffectsText ? trembleOffsetsRef.current.y : 0
-
+    const tremX = tremblingAffectsText ? (Math.random() - 0.5) * tremblingIntensity : 0
+    const tremY = tremblingAffectsText ? (Math.random() - 0.5) * tremblingIntensity : 0
     ctx.save()
-    ctx.translate(pos.x + pos.width / 2 + textTremX, pos.y + pos.height / 2 + textTremY)
+    ctx.translate(pos.x + pos.width / 2 + tremX, pos.y + pos.height / 2 + tremY)
     ctx.rotate(pos.rotation)
     ctx.font = `bold ${pos.fontSize}px Arial`
     ctx.fillStyle = getContrastColor(backgroundColor)
@@ -355,21 +333,20 @@ export default function InstagramPostCreator() {
     ctx.lineCap = 'butt'
     ctx.lineJoin = 'round'
     ctx.strokeStyle = '#0000FF'
-
-    // Lines always get trembling
-    const lineTremX = trembleOffsetsRef.current.x
-    const lineTremY = trembleOffsetsRef.current.y
-
     framelines.forEach(line => {
+      const tremX = (Math.random() - 0.5) * tremblingIntensity
+      const tremY = (Math.random() - 0.5) * tremblingIntensity
       ctx.beginPath()
-      ctx.moveTo(line.start.x + lineTremX, line.start.y + lineTremY)
-      ctx.lineTo(line.end.x + lineTremX, line.end.y + lineTremY)
+      ctx.moveTo(line.start.x + tremX, line.start.y + tremY)
+      ctx.lineTo(line.end.x + tremX, line.end.y + tremY)
       ctx.stroke()
     })
     if (currentLine) {
+      const tremX = (Math.random() - 0.5) * tremblingIntensity
+      const tremY = (Math.random() - 0.5) * tremblingIntensity
       ctx.beginPath()
-      ctx.moveTo(currentLine.start.x + lineTremX, currentLine.start.y + lineTremY)
-      ctx.lineTo(currentLine.end.x + lineTremX, currentLine.end.y + lineTremY)
+      ctx.moveTo(currentLine.start.x + tremX, currentLine.start.y + tremY)
+      ctx.lineTo(currentLine.end.x + tremX, currentLine.end.y + tremY)
       ctx.stroke()
     }
   }
@@ -389,10 +366,6 @@ export default function InstagramPostCreator() {
     const animationDuration = 0.3
     const maxStaggerDelay = 0.2
 
-    // Lines always get trembling
-    const lineTremX = trembleOffsetsRef.current.x
-    const lineTremY = trembleOffsetsRef.current.y
-
     const drawFrameLines = (linesArr: Line[], fgProgress: number) => {
       const adjustedStagger = linesArr.length > 1 ? maxStaggerDelay / (linesArr.length - 1) : 0
       linesArr.forEach((ln, idx) => {
@@ -403,9 +376,11 @@ export default function InstagramPostCreator() {
           x: start.x + (end.x - start.x) * (animationType === 'grow' ? t : 1 - t),
           y: start.y + (end.y - start.y) * (animationType === 'grow' ? t : 1 - t)
         }
+        const tremX = (Math.random() - 0.5) * tremblingIntensity
+        const tremY = (Math.random() - 0.5) * tremblingIntensity
         ctx.beginPath()
-        ctx.moveTo(start.x + lineTremX, start.y + lineTremY)
-        ctx.lineTo(currentEnd.x + lineTremX, currentEnd.y + lineTremY)
+        ctx.moveTo(start.x + tremX, start.y + tremY)
+        ctx.lineTo(currentEnd.x + tremX, currentEnd.y + tremY)
         ctx.stroke()
       })
     }
@@ -426,18 +401,16 @@ export default function InstagramPostCreator() {
     })
     const t = easeInOutQuint(progress)
 
-    // Get trembling offsets (only if trembling affects text)
-    const textTremX = tremblingAffectsText ? trembleOffsetsRef.current.x : 0
-    const textTremY = tremblingAffectsText ? trembleOffsetsRef.current.y : 0
-
-    // Draw titles with optional trembling
+    // Draw titles with conditional trembling
     titles.forEach((text, idx) => {
       const pos1 = fromFrame === 1 ? titlePositionsFrame1[idx] : titlePositionsFrame2[idx]
       const pos2 = toFrame === 1 ? titlePositionsFrame1[idx] : titlePositionsFrame2[idx]
       const midPos = interpolatePos(pos1, pos2, t)
+      const tremX = tremblingAffectsText ? (Math.random() - 0.5) * tremblingIntensity : 0
+      const tremY = tremblingAffectsText ? (Math.random() - 0.5) * tremblingIntensity : 0
 
       ctx.save()
-      ctx.translate(midPos.x + midPos.width / 2 + textTremX, midPos.y + midPos.height / 2 + textTremY)
+      ctx.translate(midPos.x + midPos.width / 2 + tremX, midPos.y + midPos.height / 2 + tremY)
       ctx.rotate(midPos.rotation)
       ctx.font = `bold ${midPos.fontSize}px Arial`
       ctx.fillStyle = getContrastColor(backgroundColor)
@@ -447,13 +420,15 @@ export default function InstagramPostCreator() {
       ctx.restore()
     })
 
-    // Draw subtitle with optional trembling
+    // Draw subtitle with conditional trembling
     const sub1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
     const sub2 = toFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
     const midSub = interpolatePos(sub1, sub2, t)
+    const tremXsub = tremblingAffectsText ? (Math.random() - 0.5) * tremblingIntensity : 0
+    const tremYsub = tremblingAffectsText ? (Math.random() - 0.5) * tremblingIntensity : 0
 
     ctx.save()
-    ctx.translate(midSub.x + midSub.width / 2 + textTremX, midSub.y + midSub.height / 2 + textTremY)
+    ctx.translate(midSub.x + midSub.width / 2 + tremXsub, midSub.y + midSub.height / 2 + tremYsub)
     ctx.rotate(midSub.rotation)
     ctx.font = `bold ${midSub.fontSize}px Arial`
     ctx.fillStyle = getContrastColor(backgroundColor)
@@ -1117,9 +1092,6 @@ export default function InstagramPostCreator() {
     if (!startTimeRef.current) startTimeRef.current = timestamp
     const elapsed = timestamp - startTimeRef.current
 
-    // Update trembling offsets during animation
-    updateTrembleOffsets(timestamp)
-
     // Use baseFps for internal timing
     const msPerBaseFrame = 1000 / baseFps
     const normalized = elapsed / (msPerBaseFrame * 150)
@@ -1176,22 +1148,16 @@ export default function InstagramPostCreator() {
     drawCanvas()
   }
 
-  const handleSettingsChange = (name: string, val: number | boolean) => {
+  const handleSettingsChange = (name: string, val: number) => {
     switch (name) {
       case 'lineThickness':
-        setLineThickness(val as number)
+        setLineThickness(val)
         break
       case 'tremblingIntensity':
-        setTremblingIntensity(val as number)
-        break
-      case 'tremblingSpeed':
-        setTremblingSpeed(val as number)
-        break
-      case 'tremblingAffectsText':
-        setTremblingAffectsText(val as boolean)
+        setTremblingIntensity(val)
         break
       case 'frameRate':
-        setFrameRate(val as number)
+        setFrameRate(val)
         break
     }
     drawCanvas()
@@ -1412,25 +1378,6 @@ export default function InstagramPostCreator() {
               />
             </div>
             <div>
-              <Label htmlFor="trembleSpeedSlider">Trembling Speed (updates/sec)</Label>
-              <Slider
-                id="trembleSpeedSlider"
-                min={1}
-                max={60}
-                step={1}
-                value={[tremblingSpeed]}
-                onValueChange={value => handleSettingsChange('tremblingSpeed', value[0])}
-              />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="trembleTextToggle"
-                checked={tremblingAffectsText}
-                onCheckedChange={value => handleSettingsChange('tremblingAffectsText', value)}
-              />
-              <Label htmlFor="trembleTextToggle">Trembling affects text (OFF = lines only)</Label>
-            </div>
-            <div>
               <Label htmlFor="baseFpsSlider">Animation Speed (Base FPS {baseFps})</Label>
               <Slider
                 id="baseFpsSlider"
@@ -1459,6 +1406,14 @@ export default function InstagramPostCreator() {
                   }
                 }}
               />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="tremblingTarget"
+                checked={tremblingAffectsText}
+                onCheckedChange={setTremblingAffectsText}
+              />
+              <Label htmlFor="tremblingTarget">Trembling affects text (OFF = lines only)</Label>
             </div>
           </div>
         </DialogContent>
