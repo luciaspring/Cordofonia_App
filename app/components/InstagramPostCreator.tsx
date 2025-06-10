@@ -1211,18 +1211,18 @@ export default function InstagramPostCreator() {
     // move:   0.60 → 0.833  (0.233)  
     if (p <= 0.833) {
       const t = ease((p - 0.60) / 0.233)
-      drawAnimatedText(ctx, t, 0, 1, 2)
+      drawAnimatedText(ctx, t, 0, 1, 2)  // animate position only, no scale
       return
     }
     // pause:  0.833 → 0.950  (0.117)
     if (p <= 0.950) {
-      drawAnimatedText(ctx, 1, 0, 1, 2)
+      drawAnimatedText(ctx, 1, 0, 1, 2)  // fully moved, no scale
       return
     }
     // scale:  0.950 → 1.183  (0.233)
     if (p <= 1.183) {
       const s = ease((p - 0.950) / 0.233)
-      drawAnimatedText(ctx, 1, s, 1, 2)
+      drawAnimatedText(ctx, 1, s, 1, 2)  // keep position, animate scale
       return
     }
 
@@ -1242,18 +1242,18 @@ export default function InstagramPostCreator() {
     // move-back: 1.833 → 2.066
     if (p <= 2.066) {
       const t = ease((p - 1.833) / 0.233)
-      drawAnimatedText(ctx, 1 - t, 1, 2, 1)
+      drawAnimatedText(ctx, 1 - t, 1, 2, 1)  // reverse position, keep scale
       return
     }
     // pause-back: 2.066 → 2.183
     if (p <= 2.183) {
-      drawAnimatedText(ctx, 0, 1, 2, 1)
+      drawAnimatedText(ctx, 0, 1, 2, 1)  // back in place, still scaled
       return
     }
     // scale-back: 2.183 → 2.416
     if (p <= 2.416) {
       const s = ease((p - 2.183) / 0.233)
-      drawAnimatedText(ctx, 0, 1 - s, 2, 1)
+      drawAnimatedText(ctx, 0, 1 - s, 2, 1)  // keep position, reverse scale
       return
     }
 
