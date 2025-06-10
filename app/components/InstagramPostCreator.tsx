@@ -10,6 +10,8 @@ import { PlayIcon, PauseIcon, RotateCcwIcon, ShareIcon, Settings } from 'lucide-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
+const SUL_SANS = 'SulSans-Bold'
+
 // ─── TYPES & INTERFACES ─────────────────────────────────────────────────────────
 
 interface Point {
@@ -91,6 +93,7 @@ export default function InstagramPostCreator() {
   const [lines, setLines] = useState<Line[]>([])
   const [currentLine, setCurrentLine] = useState<Line | null>(null)
   const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null)
+  const [fontLoaded, setFontLoaded] = useState(false)
 
   const [titlePositionsFrame1, setTitlePositionsFrame1] = useState<TextPosition[]>([
     { x: 40, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 },
@@ -157,6 +160,21 @@ export default function InstagramPostCreator() {
   }, [])
 
   useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      try {
+        const face = new FontFace(SUL_SANS, 'url(/fonts/SulSans-Bold.otf)')
+        await face.load()
+        document.fonts.add(face)
+        await document.fonts.ready
+        if (!cancelled) setFontLoaded(true)
+      } catch {}
+    }
+    load()
+    return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
@@ -172,7 +190,8 @@ export default function InstagramPostCreator() {
     lines,
     lineThickness,
     tremblingIntensity,
-    frameRate
+    frameRate,
+    fontLoaded
   ])
 
   useEffect(() => {
@@ -192,7 +211,7 @@ export default function InstagramPostCreator() {
   // ─── TEXT DIMENSION UPDATER ──────────────────────────────────────────────────────
   const updateTextDimensions = (ctx: CanvasRenderingContext2D) => {
     const measureText = (text: string, fontSize: number) => {
-      ctx.font = `bold ${fontSize}px Arial`
+      ctx.font = `bold ${fontSize}px "${SUL_SANS}", sans-serif`
       const metrics = ctx.measureText(text)
       return {
         width: metrics.width,
@@ -282,14 +301,13 @@ export default function InstagramPostCreator() {
     const positions = frame === 1 ? titlePositionsFrame1 : titlePositionsFrame2
     const subPos = frame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
 
-    // Draw titles with random tremble
     positions.forEach((pos, idx) => {
       const tremX = (Math.random() - 0.5) * tremblingIntensity
       const tremY = (Math.random() - 0.5) * tremblingIntensity
       ctx.save()
-      ctx.translate(pos.x + pos.width / 2 + tremX, pos.y + pos.height / 2 + tremY)
+      ctx.translate(pos.x + pos.width/2 + tremX, pos.y + pos.height/2 + tremY)
       ctx.rotate(pos.rotation)
-      ctx.font = `bold ${pos.fontSize}px Arial`
+      ctx.font = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`
       ctx.fillStyle = getContrastColor(backgroundColor)
       ctx.textBaseline = 'middle'
       ctx.textAlign = 'center'
@@ -297,13 +315,12 @@ export default function InstagramPostCreator() {
       ctx.restore()
     })
 
-    // Draw subtitle with random tremble
     const tremXsub = (Math.random() - 0.5) * tremblingIntensity
     const tremYsub = (Math.random() - 0.5) * tremblingIntensity
     ctx.save()
-    ctx.translate(subPos.x + subPos.width / 2 + tremXsub, subPos.y + subPos.height / 2 + tremYsub)
+    ctx.translate(subPos.x + subPos.width/2 + tremXsub, subPos.y + subPos.height/2 + tremYsub)
     ctx.rotate(subPos.rotation)
-    ctx.font = `bold ${subPos.fontSize}px Arial`
+    ctx.font = `bold ${subPos.fontSize}px "${SUL_SANS}", sans-serif`
     ctx.fillStyle = getContrastColor(backgroundColor)
     ctx.textBaseline = 'middle'
     ctx.textAlign = 'center'
@@ -313,9 +330,9 @@ export default function InstagramPostCreator() {
 
   const drawRotatedText = (ctx: CanvasRenderingContext2D, pos: TextPosition, text: string) => {
     ctx.save()
-    ctx.translate(pos.x + pos.width / 2, pos.y + pos.height / 2)
+    ctx.translate(pos.x + pos.width/2, pos.y + pos.height/2)
     ctx.rotate(pos.rotation)
-    ctx.font = `bold ${pos.fontSize}px Arial`
+    ctx.font = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`
     ctx.fillStyle = getContrastColor(backgroundColor)
     ctx.textBaseline = 'middle'
     ctx.textAlign = 'center'
@@ -415,7 +432,7 @@ export default function InstagramPostCreator() {
       ctx.save()
       ctx.translate(midPos.x + midPos.width / 2 + tremX, midPos.y + midPos.height / 2 + tremY)
       ctx.rotate(midPos.rotation)
-      ctx.font = `bold ${midPos.fontSize}px Arial`
+      ctx.font = `bold ${midPos.fontSize}px "${SUL_SANS}", sans-serif`
       ctx.fillStyle = getContrastColor(backgroundColor)
       ctx.textBaseline = 'middle'
       ctx.textAlign = 'center'
@@ -433,7 +450,7 @@ export default function InstagramPostCreator() {
     ctx.save()
     ctx.translate(midSub.x + midSub.width / 2 + tremXsub, midSub.y + midSub.height / 2 + tremYsub)
     ctx.rotate(midSub.rotation)
-    ctx.font = `bold ${midSub.fontSize}px Arial`
+    ctx.font = `bold ${midSub.fontSize}px "${SUL_SANS}", sans-serif`
     ctx.fillStyle = getContrastColor(backgroundColor)
     ctx.textBaseline = 'middle'
     ctx.textAlign = 'center'
