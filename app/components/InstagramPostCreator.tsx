@@ -404,54 +404,61 @@ export default function InstagramPostCreator() {
 
   const drawAnimatedText = (
     ctx: CanvasRenderingContext2D,
-    moveT: number,          // 0-1 for position interpolation
-    scaleT: number,        // 0-1 for size interpolation
-    fromFrame: number,     // starting frame (1 or 2)
-    toFrame: number        // ending frame (1 or 2)
+    moveT: number,        // 0→1 for position/rotation
+    scaleT: number,       // 0→1 for size
+    fromFrame: number,    // 1 or 2
+    toFrame: number       // 1 or 2
   ) => {
-    const interpolate = (a: number, b: number, t: number) => a + (b - a) * t
-    const interpolatePos = (p1: TextPosition, p2: TextPosition, t: number): TextPosition => ({
-      x: interpolate(p1.x, p2.x, t),
-      y: interpolate(p1.y, p2.y, t),
-      width: interpolate(p1.width, p2.width, t),
-      height: interpolate(p1.height, p2.height, t),
-      rotation: interpolate(p1.rotation, p2.rotation, t),
-      fontSize: interpolate(p1.fontSize, p2.fontSize, t)
-    })
+    const titlesArr = titles
+    const fromPositions = fromFrame === 1 ? titlePositionsFrame1 : titlePositionsFrame2
+    const toPositions   = toFrame  === 1 ? titlePositionsFrame1 : titlePositionsFrame2
 
-    // Draw titles with trembling
-    titles.forEach((text, idx) => {
-      const pos1 = fromFrame === 1 ? titlePositionsFrame1[idx] : titlePositionsFrame2[idx]
-      const pos2 = toFrame === 1 ? titlePositionsFrame1[idx] : titlePositionsFrame2[idx]
-      const midPos = interpolatePos(pos1, pos2, moveT)
+    titlesArr.forEach((text, i) => {
+      const p1 = fromPositions[i]
+      const p2 = toPositions[i]
+
+      // 1) POSITION & ROTATION INTERPOLATION
+      const x        = p1.x        + (p2.x        - p1.x)        * moveT
+      const y        = p1.y        + (p2.y        - p1.y)        * moveT
+      const rotation = p1.rotation + (p2.rotation - p1.rotation) * moveT
+
+      // 2) SIZE INTERPOLATION
+      const fontSize = p1.fontSize + (p2.fontSize - p1.fontSize) * scaleT
+
+      // 3) RANDOM TREMBLE
       const tremX = (Math.random() - 0.5) * tremblingIntensity
       const tremY = (Math.random() - 0.5) * tremblingIntensity
 
+      // 4) DRAW
       ctx.save()
-      ctx.translate(midPos.x + midPos.width/2 + tremX, midPos.y + midPos.height/2 + tremY)
-      ctx.rotate(midPos.rotation)
-      ctx.font = `bold ${midPos.fontSize * (1 + (scaleT - 1) * 0.2)}px "${SUL_SANS}", sans-serif`
-      ctx.fillStyle = getContrastColor(backgroundColor)
+      ctx.translate(x + p1.width / 2 + tremX, y + p1.height / 2 + tremY)
+      ctx.rotate(rotation)
+      ctx.font = `bold ${fontSize}px "${SUL_SANS}", sans-serif`
+      ctx.fillStyle    = getContrastColor(backgroundColor)
       ctx.textBaseline = 'middle'
-      ctx.textAlign = 'center'
+      ctx.textAlign    = 'center'
       ctx.fillText(text, 0, 0)
       ctx.restore()
     })
 
-    // Draw subtitle with trembling
+    // ——— Subtitle (same logic) ———
     const sub1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
-    const sub2 = toFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
-    const midSub = interpolatePos(sub1, sub2, moveT)
-    const tremXsub = (Math.random() - 0.5) * tremblingIntensity
-    const tremYsub = (Math.random() - 0.5) * tremblingIntensity
+    const sub2 = toFrame   === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
+
+    const sx        = sub1.x        + (sub2.x        - sub1.x)        * moveT
+    const sy        = sub1.y        + (sub2.y        - sub1.y)        * moveT
+    const srot      = sub1.rotation + (sub2.rotation - sub1.rotation) * moveT
+    const sFontSize = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT
+    const streX     = (Math.random() - 0.5) * tremblingIntensity
+    const streY     = (Math.random() - 0.5) * tremblingIntensity
 
     ctx.save()
-    ctx.translate(midSub.x + midSub.width/2 + tremXsub, midSub.y + midSub.height/2 + tremYsub)
-    ctx.rotate(midSub.rotation)
-    ctx.font = `${midSub.fontSize * (1 + (scaleT - 1) * 0.2)}px "${AFFAIRS}", sans-serif`
-    ctx.fillStyle = getContrastColor(backgroundColor)
+    ctx.translate(sx + sub1.width / 2 + streX, sy + sub1.height / 2 + streY)
+    ctx.rotate(srot)
+    ctx.font = `${sFontSize}px "${AFFAIRS}", sans-serif`
+    ctx.fillStyle    = getContrastColor(backgroundColor)
     ctx.textBaseline = 'middle'
-    ctx.textAlign = 'center'
+    ctx.textAlign    = 'center'
     ctx.fillText(subtitle, 0, 0)
     ctx.restore()
   }
