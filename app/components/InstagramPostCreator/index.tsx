@@ -216,15 +216,26 @@ export default function InstagramPostCreator() {
         const pos1 = titlePositionsFrame1[index]
         const pos2 = titlePositionsFrame2[index]
         
-        // Calculate position (placement animation)
-        const x = pos1.x + (pos2.x - pos1.x) * placementProgress
-        const y = pos1.y + (pos2.y - pos1.y) * placementProgress
-        const rotation = pos1.rotation + (pos2.rotation - pos1.rotation) * placementProgress
+        // Phase 1: Calculate position (placement animation only)
+        let x, y, rotation, fontSize, width, height
         
-        // Calculate scale (scale animation)
-        const fontSize = pos1.fontSize + (pos2.fontSize - pos1.fontSize) * scaleProgress
-        const width = pos1.width + (pos2.width - pos1.width) * scaleProgress
-        const height = pos1.height + (pos2.height - pos1.height) * scaleProgress
+        if (placementProgress < 1) {
+          // During placement phase: animate position, keep Frame 1 scale
+          x = pos1.x + (pos2.x - pos1.x) * placementProgress
+          y = pos1.y + (pos2.y - pos1.y) * placementProgress
+          rotation = pos1.rotation + (pos2.rotation - pos1.rotation) * placementProgress
+          fontSize = pos1.fontSize // Keep Frame 1 scale
+          width = pos1.width // Keep Frame 1 scale
+          height = pos1.height // Keep Frame 1 scale
+        } else {
+          // After placement phase: use Frame 2 position, animate scale
+          x = pos2.x // Final position
+          y = pos2.y // Final position
+          rotation = pos2.rotation // Final rotation
+          fontSize = pos1.fontSize + (pos2.fontSize - pos1.fontSize) * scaleProgress
+          width = pos1.width + (pos2.width - pos1.width) * scaleProgress
+          height = pos1.height + (pos2.height - pos1.height) * scaleProgress
+        }
         
         ctx.save()
         ctx.translate(x + width / 2, y + height / 2)
@@ -239,15 +250,26 @@ export default function InstagramPostCreator() {
         const subPos1 = subtitlePositionFrame1
         const subPos2 = subtitlePositionFrame2
         
-        // Calculate position (placement animation)
-        const subX = subPos1.x + (subPos2.x - subPos1.x) * placementProgress
-        const subY = subPos1.y + (subPos2.y - subPos1.y) * placementProgress
-        const subRotation = subPos1.rotation + (subPos2.rotation - subPos1.rotation) * placementProgress
+        // Phase 1: Calculate position (placement animation only)
+        let subX, subY, subRotation, subFontSize, subWidth, subHeight
         
-        // Calculate scale (scale animation)
-        const subFontSize = subPos1.fontSize + (subPos2.fontSize - subPos1.fontSize) * scaleProgress
-        const subWidth = subPos1.width + (subPos2.width - subPos1.width) * scaleProgress
-        const subHeight = subPos1.height + (subPos2.height - subPos1.height) * scaleProgress
+        if (placementProgress < 1) {
+          // During placement phase: animate position, keep Frame 1 scale
+          subX = subPos1.x + (subPos2.x - subPos1.x) * placementProgress
+          subY = subPos1.y + (subPos2.y - subPos1.y) * placementProgress
+          subRotation = subPos1.rotation + (subPos2.rotation - subPos1.rotation) * placementProgress
+          subFontSize = subPos1.fontSize // Keep Frame 1 scale
+          subWidth = subPos1.width // Keep Frame 1 scale
+          subHeight = subPos1.height // Keep Frame 1 scale
+        } else {
+          // After placement phase: use Frame 2 position, animate scale
+          subX = subPos2.x // Final position
+          subY = subPos2.y // Final position
+          subRotation = subPos2.rotation // Final rotation
+          subFontSize = subPos1.fontSize + (subPos2.fontSize - subPos1.fontSize) * scaleProgress
+          subWidth = subPos1.width + (subPos2.width - subPos1.width) * scaleProgress
+          subHeight = subPos1.height + (subPos2.height - subPos1.height) * scaleProgress
+        }
 
         ctx.save()
         ctx.translate(subX + subWidth / 2, subY + subHeight / 2)
@@ -405,8 +427,8 @@ export default function InstagramPostCreator() {
         setLineThickness={setLineThickness}
         easingSpeed={easingSpeed}
         setEasingSpeed={setEasingSpeed}
-        staggerDelay={setStaggerDelay}
         staggerDelay={staggerDelay}
+        setStaggerDelay={setStaggerDelay}
         tremblingIntensity={tremblingIntensity}
         setTremblingIntensity={setTremblingIntensity}
         lineDisappearEffect={lineDisappearEffect}
