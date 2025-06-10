@@ -1,4 +1,3 @@
-// app/components/InstagramPostCreator.tsx
 'use client'
 
 import React, { useState, useRef, useEffect, useCallback } from 'react'
@@ -231,21 +230,27 @@ export default function InstagramPostCreator() {
 
     // Animation sequence with proper timing
     if (progress <= 0.3) {
+      // Phase 1: Frame 1 text + lines growing
       drawStaticText(ctx, 1)
-      drawAnimatedLines(ctx, progress / 0.3, frame1Lines, [], 'grow')
+      drawAnimatedLines(ctx, progress / 0.3, frame1Lines, 'grow')
     } else if (progress <= 0.6) {
+      // Phase 2: Frame 1 text + lines shrinking
       drawStaticText(ctx, 1)
-      drawAnimatedLines(ctx, (progress - 0.3) / 0.3, frame1Lines, [], 'shrink')
+      drawAnimatedLines(ctx, (progress - 0.3) / 0.3, frame1Lines, 'shrink')
     } else if (progress <= 0.7) {
+      // Phase 3: Text transition
       const t = (progress - 0.6) / 0.1
       drawTransitionText(ctx, t)
     } else if (progress <= 1.0) {
+      // Phase 4: Frame 2 text + lines growing
       drawStaticText(ctx, 2)
-      drawAnimatedLines(ctx, (progress - 0.7) / 0.3, [], frame2Lines, 'grow')
+      drawAnimatedLines(ctx, (progress - 0.7) / 0.3, frame2Lines, 'grow')
     } else if (progress <= 1.3) {
+      // Phase 5: Frame 2 text + lines shrinking
       drawStaticText(ctx, 2)
-      drawAnimatedLines(ctx, (progress - 1.0) / 0.3, [], frame2Lines, 'shrink')
+      drawAnimatedLines(ctx, (progress - 1.0) / 0.3, frame2Lines, 'shrink')
     } else if (progress <= 1.4) {
+      // Phase 6: Text transition back
       const t = (progress - 1.3) / 0.1
       drawTransitionText(ctx, 1 - t)
     }
@@ -322,54 +327,48 @@ export default function InstagramPostCreator() {
   const drawAnimatedLines = (
     ctx: CanvasRenderingContext2D,
     t: number,
-    frame1Lines: Line[],
-    frame2Lines: Line[],
+    linesToDraw: Line[],
     animationType: 'grow' | 'shrink'
   ) => {
     ctx.lineWidth = lineThickness
     ctx.strokeStyle = getContrastColor(backgroundColor)
 
-    const allLines = [...frame1Lines, ...frame2Lines]
-
     const easeInOutQuint = (t: number): number => {
       return t < 0.5 ? 16 * t * t * t * t * t : 1 - Math.pow(-2 * t + 2, 5) / 2
     }
 
-    const drawFrame = (lines: Line[], t: number) => {
-      lines.forEach(ln => {
-        t = Math.max(0, Math.min(1, t))
-        t = easeInOutQuint(t)
-        const { start, end } = ln
-        
-        let currentStart: Point
-        let currentEnd: Point
-        
-        if (animationType === 'grow') {
-          // Line grows from start to end
-          currentStart = start
-          currentEnd = {
-            x: start.x + (end.x - start.x) * t,
-            y: start.y + (end.y - start.y) * t
-          }
-        } else { // shrink
-          // Line disappears from A to B (start moves toward end)
-          currentStart = {
-            x: start.x + (end.x - start.x) * t,
-            y: start.y + (end.y - start.y) * t
-          }
-          currentEnd = end
+    linesToDraw.forEach(line => {
+      const easedT = easeInOutQuint(Math.max(0, Math.min(1, t)))
+      const { start, end } = line
+      
+      let currentStart: Point
+      let currentEnd: Point
+      
+      if (animationType === 'grow') {
+        // Line grows from start to end
+        currentStart = start
+        currentEnd = {
+          x: start.x + (end.x - start.x) * easedT,
+          y: start.y + (end.y - start.y) * easedT
         }
-        
-        const tremX = (Math.random() - 0.5) * tremblingIntensity
-        const tremY = (Math.random() - 0.5) * tremblingIntensity
-        ctx.beginPath()
-        ctx.moveTo(currentStart.x + tremX, currentStart.y + tremY)
-        ctx.lineTo(currentEnd.x + tremX, currentEnd.y + tremY)
-        ctx.stroke()
-      })
-    }
-
-    drawFrame(allLines, t)
+      } else { // shrink
+        // Line disappears from A to B (start moves toward end)
+        currentStart = {
+          x: start.x + (end.x - start.x) * easedT,
+          y: start.y + (end.y - start.y) * easedT
+        }
+        currentEnd = end
+      }
+      
+      // Apply trembling effect
+      const tremX = (Math.random() - 0.5) * tremblingIntensity
+      const tremY = (Math.random() - 0.5) * tremblingIntensity
+      
+      ctx.beginPath()
+      ctx.moveTo(currentStart.x + tremX, currentStart.y + tremY)
+      ctx.lineTo(currentEnd.x + tremX, currentEnd.y + tremY)
+      ctx.stroke()
+    })
   }
 
   const drawStaticLines = (ctx: CanvasRenderingContext2D) => {
