@@ -95,6 +95,8 @@ export function drawCanvas(
     staggerDelay: number
     tremblingIntensity: number
     isPlaying: boolean
+    fontLoaded?: boolean
+    setDebug: React.Dispatch<React.SetStateAction<string>>
   },
   progress: number = 0
 ) {
@@ -123,7 +125,7 @@ export function drawCanvas(
       ctx.save()
       ctx.translate(x + pos1.width / 2, y + pos1.height / 2)
       ctx.rotate(rotation)
-      ctx.font = `${pos1.fontSize}px ${fontLoaded ? 'SulSans-Bold' : 'sans-serif'}`
+      ctx.font = `${pos1.fontSize}px ${state.fontLoaded ? 'SulSans-Bold' : 'sans-serif'}`
       ctx.fillText(title, -pos1.width / 2, -pos1.height / 2)
       ctx.restore()
     })
@@ -138,18 +140,17 @@ export function drawCanvas(
     ctx.save()
     ctx.translate(subX + subPos1.width / 2, subY + subPos1.height / 2)
     ctx.rotate(subRotation)
-    ctx.font = `${subPos1.fontSize}px ${fontLoaded ? 'SulSans-Bold' : 'sans-serif'}`
+    ctx.font = `${subPos1.fontSize}px ${state.fontLoaded ? 'SulSans-Bold' : 'sans-serif'}`
     ctx.fillText(state.subtitle, -subPos1.width / 2, -subPos1.height / 2)
     ctx.restore()
   }
 
-  if (fontLoaded) {
+  if (state.fontLoaded) {
     drawText()
   } else {
     // If font isn't loaded yet, wait for it
     document.fonts.ready.then(() => {
       if (document.fonts.check('12px SulSans-Bold')) {
-        fontLoaded = true
         drawText()
       }
     })
@@ -166,4 +167,6 @@ export function drawCanvas(
       ctx.stroke()
     }
   })
+  
+  state.setDebug(`Canvas rendered. Progress: ${progress.toFixed(2)}, Frame: ${state.currentFrame}, Font loaded: ${state.fontLoaded}`)
 }
