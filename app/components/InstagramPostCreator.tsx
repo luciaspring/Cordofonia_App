@@ -95,6 +95,8 @@ export default function InstagramPostCreator() {
   const [currentLine, setCurrentLine] = useState<Line | null>(null)
   const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null)
   const [fontLoaded, setFontLoaded] = useState(false)
+  const [selectedLineIndex, setSelectedLineIndex] = useState<number | null>(null)
+  const [isDraggingLine, setIsDraggingLine] = useState(false)
 
   const [titlePositionsFrame1, setTitlePositionsFrame1] = useState<TextPosition[]>([
     { x: 40, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 },
@@ -146,19 +148,23 @@ export default function InstagramPostCreator() {
 
   // ─── EFFECT HOOKS ───────────────────────────────────────────────────────────────
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const down = (e: KeyboardEvent) => {
       if (e.key === 'Shift') isShiftPressed.current = true
+      if ((e.key === 'Backspace' || e.key === 'Delete') && selectedLineIndex !== null) {
+        setLines(prev => prev.filter((_, i) => i !== selectedLineIndex))
+        setSelectedLineIndex(null)
+      }
     }
-    const handleKeyUp = (e: KeyboardEvent) => {
+    const up = (e: KeyboardEvent) => {
       if (e.key === 'Shift') isShiftPressed.current = false
     }
-    window.addEventListener('keydown', handleKeyDown)
-    window.addEventListener('keyup', handleKeyUp)
+    window.addEventListener('keydown', down)
+    window.addEventListener('keyup', up)
     return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      window.removeEventListener('keyup', handleKeyUp)
+      window.removeEventListener('keydown', down)
+      window.removeEventListener('keyup', up)
     }
-  }, [])
+  }, [selectedLineIndex])
 
   useEffect(() => {
     let cancelled = false
@@ -928,11 +934,23 @@ export default function InstagramPostCreator() {
         isPointNear({ x, y }, line.start) ||
         isPointNear({ x, y }, line.end))
     )
+
     if (clickedIdx !== -1) {
-      setEditingLineIndex(clickedIdx)
-    } else {
-      setCurrentLine({ start: { x, y }, end: { x, y }, frame: currentFrame })
+      setSelectedLineIndex(clickedIdx)
+
+      const ln = lines[clickedIdx]
+      const nearStart = isPointNear({ x, y }, ln.start)
+      const nearEnd = isPointNear({ x, y }, ln.end)
+
+      if (nearStart || nearEnd) {
+        setEditingLineIndex(clickedIdx)        // edit endpoints
+      } else {
+        setIsDraggingLine(true)                // drag whole line
+      }
+      return
     }
+
+    setCurrentLine({ start: { x, y }, end: { x, y }, frame: currentFrame })
     drawCanvas()
   }
 
@@ -943,6 +961,23 @@ export default function InstagramPostCreator() {
     const rect = canvas.getBoundingClientRect()
     const x = (e.clientX - rect.left) * (canvas.width / rect.width)
     const y = (e.clientY - rect.top) * (canvas.height / rect.height)
+
+    if (isDraggingLine && selectedLineIndex !== null && lastMousePosition.current) {
+      const dx = x - lastMousePosition.current.x
+      const dy = y - lastMousePosition.current.y
+      setLines(prev =>
+        prev.map((ln, i) =>
+          i === selectedLineIndex
+            ? { ...ln,
+                start: { x: ln.start.x + dx, y: ln.start.y + dy },
+                end: { x: ln.end.x + dx, y: ln.end.y + dy } }
+            : ln
+        )
+      )
+      lastMousePosition.current = { x, y }
+      drawCanvas()
+      return
+    }
 
     if (selectedTexts.length > 0 && currentFrame === 2) {
       if (isRotating) {
@@ -998,6 +1033,7 @@ export default function InstagramPostCreator() {
     setIsRotating(false)
     setResizeHandle(null)
     setResizeStartPosition(null)
+    setIsDraggingLine(false)
     lastMousePosition.current = null
     drawCanvas()
   }
