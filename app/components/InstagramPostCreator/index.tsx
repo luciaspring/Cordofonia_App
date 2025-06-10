@@ -1,55 +1,12 @@
-'use client'
-
 import React, { useState, useRef, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
-import { Switch } from "@/components/ui/switch"
-import { PlayIcon, PauseIcon, RotateCcwIcon, ShareIcon, Settings } from 'lucide-react'
+import { PlayIcon, PauseIcon, RotateCcwIcon, Settings, ShareIcon } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-
-// ─── TYPES & INTERFACES ─────────────────────────────────────────────────────────
-
-interface Point {
-  x: number
-  y: number
-}
-
-interface Line {
-  start: Point
-  end: Point
-  frame: number
-}
-
-interface TextPosition {
-  x: number
-  y: number
-  width: number
-  height: number
-  rotation: number
-  fontSize: number
-  aspectRatio?: number
-}
-
-interface GroupBoundingBox {
-  x: number
-  y: number
-  width: number
-  height: number
-  rotation: number
-}
-
-interface RigidBoundingBox {
-  x: number
-  y: number
-  width: number
-  height: number
-  rotation: number
-  centerX: number
-  centerY: number
-}
+import { Point, Line, TextPosition, GroupBoundingBox } from './types'
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────────
 
@@ -118,7 +75,6 @@ export default function InstagramPostCreator() {
   const [tremblingIntensity, setTremblingIntensity] = useState<number>(3)             // preset at 3
   const [frameRate, setFrameRate] = useState<number>(MIN_FRAME_RATE)                   // preset at 10
   const [baseFps, setBaseFps] = useState<number>(35)                                   // preset at 35
-  const [lineDisappearEffect, setLineDisappearEffect] = useState<boolean>(true)       // New disappear effect
 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [groupRotation, setGroupRotation] = useState(0)
@@ -173,8 +129,7 @@ export default function InstagramPostCreator() {
     lines,
     lineThickness,
     tremblingIntensity,
-    frameRate,
-    lineDisappearEffect
+    frameRate
   ])
 
   useEffect(() => {
@@ -365,39 +320,14 @@ export default function InstagramPostCreator() {
         let t = Math.max(0, Math.min(1, (fgProgress - idx * adjustedStagger) / animationDuration))
         t = easeInOutQuint(t)
         const { start, end } = ln
-        
-        let currentStart: Point
-        let currentEnd: Point
-
-        if (animationType === 'grow') {
-          // Growing: line draws from start to end
-          currentStart = start
-          currentEnd = {
-            x: start.x + (end.x - start.x) * t,
-            y: start.y + (end.y - start.y) * t
-          }
-        } else {
-          // Shrinking: point A (start) moves toward point B (end), point B stays fixed
-          if (lineDisappearEffect) {
-            currentStart = {
-              x: start.x + (end.x - start.x) * t,
-              y: start.y + (end.y - start.y) * t
-            }
-            currentEnd = end // Point B stays fixed
-          } else {
-            // Original behavior: point B moves toward point A
-            currentStart = start
-            currentEnd = {
-              x: start.x + (end.x - start.x) * (1 - t),
-              y: start.y + (end.y - start.y) * (1 - t)
-            }
-          }
+        const currentEnd = {
+          x: start.x + (end.x - start.x) * (animationType === 'grow' ? t : 1 - t),
+          y: start.y + (end.y - start.y) * (animationType === 'grow' ? t : 1 - t)
         }
-
         const tremX = (Math.random() - 0.5) * tremblingIntensity
         const tremY = (Math.random() - 0.5) * tremblingIntensity
         ctx.beginPath()
-        ctx.moveTo(currentStart.x + tremX, currentStart.y + tremY)
+        ctx.moveTo(start.x + tremX, start.y + tremY)
         ctx.lineTo(currentEnd.x + tremX, currentEnd.y + tremY)
         ctx.stroke()
       })
@@ -694,6 +624,7 @@ export default function InstagramPostCreator() {
         ...prev,
         x: prev.x + dx,
         y: prev.y + dy
+      
       }))
     } else {
       setTitlePositionsFrame2(prev => {
@@ -1178,7 +1109,6 @@ export default function InstagramPostCreator() {
         break
       case 'frameRate':
         setFrameRate(val)
-        // Throttling happening inside animate; no need to restart loop
         break
     }
     drawCanvas()
@@ -1246,7 +1176,7 @@ export default function InstagramPostCreator() {
         {/* ─── RIGHT PANEL: Canvas & Controls */}
         <div className="w-[600px] flex flex-col">
           <div
-            className="w-[540px] h-[675px] bg-white rounded-lg shadow-lg mb-4 relative overflow-hidden"
+            className="w-[540px] aspect-[4/5] bg-white rounded-lg shadow-lg mb-4 relative overflow-hidden"
             style={{ backgroundColor }}
           >
             <canvas
@@ -1405,14 +1335,6 @@ export default function InstagramPostCreator() {
                   }
                 }}
               />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="lineDisappearEffect"
-                checked={lineDisappearEffect}
-                onCheckedChange={setLineDisappearEffect}
-              />
-              <Label htmlFor="lineDisappearEffect">Line Disappear Effect</Label>
             </div>
           </div>
         </DialogContent>

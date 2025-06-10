@@ -1,4 +1,3 @@
-// app/components/InstagramPostCreator.tsx
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
@@ -6,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
+import { Switch } from "@/components/ui/switch"
 import { PlayIcon, PauseIcon, RotateCcwIcon, ShareIcon, Settings } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -84,27 +84,26 @@ export default function InstagramPostCreator() {
   // ─── STATE HOOKS ────────────────────────────────────────────────────────────────
   const [titles, setTitles] = useState<string[]>(['John', 'Doe'])
   const [subtitle, setSubtitle] = useState('Instrumento: Kora')
-  const [backgroundColor, setBackgroundColor] = useState('#E0B0FF')
+  const [backgroundColor, setBackgroundColor] = useState('#F6A69B')
   const [currentFrame, setCurrentFrame] = useState(1)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isLooping, setIsLooping] = useState(false)
   const [lines, setLines] = useState<Line[]>([])
   const [currentLine, setCurrentLine] = useState<Line | null>(null)
   const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null)
-  const [reverseShrink, setReverseShrink] = useState<boolean>(true)
 
   const [titlePositionsFrame1, setTitlePositionsFrame1] = useState<TextPosition[]>([
-    { x: 40, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 },
-    { x: 40, y: 550, width: 1000, height: 200, rotation: 0, fontSize: 180 }
+    { x: 40, y: 100, width: 1000, height: 200, rotation: 0, fontSize: 180 },
+    { x: 40, y: 300, width: 1000, height: 200, rotation: 0, fontSize: 180 }
   ])
 
   const [titlePositionsFrame2, setTitlePositionsFrame2] = useState<TextPosition[]>([
-    { x: 40, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 },
-    { x: 40, y: 550, width: 1000, height: 200, rotation: 0, fontSize: 180 }
+    { x: 40, y: 100, width: 1000, height: 200, rotation: 0, fontSize: 180 },
+    { x: 40, y: 300, width: 1000, height: 200, rotation: 0, fontSize: 180 }
   ])
 
-  const [subtitlePositionFrame1, setSubtitlePositionFrame1] = useState<TextPosition>({ x: 40, y: 1000, width: 1000, height: 30, rotation: 0, fontSize: 36 })
-  const [subtitlePositionFrame2, setSubtitlePositionFrame2] = useState<TextPosition>({ x: 40, y: 1000, width: 1000, height: 30, rotation: 0, fontSize: 36 })
+  const [subtitlePositionFrame1, setSubtitlePositionFrame1] = useState<TextPosition>({ x: 40, y: 500, width: 1000, height: 30, rotation: 0, fontSize: 36 })
+  const [subtitlePositionFrame2, setSubtitlePositionFrame2] = useState<TextPosition>({ x: 40, y: 500, width: 1000, height: 30, rotation: 0, fontSize: 36 })
 
   const [selectedTexts, setSelectedTexts] = useState<('title1' | 'title2' | 'subtitle')[]>([])
   const [resizeHandle, setResizeHandle] = useState<string | null>(null)
@@ -115,10 +114,11 @@ export default function InstagramPostCreator() {
   const [editingBaseFontSize, setEditingBaseFontSize] = useState<number | null>(null)
 
   // Preset values for animation controls
-  const [lineThickness, setLineThickness] = useState<number>(MAX_LINE_THICKNESS)       // 10
-  const [tremblingIntensity, setTremblingIntensity] = useState<number>(3)             // preset at 3
-  const [frameRate, setFrameRate] = useState<number>(MIN_FRAME_RATE)                   // preset at 10
-  const [baseFps, setBaseFps] = useState<number>(35)                                   // preset at 35
+  const [lineThickness, setLineThickness] = useState<number>(MAX_LINE_THICKNESS)
+  const [tremblingIntensity, setTremblingIntensity] = useState<number>(3)
+  const [frameRate, setFrameRate] = useState<number>(MIN_FRAME_RATE)
+  const [baseFps, setBaseFps] = useState<number>(35)
+  const [lineDisappearEffect, setLineDisappearEffect] = useState<boolean>(false)
 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [groupRotation, setGroupRotation] = useState(0)
@@ -162,6 +162,7 @@ export default function InstagramPostCreator() {
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
+
     updateTextDimensions(ctx)
     if (!isPlaying) drawCanvas()
   }, [
@@ -173,7 +174,7 @@ export default function InstagramPostCreator() {
     lineThickness,
     tremblingIntensity,
     frameRate,
-    reverseShrink
+    lineDisappearEffect
   ])
 
   useEffect(() => {
@@ -235,25 +236,21 @@ export default function InstagramPostCreator() {
       const frame1Lines = lines.filter(l => l.frame === 1)
       const frame2Lines = lines.filter(l => l.frame === 2)
 
-      // decide which phase goes first
-      const firstPhase: 'grow' | 'shrink' = reverseShrink ? 'shrink' : 'grow'
-      const secondPhase: 'grow' | 'shrink' = reverseShrink ? 'grow' : 'shrink'
-
       if (progress <= 0.3) {
         drawStaticText(ctx, 1)
-        drawAnimatedLines(ctx, progress / 0.3, frame1Lines, [], firstPhase)
+        drawAnimatedLines(ctx, progress / 0.3, frame1Lines, [], 'grow', lineDisappearEffect)
       } else if (progress <= 0.6) {
         drawStaticText(ctx, 1)
-        drawAnimatedLines(ctx, (progress - 0.3) / 0.3, frame1Lines, [], secondPhase)
+        drawAnimatedLines(ctx, (progress - 0.3) / 0.3, frame1Lines, [], 'shrink', lineDisappearEffect)
       } else if (progress <= 0.7) {
         const t = (progress - 0.6) / 0.1
         drawAnimatedText(ctx, t, 1, 2)
       } else if (progress <= 1.0) {
         drawStaticText(ctx, 2)
-        drawAnimatedLines(ctx, (progress - 0.7) / 0.3, [], frame2Lines, firstPhase)
+        drawAnimatedLines(ctx, (progress - 0.7) / 0.3, [], frame2Lines, 'grow', lineDisappearEffect)
       } else if (progress <= 1.3) {
         drawStaticText(ctx, 2)
-        drawAnimatedLines(ctx, (progress - 1.0) / 0.3, [], frame2Lines, secondPhase)
+        drawAnimatedLines(ctx, (progress - 1.0) / 0.3, [], frame2Lines, 'shrink', lineDisappearEffect)
       } else if (progress <= 1.4) {
         const t = (progress - 1.3) / 0.1
         drawAnimatedText(ctx, t, 2, 1)
@@ -352,7 +349,8 @@ export default function InstagramPostCreator() {
     progress: number,
     frame1Lines: Line[],
     frame2Lines: Line[],
-    animationType: 'grow' | 'shrink'
+    animationType: 'grow' | 'shrink',
+    lineDisappearEffect: boolean
   ) => {
     ctx.lineWidth = lineThickness
     ctx.lineCap = 'butt'
@@ -368,14 +366,38 @@ export default function InstagramPostCreator() {
         let t = Math.max(0, Math.min(1, (fgProgress - idx * adjustedStagger) / animationDuration))
         t = easeInOutQuint(t)
         const { start, end } = ln
-        const currentEnd = {
-          x: start.x + (end.x - start.x) * (animationType === 'grow' ? t : 1 - t),
-          y: start.y + (end.y - start.y) * (animationType === 'grow' ? t : 1 - t)
+        
+        let currentStart: Point
+        let currentEnd: Point
+        
+        if (animationType === 'grow') {
+          currentStart = start
+          currentEnd = {
+            x: start.x + (end.x - start.x) * t,
+            y: start.y + (end.y - start.y) * t
+          }
+        } else { // shrink
+          if (lineDisappearEffect) {
+            // Line disappears from start to end
+            currentStart = {
+              x: start.x + (end.x - start.x) * t,
+              y: start.y + (end.y - start.y) * t
+            }
+            currentEnd = end
+          } else {
+            // Original behavior: line disappears from end to start
+            currentStart = start
+            currentEnd = {
+              x: start.x + (end.x - start.x) * (1 - t),
+              y: start.y + (end.y - start.y) * (1 - t)
+            }
+          }
         }
+        
         const tremX = (Math.random() - 0.5) * tremblingIntensity
         const tremY = (Math.random() - 0.5) * tremblingIntensity
         ctx.beginPath()
-        ctx.moveTo(start.x + tremX, start.y + tremY)
+        ctx.moveTo(currentStart.x + tremX, currentStart.y + tremY)
         ctx.lineTo(currentEnd.x + tremX, currentEnd.y + tremY)
         ctx.stroke()
       })
@@ -1090,7 +1112,7 @@ export default function InstagramPostCreator() {
 
     // Use baseFps for internal timing
     const msPerBaseFrame = 1000 / baseFps
-    const normalized = elapsed / (msPerBaseFrame * 150) // same cycle length as before
+    const normalized = elapsed / (msPerBaseFrame * 150)
     let progress = normalized
     if (progress > 1.4) {
       if (isLooping) {
@@ -1108,11 +1130,9 @@ export default function InstagramPostCreator() {
       lastDisplayTimeRef.current = timestamp
     }
 
-    // Always continue bouncing the loop, even if not currently drawing
     if (isPlaying || isLooping) {
       animationRef.current = requestAnimationFrame(animate)
     } else {
-      // Ensure final static frame draws once
       drawCanvas()
     }
   }
@@ -1156,7 +1176,6 @@ export default function InstagramPostCreator() {
         break
       case 'frameRate':
         setFrameRate(val)
-        // Throttling happening inside animate; no need to restart loop
         break
     }
     drawCanvas()
@@ -1173,110 +1192,126 @@ export default function InstagramPostCreator() {
 
   // ─── JSX ────────────────────────────────────────────────────────────────────────
   return (
-    <div className="bg-gray-100 p-6">
-      <h1 className="text-2xl font-bold mb-6">Instagram Post Creator</h1>
-      <div className="flex space-x-6">
-        {/* ─── LEFT PANEL: Text Inputs & Color Picker */}
-        <div className="w-[300px] space-y-5">
-          <div>
-            <Label htmlFor="title1" className="text-sm text-gray-600">Title 1</Label>
-            <Input
-              id="title1"
-              value={titles[0]}
-              onChange={e => setTitles([e.target.value, titles[1]])}
-              className="mt-1 bg-white rounded text-lg h-10"
-            />
-          </div>
-          <div>
-            <Label htmlFor="title2" className="text-sm text-gray-600">Title 2</Label>
-            <Input
-              id="title2"
-              value={titles[1]}
-              onChange={e => setTitles([titles[0], e.target.value])}
-              className="mt-1 bg-white rounded text-lg h-10"
-            />
-          </div>
-          <div>
-            <Label htmlFor="subtitle" className="text-sm text-gray-600">Subtitle</Label>
-            <Input
-              id="subtitle"
-              value={subtitle}
-              onChange={e => setSubtitle(e.target.value)}
-              className="mt-1 bg-white rounded text-lg h-10"
-            />
-          </div>
-          <div>
-            <Label className="text-sm text-gray-600">Background Color</Label>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {colorOptions.map(c => (
-                <button
-                  key={c.value}
-                  onClick={() => setBackgroundColor(c.value)}
-                  className="w-8 h-8 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  style={{ backgroundColor: c.value }}
-                  aria-label={c.name}
-                />
-              ))}
-            </div>
-          </div>
+    <div className="bg-white rounded-lg shadow-lg flex w-full h-[90vh] overflow-hidden">
+      {/* LEFT PANEL */}
+      <div className="w-1/3 border-r border-gray-200 px-8 py-6 space-y-8 overflow-auto">
+        <h2 className="text-xl font-semibold mb-4">Cordofonia Instagram<br/>Posts Creator Tool</h2>
+
+        <div className="space-y-4">
+          <p className="text-gray-600">1. Write a title</p>
+          <Input
+            value={titles[0]}
+            onChange={e => setTitles([e.target.value, titles[1]])}
+            className="w-full bg-gray-100 border-gray-300 text-lg h-10"
+          />
+          <Input
+            value={titles[1]}
+            onChange={e => setTitles([titles[0], e.target.value])}
+            className="w-full bg-gray-100 border-gray-300 text-lg h-10"
+          />
         </div>
 
-        {/* ─── RIGHT PANEL: Canvas & Controls */}
-        <div className="w-[600px] flex flex-col">
-          <div
-            className="w-[540px] h-[675px] bg-white rounded-lg shadow-lg mb-4 relative overflow-hidden"
-            style={{ backgroundColor }}
-          >
-            <canvas
-              ref={canvasRef}
-              width={1080}        // internal bitmap resolution
-              height={1350}
-              className="absolute inset-0 w-full h-full"    // stretch to the box edges
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
-            />
+        <div className="space-y-4">
+          <p className="text-gray-600">2. Write the instrument</p>
+          <Input
+            value={subtitle.replace('Instrumento: ', '')}
+            onChange={e => setSubtitle(`Instrumento: ${e.target.value}`)}
+            className="w-full bg-gray-100 border-gray-300 text-lg h-10"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-gray-600">3. Pick a Color</p>
+          <div className="flex items-center space-x-2">
+            {colorOptions.map(c => (
+              <button
+                key={c.value}
+                onClick={() => setBackgroundColor(c.value)}
+                className={`w-8 h-8 rounded ${backgroundColor === c.value ? 'ring-2 ring-black' : 'border border-gray-300'}`}
+                style={{ backgroundColor: c.value }}
+                aria-label={c.name}
+              />
+            ))}
           </div>
-          <div className="flex space-x-2 w-[540px]">
+        </div>
+      </div>
+
+      {/* RIGHT PANEL */}
+      <div className="w-2/3 flex flex-col">
+        <div className="flex-1 relative" style={{ backgroundColor }}>
+          <canvas
+            ref={canvasRef}
+            width={1080}
+            height={1350}
+            className="absolute inset-0 w-full h-full"
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+          />
+        </div>
+
+        {/* CONTROLS BAR */}
+        <div className="flex items-center justify-between px-8 py-4 bg-gray-50 border-t border-gray-200">
+          <div className="space-x-2">
             <Button
               variant={currentFrame === 1 ? "default" : "outline"}
               onClick={() => handleFrameChange(1)}
-              className="flex-1 h-[40px] rounded"
+              className="px-6 py-2 rounded bg-gray-200 hover:bg-gray-300"
             >
               Frame 1
             </Button>
             <Button
               variant={currentFrame === 2 ? "default" : "outline"}
               onClick={() => handleFrameChange(2)}
-              className="flex-1 h-[40px] rounded"
+              className="px-6 py-2 rounded bg-gray-200 hover:bg-gray-300"
             >
               Frame 2
             </Button>
-            <Button onClick={togglePlay} className="w-[40px] h-[40px] p-0 rounded-full bg-black">
-              {isPlaying ? <PauseIcon className="h-5 w-5 text-white" /> : <PlayIcon className="h-5 w-5 text-white" />}
+          </div>
+
+          <div className="flex space-x-4 items-center">
+            <Button
+              onClick={togglePlay}
+              className="w-12 h-12 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
+            >
+              {isPlaying
+                ? <PauseIcon className="w-6 h-6 text-black"/>
+                : <PlayIcon className="w-6 h-6 text-black"/>}
             </Button>
-            <Button onClick={toggleLoop} className={`w-[40px] h-[40px] p-0 rounded bg-black ${isLooping ? 'ring-2 ring-blue-500' : ''}`}>
-              <RotateCcwIcon className="h-5 w-5 text-white" />
+
+            <Button
+              onClick={toggleLoop}
+              className={`w-12 h-12 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center ${isLooping ? 'ring-2 ring-black' : ''}`}
+            >
+              <RotateCcwIcon className="w-6 h-6 text-black"/>
             </Button>
-            <Button onClick={() => setSettingsOpen(true)} className="w-[40px] h-[40px] p-0 rounded bg-black">
-              <Settings className="h-5 w-5 text-white" />
+
+            <Button
+              onClick={() => setSettingsOpen(true)}
+              className="w-12 h-12 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
+            >
+              <Settings className="w-6 h-6 text-black"/>
             </Button>
-            <Button onClick={() => console.log("Export functionality not implemented")} className="w-[40px] h-[40px] p-0 rounded bg-black">
-              <ShareIcon className="h-5 w-5 text-white" />
+
+            <Button
+              onClick={() => console.log("Export not implemented")}
+              className="w-12 h-12 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
+            >
+              <ShareIcon className="w-6 h-6 text-black"/>
             </Button>
           </div>
         </div>
       </div>
 
-      {/* ─── POSITION MODAL ───────────────────────────────────────────────────────────── */}
+      {/* POSITION MODAL */}
       <Dialog open={positionModalOpen} onOpenChange={setPositionModalOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Position</DialogTitle>
           </DialogHeader>
           {editingPosition && editingBaseFontSize !== null && (
-            <div className="space-y-4">
+            <div className="space-y-4 p-4">
               <div>
                 <Label htmlFor="xPos">X Position</Label>
                 <Input
@@ -1284,6 +1319,7 @@ export default function InstagramPostCreator() {
                   type="number"
                   value={editingPosition.x}
                   onChange={e => setEditingPosition({ ...editingPosition, x: Number(e.target.value) })}
+                  className="w-full bg-gray-100 border-gray-300"
                 />
               </div>
               <div>
@@ -1293,15 +1329,17 @@ export default function InstagramPostCreator() {
                   type="number"
                   value={editingPosition.y}
                   onChange={e => setEditingPosition({ ...editingPosition, y: Number(e.target.value) })}
+                  className="w-full bg-gray-100 border-gray-300"
                 />
               </div>
               <div>
-                <Label htmlFor="rotation">Rotation (degrees)</Label>
+                <Label htmlFor="rotation">Rotation (deg)</Label>
                 <Input
                   id="rotation"
                   type="number"
                   value={editingPosition.rotation * (180 / Math.PI)}
                   onChange={e => setEditingPosition({ ...editingPosition, rotation: Number(e.target.value) * (Math.PI / 180) })}
+                  className="w-full bg-gray-100 border-gray-300"
                 />
               </div>
               <div>
@@ -1317,21 +1355,24 @@ export default function InstagramPostCreator() {
                       fontSize: editingBaseFontSize * scale
                     })
                   }}
+                  className="w-full bg-gray-100 border-gray-300"
                 />
               </div>
-              <Button onClick={() => updatePosition(editingPosition)}>Update</Button>
+              <Button onClick={() => updatePosition(editingPosition)} className="mt-4 w-full bg-black text-white">
+                Update
+              </Button>
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* ─── SETTINGS MODAL ───────────────────────────────────────────────────────────── */}
+      {/* SETTINGS MODAL */}
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Settings</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 p-4">
             <div>
               <Label htmlFor="thicknessSlider">Line Thickness (max 10)</Label>
               <Slider
@@ -1355,7 +1396,7 @@ export default function InstagramPostCreator() {
               />
             </div>
             <div>
-              <Label htmlFor="baseFpsSlider">Animation Speed (Base FPS: {baseFps})</Label>
+              <Label htmlFor="baseFpsSlider">Animation Speed (Base FPS {baseFps})</Label>
               <Slider
                 id="baseFpsSlider"
                 min={10}
@@ -1384,21 +1425,13 @@ export default function InstagramPostCreator() {
                 }}
               />
             </div>
-            <div>
-              <Label htmlFor="orderSelect">Line Animation Order</Label>
-              <Select
-                id="orderSelect"
-                value={reverseShrink ? 'reverse' : 'normal'}
-                onValueChange={v => setReverseShrink(v === 'reverse')}
-              >
-                <SelectTrigger className="w-full mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="normal">Grow → Shrink</SelectItem>
-                  <SelectItem value="reverse">Shrink → Grow</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="lineDisappearEffect"
+                checked={lineDisappearEffect}
+                onCheckedChange={setLineDisappearEffect}
+              />
+              <Label htmlFor="lineDisappearEffect">Lines disappear from start</Label>
             </div>
           </div>
         </DialogContent>
