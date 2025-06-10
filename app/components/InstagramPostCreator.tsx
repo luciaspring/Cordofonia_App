@@ -1163,14 +1163,14 @@ export default function InstagramPostCreator() {
 
     // Use baseFps for internal timing
     const msPerBaseFrame = 1000 / baseFps
-    const normalized = elapsed / (msPerBaseFrame * 150) // same cycle length as before
+    const normalized = elapsed / (msPerBaseFrame * 150)
     let progress = normalized
-    if (progress > 1.4) {
+    if (progress > 2.15) {            // was 2.0
       if (isLooping) {
         startTimeRef.current = timestamp
         progress = 0
       } else {
-        progress = 1.4
+        progress = 2.15
         setIsPlaying(false)
       }
     }
@@ -1188,6 +1188,77 @@ export default function InstagramPostCreator() {
       // Ensure final static frame draws once
       drawCanvas()
     }
+  }
+
+  // ─── DRAW ANIMATED CONTENT (move → pause → scale, longer pause) ───
+  const drawAnimatedContent = (ctx: CanvasRenderingContext2D, progress: number) => {
+    const f1 = lines.filter(l => l.frame === 1)
+    const f2 = lines.filter(l => l.frame === 2)
+
+    /* 0.00-0.30  grow lines frame-1 */
+    if (progress <= 0.30) {
+      drawStaticText(ctx, 1)
+      drawAnimatedLines(ctx, progress / 0.30, f1, [], 'grow')
+      return
+    }
+
+    /* 0.30-0.60  shrink lines frame-1 */
+    if (progress <= 0.60) {
+      drawStaticText(ctx, 1)
+      drawAnimatedLines(ctx, (progress - 0.30) / 0.30, f1, [], 'shrink')
+      return
+    }
+
+    /* text transition  (frame-1 → frame-2) 0.60-1.05
+       move 0.15  |  pause 0.15  |  scale 0.15   */
+    if (progress <= 0.75) {                     // 0.60-0.75 move (eased)
+      const t = (progress - 0.60) / 0.15
+      drawAnimatedText(ctx, t, 0, 1, 2)
+      return
+    }
+    if (progress <= 0.90) {                     // 0.75-0.90 pause
+      drawAnimatedText(ctx, 1, 0, 1, 2)
+      return
+    }
+    if (progress <= 1.05) {                     // 0.90-1.05 scale (eased)
+      const t = (progress - 0.90) / 0.15
+      drawAnimatedText(ctx, 1, t, 1, 2)
+      return
+    }
+
+    /* 1.05-1.40  grow lines frame-2 */
+    if (progress <= 1.40) {
+      drawStaticText(ctx, 2)
+      drawAnimatedLines(ctx, (progress - 1.05) / 0.35, [], f2, 'grow')
+      return
+    }
+
+    /* 1.40-1.70  shrink lines frame-2 */
+    if (progress <= 1.70) {
+      drawStaticText(ctx, 2)
+      drawAnimatedLines(ctx, (progress - 1.40) / 0.30, [], f2, 'shrink')
+      return
+    }
+
+    /* reverse transition  (frame-2 → frame-1) 1.70-2.15
+       move-back 0.15 | pause 0.15 | scale-back 0.15 */
+    if (progress <= 1.85) {                     // move back
+      const t = (progress - 1.70) / 0.15
+      drawAnimatedText(ctx, 1 - t, 1, 2, 1)
+      return
+    }
+    if (progress <= 2.00) {                     // pause
+      drawAnimatedText(ctx, 0, 1, 2, 1)
+      return
+    }
+    if (progress <= 2.15) {                     // scale back
+      const t = (progress - 2.00) / 0.15
+      drawAnimatedText(ctx, 0, 1 - t, 2, 1)
+      return
+    }
+
+    /* static fallback */
+    drawStaticText(ctx, 1)
   }
 
   // ─── FRAME CONTROLS ─────────────────────────────────────────────────────────────
@@ -1242,92 +1313,6 @@ export default function InstagramPostCreator() {
     const b = parseInt(bgColor.slice(5, 7), 16)
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
     return luminance > 0.5 ? '#000000' : '#FFFFFF'
-  }
-
-  const drawAnimatedContent = (ctx: CanvasRenderingContext2D, progress: number) => {
-    const frame1Lines = lines.filter(l => l.frame === 1)
-    const frame2Lines = lines.filter(l => l.frame === 2)
-
-    // 0.00–0.30  grow frame-1 lines
-    if (progress <= 0.30) {
-      drawStaticText(ctx, 1)
-      drawAnimatedLines(ctx, progress / 0.30, frame1Lines, [], 'grow')
-      return
-    }
-
-    // 0.30–0.60  shrink frame-1 lines
-    if (progress <= 0.60) {
-      drawStaticText(ctx, 1)
-      drawAnimatedLines(ctx, (progress - 0.30) / 0.30, frame1Lines, [], 'shrink')
-      return
-    }
-
-    /*──────────────────────────────────────────────────────────────
-      TEXT TRANSITION (frame-1 → frame-2)
-
-      ┌────────────┬───────────┬─────────────┐
-      │ 0.60–0.75  │ 0.75–0.80 │ 0.80–0.95   │
-      │ move only  │  pause    │  scale only │
-      └────────────┴───────────┴─────────────┘
-    */
-    if (progress <= 0.75) {                 // move (location) 15 %
-      const t = (progress - 0.60) / 0.15
-      drawAnimatedText(ctx, t, 0, 1, 2)     // location t, scale 0, frame1→2
-      return
-    }
-
-    if (progress <= 0.80) {                 // tiny pause 5 %
-      drawAnimatedText(ctx, 1, 0, 1, 2)     // fully moved, not scaled
-      return
-    }
-
-    if (progress <= 0.95) {                 // scale 15 %
-      const t = (progress - 0.80) / 0.15
-      drawAnimatedText(ctx, 1, t, 1, 2)     // location done, scale t
-      return
-    }
-
-    // 0.95–1.30   grow frame-2 lines
-    if (progress <= 1.30) {
-      drawStaticText(ctx, 2)
-      drawAnimatedLines(ctx, (progress - 0.95) / 0.35, [], frame2Lines, 'grow')
-      return
-    }
-
-    // 1.30–1.60   shrink frame-2 lines
-    if (progress <= 1.60) {
-      drawStaticText(ctx, 2)
-      drawAnimatedLines(ctx, (progress - 1.30) / 0.30, [], frame2Lines, 'shrink')
-      return
-    }
-
-    /*──────────────────────────────────────────────────────────────
-      REVERSE TEXT TRANSITION (frame-2 → frame-1)
-
-      ┌────────────┬───────────┬─────────────┐
-      │ 1.60–1.75  │ 1.75–1.80 │ 1.80–1.95   │
-      │ move back  │  pause    │  scale back │
-      └────────────┴───────────┴─────────────┘
-    */
-    if (progress <= 1.75) {                 // move back
-      const t = (progress - 1.60) / 0.15
-      drawAnimatedText(ctx, 1 - t, 1, 2, 1) // reverse location, keep scale
-      return
-    }
-
-    if (progress <= 1.80) {                 // pause
-      drawAnimatedText(ctx, 0, 1, 2, 1)     // back in place, still scaled
-      return
-    }
-
-    if (progress <= 1.95) {                 // scale back
-      const t = (progress - 1.80) / 0.15
-      drawAnimatedText(ctx, 0, 1 - t, 2, 1) // no move, reverse scale
-      return
-    }
-
-    // 1.95–2.00   final static frame-1 (leave exactly as before)
-    drawStaticText(ctx, 1)
   }
 
   // ─── JSX ────────────────────────────────────────────────────────────────────────
