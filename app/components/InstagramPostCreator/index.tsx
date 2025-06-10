@@ -184,7 +184,8 @@ export default function InstagramPostCreator() {
 
     // Set text properties
     ctx.fillStyle = getContrastColor(backgroundColor)
-    ctx.textBaseline = 'top'
+    ctx.textBaseline = 'middle'
+    ctx.textAlign = 'center'
 
     // Calculate animation phases with clear boundaries
     const placementEndTime = PLACEMENT_DURATION / TOTAL_ANIMATION_DURATION
@@ -233,17 +234,17 @@ export default function InstagramPostCreator() {
           fontSize = pos2.fontSize
         }
         
+        // Use a FIXED center point that doesn't change based on width/height
+        const centerX = x + 500 // Fixed offset for centering
+        const centerY = y + 100 // Fixed offset for centering
+        
         ctx.save()
-        ctx.translate(x + pos1.width / 2, y + pos1.height / 2)
+        ctx.translate(centerX, centerY)
         ctx.rotate(rotation)
         ctx.font = `${fontSize}px SulSans-Bold, sans-serif`
         
-        // Measure text to center it properly
-        const metrics = ctx.measureText(title)
-        const textWidth = metrics.width
-        const textHeight = fontSize // Approximate height
-        
-        ctx.fillText(title, -textWidth / 2, -textHeight / 2)
+        // Draw text centered at origin (0,0) since we translated
+        ctx.fillText(title, 0, 0)
         ctx.restore()
       })
 
@@ -286,17 +287,17 @@ export default function InstagramPostCreator() {
           subFontSize = subPos2.fontSize
         }
 
+        // Use a FIXED center point for subtitle too
+        const centerX = subX + 500 // Fixed offset for centering
+        const centerY = subY + 15 // Fixed offset for centering (smaller for subtitle)
+
         ctx.save()
-        ctx.translate(subX + subPos1.width / 2, subY + subPos1.height / 2)
+        ctx.translate(centerX, centerY)
         ctx.rotate(subRotation)
         ctx.font = `${subFontSize}px SulSans-Bold, sans-serif`
         
-        // Measure text to center it properly
-        const metrics = ctx.measureText(subtitle)
-        const textWidth = metrics.width
-        const textHeight = subFontSize // Approximate height
-        
-        ctx.fillText(subtitle, -textWidth / 2, -textHeight / 2)
+        // Draw text centered at origin (0,0) since we translated
+        ctx.fillText(subtitle, 0, 0)
         ctx.restore()
       }
     }
@@ -311,10 +312,10 @@ export default function InstagramPostCreator() {
     let phaseProgress = 0
     
     if (progress < placementEndTime) {
-      phase = 'Position/Rotation'
+      phase = 'Position/Rotation ONLY'
       phaseProgress = (progress / placementEndTime) * 100
     } else if (progress < scaleEndTime) {
-      phase = 'Scale Only'
+      phase = 'Scale ONLY'
       phaseProgress = ((progress - placementEndTime) / (scaleEndTime - placementEndTime)) * 100
     } else if (progress < (PLACEMENT_DURATION + SCALE_DURATION + LINES_DELAY) / TOTAL_ANIMATION_DURATION) {
       phase = 'Waiting for Lines'
