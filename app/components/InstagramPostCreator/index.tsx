@@ -90,8 +90,8 @@ export default function InstagramPostCreator() {
   )
 
   // Animation timing constants
-  const PLACEMENT_DURATION = 1.5 // seconds for placement animation
-  const SCALE_DURATION = 1.0 // seconds for scale animation
+  const PLACEMENT_DURATION = 2.0 // seconds for placement animation
+  const SCALE_DURATION = 1.5 // seconds for scale animation
   const LINES_DELAY = 0.5 // delay before lines start appearing
   const TOTAL_ANIMATION_DURATION = PLACEMENT_DURATION + SCALE_DURATION + LINES_DELAY + 2.0 // total cycle
 
@@ -186,27 +186,9 @@ export default function InstagramPostCreator() {
     ctx.fillStyle = getContrastColor(backgroundColor)
     ctx.textBaseline = 'top'
 
-    // Calculate animation phases
+    // Calculate animation phases with clear boundaries
     const placementEndTime = PLACEMENT_DURATION / TOTAL_ANIMATION_DURATION
     const scaleEndTime = (PLACEMENT_DURATION + SCALE_DURATION) / TOTAL_ANIMATION_DURATION
-
-    let placementProgress = 0
-    let scaleProgress = 0
-
-    if (progress <= placementEndTime) {
-      // Phase 1: Only placement animation
-      placementProgress = easeInOutCubic(progress / placementEndTime)
-      scaleProgress = 0 // No scale animation yet
-    } else if (progress <= scaleEndTime) {
-      // Phase 2: Placement complete, now scale animation
-      placementProgress = 1 // Placement is complete
-      const scalePhaseProgress = (progress - placementEndTime) / ((scaleEndTime - placementEndTime))
-      scaleProgress = easeInOutCubic(scalePhaseProgress)
-    } else {
-      // Phase 3: Both animations complete
-      placementProgress = 1
-      scaleProgress = 1
-    }
 
     const drawText = () => {
       // Draw titles
@@ -216,25 +198,44 @@ export default function InstagramPostCreator() {
         const pos1 = titlePositionsFrame1[index]
         const pos2 = titlePositionsFrame2[index]
         
-        // Phase 1: Calculate position (placement animation only)
         let x, y, rotation, fontSize, width, height
-        
-        if (placementProgress < 1) {
-          // During placement phase: animate position, keep Frame 1 scale
+
+        if (progress < placementEndTime) {
+          // PHASE 1: PLACEMENT ONLY - Position animates, scale stays at Frame 1
+          const placementProgress = easeInOutCubic(progress / placementEndTime)
+          
           x = pos1.x + (pos2.x - pos1.x) * placementProgress
           y = pos1.y + (pos2.y - pos1.y) * placementProgress
           rotation = pos1.rotation + (pos2.rotation - pos1.rotation) * placementProgress
-          fontSize = pos1.fontSize // Keep Frame 1 scale
-          width = pos1.width // Keep Frame 1 scale
-          height = pos1.height // Keep Frame 1 scale
-        } else {
-          // After placement phase: use Frame 2 position, animate scale
-          x = pos2.x // Final position
-          y = pos2.y // Final position
-          rotation = pos2.rotation // Final rotation
+          
+          // Scale remains at Frame 1 values during placement
+          fontSize = pos1.fontSize
+          width = pos1.width
+          height = pos1.height
+          
+        } else if (progress < scaleEndTime) {
+          // PHASE 2: SCALE ONLY - Position locked at Frame 2, scale animates
+          const scalePhaseProgress = (progress - placementEndTime) / (scaleEndTime - placementEndTime)
+          const scaleProgress = easeInOutCubic(scalePhaseProgress)
+          
+          // Position locked at Frame 2 values
+          x = pos2.x
+          y = pos2.y
+          rotation = pos2.rotation
+          
+          // Scale animates from Frame 1 to Frame 2
           fontSize = pos1.fontSize + (pos2.fontSize - pos1.fontSize) * scaleProgress
           width = pos1.width + (pos2.width - pos1.width) * scaleProgress
           height = pos1.height + (pos2.height - pos1.height) * scaleProgress
+          
+        } else {
+          // PHASE 3: BOTH COMPLETE - Everything at Frame 2 values
+          x = pos2.x
+          y = pos2.y
+          rotation = pos2.rotation
+          fontSize = pos2.fontSize
+          width = pos2.width
+          height = pos2.height
         }
         
         ctx.save()
@@ -245,30 +246,49 @@ export default function InstagramPostCreator() {
         ctx.restore()
       })
 
-      // Draw subtitle
+      // Draw subtitle with same logic
       if (subtitle.trim()) {
         const subPos1 = subtitlePositionFrame1
         const subPos2 = subtitlePositionFrame2
         
-        // Phase 1: Calculate position (placement animation only)
         let subX, subY, subRotation, subFontSize, subWidth, subHeight
-        
-        if (placementProgress < 1) {
-          // During placement phase: animate position, keep Frame 1 scale
+
+        if (progress < placementEndTime) {
+          // PHASE 1: PLACEMENT ONLY
+          const placementProgress = easeInOutCubic(progress / placementEndTime)
+          
           subX = subPos1.x + (subPos2.x - subPos1.x) * placementProgress
           subY = subPos1.y + (subPos2.y - subPos1.y) * placementProgress
           subRotation = subPos1.rotation + (subPos2.rotation - subPos1.rotation) * placementProgress
-          subFontSize = subPos1.fontSize // Keep Frame 1 scale
-          subWidth = subPos1.width // Keep Frame 1 scale
-          subHeight = subPos1.height // Keep Frame 1 scale
-        } else {
-          // After placement phase: use Frame 2 position, animate scale
-          subX = subPos2.x // Final position
-          subY = subPos2.y // Final position
-          subRotation = subPos2.rotation // Final rotation
+          
+          // Scale remains at Frame 1
+          subFontSize = subPos1.fontSize
+          subWidth = subPos1.width
+          subHeight = subPos1.height
+          
+        } else if (progress < scaleEndTime) {
+          // PHASE 2: SCALE ONLY
+          const scalePhaseProgress = (progress - placementEndTime) / (scaleEndTime - placementEndTime)
+          const scaleProgress = easeInOutCubic(scalePhaseProgress)
+          
+          // Position locked at Frame 2
+          subX = subPos2.x
+          subY = subPos2.y
+          subRotation = subPos2.rotation
+          
+          // Scale animates
           subFontSize = subPos1.fontSize + (subPos2.fontSize - subPos1.fontSize) * scaleProgress
           subWidth = subPos1.width + (subPos2.width - subPos1.width) * scaleProgress
           subHeight = subPos1.height + (subPos2.height - subPos1.height) * scaleProgress
+          
+        } else {
+          // PHASE 3: BOTH COMPLETE
+          subX = subPos2.x
+          subY = subPos2.y
+          subRotation = subPos2.rotation
+          subFontSize = subPos2.fontSize
+          subWidth = subPos2.width
+          subHeight = subPos2.height
         }
 
         ctx.save()
@@ -285,7 +305,19 @@ export default function InstagramPostCreator() {
     // Draw animated lines (only after placement and scale animations are complete)
     drawAnimatedLines(ctx, progress)
 
-    setDebug(`Progress: ${progress.toFixed(3)}, Placement: ${placementProgress.toFixed(3)}, Scale: ${scaleProgress.toFixed(3)}, Frame: ${currentFrame}`)
+    // Enhanced debug info
+    let phase = 'Complete'
+    if (progress < placementEndTime) {
+      phase = 'Placement'
+    } else if (progress < scaleEndTime) {
+      phase = 'Scale'
+    } else if (progress < (PLACEMENT_DURATION + SCALE_DURATION + LINES_DELAY) / TOTAL_ANIMATION_DURATION) {
+      phase = 'Waiting for Lines'
+    } else {
+      phase = 'Lines'
+    }
+
+    setDebug(`Progress: ${progress.toFixed(3)} | Phase: ${phase} | Frame: ${currentFrame}`)
   }, [
     backgroundColor,
     titles,
