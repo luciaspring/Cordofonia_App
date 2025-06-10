@@ -86,6 +86,7 @@ export default function InstagramPostCreator() {
   const [tremblingIntensity, setTremblingIntensity] = useState<number>(3)
   const [frameRate, setFrameRate]                   = useState<number>(MIN_FRAME_RATE)
   const [tremblingAffectsText, setTremblingAffectsText] = useState<boolean>(true)
+  const [lineDisappearEffect, setLineDisappearEffect] = useState<boolean>(false)
   const [baseFps, setBaseFps]                       = useState<number>(35)
 
   // modals
@@ -132,7 +133,8 @@ export default function InstagramPostCreator() {
     lineThickness,
     tremblingIntensity,
     frameRate,
-    tremblingAffectsText
+    tremblingAffectsText,
+    lineDisappearEffect
   ])
 
   // ─── START / STOP ANIMATION ──────────────────────────────────────────────────────
@@ -313,16 +315,41 @@ export default function InstagramPostCreator() {
       arr.forEach((ln,idx) => {
         let t = Math.max(0, Math.min(1, (fgProg - idx*delay)/duration))
         t = easeInOutQuint(t)
-        const { start,end } = ln
-        const curEnd = {
-          x: start.x + (end.x - start.x) * (animationType==='grow'?t:1-t),
-          y: start.y + (end.y - start.y) * (animationType==='grow'?t:1-t),
+        const { start, end } = ln
+        
+        let currentStart: Point, currentEnd: Point
+        
+        if (animationType === 'grow') {
+          // Growing: line extends from start to end
+          currentStart = start
+          currentEnd = {
+            x: start.x + (end.x - start.x) * t,
+            y: start.y + (end.y - start.y) * t,
+          }
+        } else {
+          // Shrinking: depends on lineDisappearEffect
+          if (lineDisappearEffect) {
+            // New effect: start point moves toward end point
+            currentStart = {
+              x: start.x + (end.x - start.x) * t,
+              y: start.y + (end.y - start.y) * t,
+            }
+            currentEnd = end
+          } else {
+            // Original effect: end point moves toward start point
+            currentStart = start
+            currentEnd = {
+              x: start.x + (end.x - start.x) * (1 - t),
+              y: start.y + (end.y - start.y) * (1 - t),
+            }
+          }
         }
+        
         const tremX = (Math.random()-0.5)*tremblingIntensity
         const tremY = (Math.random()-0.5)*tremblingIntensity
         ctx.beginPath()
-        ctx.moveTo(start.x+tremX, start.y+tremY)
-        ctx.lineTo(curEnd.x+tremX, curEnd.y+tremY)
+        ctx.moveTo(currentStart.x+tremX, currentStart.y+tremY)
+        ctx.lineTo(currentEnd.x+tremX, currentEnd.y+tremY)
         ctx.stroke()
       })
     }
@@ -1172,6 +1199,14 @@ export default function InstagramPostCreator() {
                 onCheckedChange={setTremblingAffectsText}
               />
               <Label htmlFor="tremblingTarget">Trembling affects text (OFF = lines only)</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="lineDisappearEffect"
+                checked={lineDisappearEffect}
+                onCheckedChange={setLineDisappearEffect}
+              />
+              <Label htmlFor="lineDisappearEffect">Lines disappear from start to end</Label>
             </div>
           </div>
         </DialogContent>
