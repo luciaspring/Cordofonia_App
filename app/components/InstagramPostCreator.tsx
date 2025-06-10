@@ -1165,12 +1165,12 @@ export default function InstagramPostCreator() {
     const msPerBaseFrame = 1000 / baseFps
     const normalized = elapsed / (msPerBaseFrame * 150)
     let progress = normalized
-    if (progress > 2.15) {            // was 2.0
+    if (progress > 2.25) {      // was 2.15
       if (isLooping) {
         startTimeRef.current = timestamp
         progress = 0
       } else {
-        progress = 2.15
+        progress = 2.25
         setIsPlaying(false)
       }
     }
@@ -1190,75 +1190,36 @@ export default function InstagramPostCreator() {
     }
   }
 
-  // ─── DRAW ANIMATED CONTENT (move → pause → scale, longer pause) ───
-  const drawAnimatedContent = (ctx: CanvasRenderingContext2D, progress: number) => {
+  const drawAnimatedContent = (ctx: CanvasRenderingContext2D, p: number) => {
     const f1 = lines.filter(l => l.frame === 1)
     const f2 = lines.filter(l => l.frame === 2)
 
-    /* 0.00-0.30  grow lines frame-1 */
-    if (progress <= 0.30) {
-      drawStaticText(ctx, 1)
-      drawAnimatedLines(ctx, progress / 0.30, f1, [], 'grow')
-      return
-    }
+    // 0.00-0.30  grow lines frame-1
+    if (p <= 0.30) { drawStaticText(ctx,1); drawAnimatedLines(ctx, p/0.30, f1,[], 'grow'); return }
 
-    /* 0.30-0.60  shrink lines frame-1 */
-    if (progress <= 0.60) {
-      drawStaticText(ctx, 1)
-      drawAnimatedLines(ctx, (progress - 0.30) / 0.30, f1, [], 'shrink')
-      return
-    }
+    // 0.30-0.60  shrink lines frame-1
+    if (p <= 0.60) { drawStaticText(ctx,1); drawAnimatedLines(ctx,(p-0.30)/0.30,f1,[],'shrink'); return }
 
-    /* text transition  (frame-1 → frame-2) 0.60-1.05
-       move 0.15  |  pause 0.15  |  scale 0.15   */
-    if (progress <= 0.75) {                     // 0.60-0.75 move (eased)
-      const t = (progress - 0.60) / 0.15
-      drawAnimatedText(ctx, t, 0, 1, 2)
-      return
-    }
-    if (progress <= 0.90) {                     // 0.75-0.90 pause
-      drawAnimatedText(ctx, 1, 0, 1, 2)
-      return
-    }
-    if (progress <= 1.05) {                     // 0.90-1.05 scale (eased)
-      const t = (progress - 0.90) / 0.15
-      drawAnimatedText(ctx, 1, t, 1, 2)
-      return
-    }
+    // 0.60-0.85  MOVE (≈1 s)
+    if (p <= 0.85) { const t=(p-0.60)/0.25; drawAnimatedText(ctx, t, 0, 1, 2); return }
 
-    /* 1.05-1.40  grow lines frame-2 */
-    if (progress <= 1.40) {
-      drawStaticText(ctx, 2)
-      drawAnimatedLines(ctx, (progress - 1.05) / 0.35, [], f2, 'grow')
-      return
-    }
+    // 0.85-1.10  SCALE (≈1 s)
+    if (p <= 1.10) { const t=(p-0.85)/0.25; drawAnimatedText(ctx, 1, t, 1, 2); return }
 
-    /* 1.40-1.70  shrink lines frame-2 */
-    if (progress <= 1.70) {
-      drawStaticText(ctx, 2)
-      drawAnimatedLines(ctx, (progress - 1.40) / 0.30, [], f2, 'shrink')
-      return
-    }
+    // 1.10-1.45  grow lines frame-2
+    if (p <= 1.45) { drawStaticText(ctx,2); drawAnimatedLines(ctx,(p-1.10)/0.35,[],f2,'grow'); return }
 
-    /* reverse transition  (frame-2 → frame-1) 1.70-2.15
-       move-back 0.15 | pause 0.15 | scale-back 0.15 */
-    if (progress <= 1.85) {                     // move back
-      const t = (progress - 1.70) / 0.15
-      drawAnimatedText(ctx, 1 - t, 1, 2, 1)
-      return
-    }
-    if (progress <= 2.00) {                     // pause
-      drawAnimatedText(ctx, 0, 1, 2, 1)
-      return
-    }
-    if (progress <= 2.15) {                     // scale back
-      const t = (progress - 2.00) / 0.15
-      drawAnimatedText(ctx, 0, 1 - t, 2, 1)
-      return
-    }
+    // 1.45-1.75  shrink lines frame-2
+    if (p <= 1.75) { drawStaticText(ctx,2); drawAnimatedLines(ctx,(p-1.45)/0.30,[],f2,'shrink'); return }
 
-    /* static fallback */
-    drawStaticText(ctx, 1)
+    // 1.75-2.00  MOVE BACK (≈1 s)
+    if (p <= 2.00) { const t=(p-1.75)/0.25; drawAnimatedText(ctx, 1-t, 1, 2, 1); return }
+
+    // 2.00-2.25  SCALE BACK (≈1 s)
+    if (p <= 2.25) { const t=(p-2.00)/0.25; drawAnimatedText(ctx, 0, 1-t, 2, 1); return }
+
+    // fallback
+    drawStaticText(ctx,1)
   }
 
   // ─── FRAME CONTROLS ─────────────────────────────────────────────────────────────
