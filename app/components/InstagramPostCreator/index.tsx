@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useRef, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,6 +28,12 @@ const MAX_LINE_THICKNESS = 10
 const MIN_LINE_THICKNESS = 1
 const MIN_FRAME_RATE = 10
 const BASE_FPS = 60
+
+// Fixed canvas dimensions
+const CANVAS_WIDTH = 540
+const CANVAS_HEIGHT = 675
+const CANVAS_INTERNAL_WIDTH = 1080
+const CANVAS_INTERNAL_HEIGHT = 1350
 
 // Ease In-Out Quint easing function (piecewise)
 const easeInOutQuint = (t: number): number => {
@@ -325,10 +333,10 @@ export default function InstagramPostCreator() {
         t = easeInOutQuint(t)
         const { start, end } = ln
         
-        let currentStart, currentEnd
+        let currentStart = start
+        let currentEnd = end
         
         if (animationType === 'grow') {
-          currentStart = start
           currentEnd = {
             x: start.x + (end.x - start.x) * t,
             y: start.y + (end.y - start.y) * t
@@ -340,10 +348,8 @@ export default function InstagramPostCreator() {
               x: start.x + (end.x - start.x) * t,
               y: start.y + (end.y - start.y) * t
             }
-            currentEnd = end
           } else {
             // Lines disappear from end (original behavior)
-            currentStart = start
             currentEnd = {
               x: start.x + (end.x - start.x) * (1 - t),
               y: start.y + (end.y - start.y) * (1 - t)
@@ -849,8 +855,8 @@ export default function InstagramPostCreator() {
     const canvas = canvasRef.current
     if (!canvas) return
     const rect = canvas.getBoundingClientRect()
-    const x = (e.clientX - rect.left) * (canvas.width / rect.width)
-    const y = (e.clientY - rect.top) * (canvas.height / rect.height)
+    const x = (e.clientX - rect.left) * (CANVAS_INTERNAL_WIDTH / CANVAS_WIDTH)
+    const y = (e.clientY - rect.top) * (CANVAS_INTERNAL_HEIGHT / CANVAS_HEIGHT)
 
     lastMousePosition.current = { x, y }
 
@@ -894,8 +900,8 @@ export default function InstagramPostCreator() {
     const canvas = canvasRef.current
     if (!canvas) return
     const rect = canvas.getBoundingClientRect()
-    const x = (e.clientX - rect.left) * (canvas.width / rect.width)
-    const y = (e.clientY - rect.top) * (canvas.height / rect.height)
+    const x = (e.clientX - rect.left) * (CANVAS_INTERNAL_WIDTH / CANVAS_WIDTH)
+    const y = (e.clientY - rect.top) * (CANVAS_INTERNAL_HEIGHT / CANVAS_HEIGHT)
 
     if (selectedTexts.length > 0 && currentFrame === 2) {
       if (isRotating) {
@@ -1203,25 +1209,32 @@ export default function InstagramPostCreator() {
         {/* ─── RIGHT PANEL: Canvas & Controls */}
         <div className="flex flex-col">
           <div
-            className="bg-white rounded-lg shadow-lg mb-4 relative overflow-hidden"
-            style={{ 
-              backgroundColor,
-              width: '540px',
-              height: '675px',
-              minWidth: '540px',
-              minHeight: '675px',
-              maxWidth: '540px',
-              maxHeight: '675px'
+            style={{
+              width: `${CANVAS_WIDTH}px`,
+              height: `${CANVAS_HEIGHT}px`,
+              minWidth: `${CANVAS_WIDTH}px`,
+              minHeight: `${CANVAS_HEIGHT}px`,
+              maxWidth: `${CANVAS_WIDTH}px`,
+              maxHeight: `${CANVAS_HEIGHT}px`,
+              backgroundColor: backgroundColor,
+              borderRadius: '8px',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+              marginBottom: '16px',
+              position: 'relative',
+              overflow: 'hidden'
             }}
           >
             <canvas
               ref={canvasRef}
-              width={1080}
-              height={1350}
-              className="absolute inset-0"
+              width={CANVAS_INTERNAL_WIDTH}
+              height={CANVAS_INTERNAL_HEIGHT}
               style={{
-                width: '540px',
-                height: '675px'
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: `${CANVAS_WIDTH}px`,
+                height: `${CANVAS_HEIGHT}px`,
+                display: 'block'
               }}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
@@ -1229,7 +1242,7 @@ export default function InstagramPostCreator() {
               onMouseLeave={handleMouseUp}
             />
           </div>
-          <div className="flex space-x-2" style={{ width: '540px' }}>
+          <div className="flex space-x-2" style={{ width: `${CANVAS_WIDTH}px` }}>
             <Button
               variant={currentFrame === 1 ? "default" : "outline"}
               onClick={() => handleFrameChange(1)}
