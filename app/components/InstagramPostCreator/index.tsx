@@ -10,13 +10,6 @@ import { PlayIcon, PauseIcon, RotateCcwIcon, ShareIcon, Settings } from 'lucide-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-// ─── CONSTANTS ───────────────────────────────────────────────────────────────────
-
-const CANVAS_WIDTH = 540
-const CANVAS_HEIGHT = 675
-const CANVAS_INTERNAL_WIDTH = 1080
-const CANVAS_INTERNAL_HEIGHT = 1350
-
 // ─── TYPES & INTERFACES ─────────────────────────────────────────────────────────
 
 interface Point {
@@ -58,6 +51,8 @@ interface RigidBoundingBox {
   centerY: number
 }
 
+// ─── CONSTANTS ───────────────────────────────────────────────────────────────────
+
 const colorOptions = [
   { name: 'Light Pink', value: '#F6A69B' },
   { name: 'Light Blue', value: '#5894D0' },
@@ -96,7 +91,6 @@ export default function InstagramPostCreator() {
   const [lines, setLines] = useState<Line[]>([])
   const [currentLine, setCurrentLine] = useState<Line | null>(null)
   const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null)
-  const [lineDisappearEffect, setLineDisappearEffect] = useState(false)
 
   const [titlePositionsFrame1, setTitlePositionsFrame1] = useState<TextPosition[]>([
     { x: 40, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 },
@@ -124,6 +118,7 @@ export default function InstagramPostCreator() {
   const [tremblingIntensity, setTremblingIntensity] = useState<number>(3)             // preset at 3
   const [frameRate, setFrameRate] = useState<number>(MIN_FRAME_RATE)                   // preset at 10
   const [baseFps, setBaseFps] = useState<number>(35)                                   // preset at 35
+  const [lineDisappearEffect, setLineDisappearEffect] = useState<boolean>(true)       // NEW: lines disappear at end point
 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [groupRotation, setGroupRotation] = useState(0)
@@ -375,19 +370,29 @@ export default function InstagramPostCreator() {
         let currentEnd: Point
 
         if (animationType === 'grow') {
-          // Grow: line appears from start to end
+          // Growing: line appears from start to end
           currentStart = start
           currentEnd = {
             x: start.x + (end.x - start.x) * t,
             y: start.y + (end.y - start.y) * t
           }
         } else {
-          // Shrink: both points move toward the end point, making line disappear at end
-          currentStart = {
-            x: start.x + (end.x - start.x) * t,
-            y: start.y + (end.y - start.y) * t
+          // Shrinking: NEW BEHAVIOR - both points converge at end point
+          if (lineDisappearEffect) {
+            // Both start and end move toward the end point
+            currentStart = {
+              x: start.x + (end.x - start.x) * t,
+              y: start.y + (end.y - start.y) * t
+            }
+            currentEnd = end
+          } else {
+            // Original behavior: line shrinks from end to start
+            currentStart = start
+            currentEnd = {
+              x: start.x + (end.x - start.x) * (1 - t),
+              y: start.y + (end.y - start.y) * (1 - t)
+            }
           }
-          currentEnd = end
         }
 
         const tremX = (Math.random() - 0.5) * tremblingIntensity
@@ -887,8 +892,8 @@ export default function InstagramPostCreator() {
     const canvas = canvasRef.current
     if (!canvas) return
     const rect = canvas.getBoundingClientRect()
-    const x = (e.clientX - rect.left) * (CANVAS_INTERNAL_WIDTH / CANVAS_WIDTH)
-    const y = (e.clientY - rect.top) * (CANVAS_INTERNAL_HEIGHT / CANVAS_HEIGHT)
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width)
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height)
 
     lastMousePosition.current = { x, y }
 
@@ -932,8 +937,8 @@ export default function InstagramPostCreator() {
     const canvas = canvasRef.current
     if (!canvas) return
     const rect = canvas.getBoundingClientRect()
-    const x = (e.clientX - rect.left) * (CANVAS_INTERNAL_WIDTH / CANVAS_WIDTH)
-    const y = (e.clientY - rect.top) * (CANVAS_INTERNAL_HEIGHT / CANVAS_HEIGHT)
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width)
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height)
 
     if (selectedTexts.length > 0 && currentFrame === 2) {
       if (isRotating) {
@@ -1240,41 +1245,23 @@ export default function InstagramPostCreator() {
         </div>
 
         {/* ─── RIGHT PANEL: Canvas & Controls */}
-        <div className="flex flex-col">
+        <div className="w-[600px] flex flex-col">
           <div
-            style={{
-              width: `${CANVAS_WIDTH}px`,
-              height: `${CANVAS_HEIGHT}px`,
-              minWidth: `${CANVAS_WIDTH}px`,
-              minHeight: `${CANVAS_HEIGHT}px`,
-              maxWidth: `${CANVAS_WIDTH}px`,
-              maxHeight: `${CANVAS_HEIGHT}px`,
-              backgroundColor: backgroundColor,
-              borderRadius: '8px',
-              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-              marginBottom: '16px',
-              position: 'relative',
-              overflow: 'hidden'
-            }}
+            className="w-[540px] h-[675px] bg-white rounded-lg shadow-lg mb-4 relative overflow-hidden"
+            style={{ backgroundColor }}
           >
             <canvas
               ref={canvasRef}
-              width={CANVAS_INTERNAL_WIDTH}
-              height={CANVAS_INTERNAL_HEIGHT}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%'
-              }}
+              width={1080}
+              height={1350}
+              className="absolute inset-0 w-full h-full"
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
             />
           </div>
-          <div className="flex space-x-2" style={{ width: `${CANVAS_WIDTH}px` }}>
+          <div className="flex space-x-2 w-[540px]">
             <Button
               variant={currentFrame === 1 ? "default" : "outline"}
               onClick={() => handleFrameChange(1)}
@@ -1426,7 +1413,7 @@ export default function InstagramPostCreator() {
                 checked={lineDisappearEffect}
                 onCheckedChange={setLineDisappearEffect}
               />
-              <Label htmlFor="lineDisappearEffect">Lines disappear from start</Label>
+              <Label htmlFor="lineDisappearEffect">Lines disappear at end point</Label>
             </div>
           </div>
         </DialogContent>
