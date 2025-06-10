@@ -1,12 +1,55 @@
+// app/components/InstagramPostCreator.tsx
+'use client'
+
 import React, { useState, useRef, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
-import { PlayIcon, PauseIcon, RotateCcwIcon, Settings, ShareIcon } from 'lucide-react'
+import { PlayIcon, PauseIcon, RotateCcwIcon, ShareIcon, Settings } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Point, Line, TextPosition, GroupBoundingBox } from './types'
+
+// ─── TYPES & INTERFACES ─────────────────────────────────────────────────────────
+
+interface Point {
+  x: number
+  y: number
+}
+
+interface Line {
+  start: Point
+  end: Point
+  frame: number
+}
+
+interface TextPosition {
+  x: number
+  y: number
+  width: number
+  height: number
+  rotation: number
+  fontSize: number
+  aspectRatio?: number
+}
+
+interface GroupBoundingBox {
+  x: number
+  y: number
+  width: number
+  height: number
+  rotation: number
+}
+
+interface RigidBoundingBox {
+  x: number
+  y: number
+  width: number
+  height: number
+  rotation: number
+  centerX: number
+  centerY: number
+}
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────────
 
@@ -48,6 +91,7 @@ export default function InstagramPostCreator() {
   const [lines, setLines] = useState<Line[]>([])
   const [currentLine, setCurrentLine] = useState<Line | null>(null)
   const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null)
+  const [reverseShrink, setReverseShrink] = useState<boolean>(true)
 
   const [titlePositionsFrame1, setTitlePositionsFrame1] = useState<TextPosition[]>([
     { x: 40, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 },
@@ -118,7 +162,6 @@ export default function InstagramPostCreator() {
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
-
     updateTextDimensions(ctx)
     if (!isPlaying) drawCanvas()
   }, [
@@ -129,7 +172,8 @@ export default function InstagramPostCreator() {
     lines,
     lineThickness,
     tremblingIntensity,
-    frameRate
+    frameRate,
+    reverseShrink
   ])
 
   useEffect(() => {
@@ -191,21 +235,25 @@ export default function InstagramPostCreator() {
       const frame1Lines = lines.filter(l => l.frame === 1)
       const frame2Lines = lines.filter(l => l.frame === 2)
 
+      // decide which phase goes first
+      const firstPhase: 'grow' | 'shrink' = reverseShrink ? 'shrink' : 'grow'
+      const secondPhase: 'grow' | 'shrink' = reverseShrink ? 'grow' : 'shrink'
+
       if (progress <= 0.3) {
         drawStaticText(ctx, 1)
-        drawAnimatedLines(ctx, progress / 0.3, frame1Lines, [], 'grow')
+        drawAnimatedLines(ctx, progress / 0.3, frame1Lines, [], firstPhase)
       } else if (progress <= 0.6) {
         drawStaticText(ctx, 1)
-        drawAnimatedLines(ctx, (progress - 0.3) / 0.3, frame1Lines, [], 'shrink')
+        drawAnimatedLines(ctx, (progress - 0.3) / 0.3, frame1Lines, [], secondPhase)
       } else if (progress <= 0.7) {
         const t = (progress - 0.6) / 0.1
         drawAnimatedText(ctx, t, 1, 2)
       } else if (progress <= 1.0) {
         drawStaticText(ctx, 2)
-        drawAnimatedLines(ctx, (progress - 0.7) / 0.3, [], frame2Lines, 'grow')
+        drawAnimatedLines(ctx, (progress - 0.7) / 0.3, [], frame2Lines, firstPhase)
       } else if (progress <= 1.3) {
         drawStaticText(ctx, 2)
-        drawAnimatedLines(ctx, (progress - 1.0) / 0.3, [], frame2Lines, 'shrink')
+        drawAnimatedLines(ctx, (progress - 1.0) / 0.3, [], frame2Lines, secondPhase)
       } else if (progress <= 1.4) {
         const t = (progress - 1.3) / 0.1
         drawAnimatedText(ctx, t, 2, 1)
@@ -624,7 +672,6 @@ export default function InstagramPostCreator() {
         ...prev,
         x: prev.x + dx,
         y: prev.y + dy
-      
       }))
     } else {
       setTitlePositionsFrame2(prev => {
@@ -1109,6 +1156,7 @@ export default function InstagramPostCreator() {
         break
       case 'frameRate':
         setFrameRate(val)
+        // Throttling happening inside animate; no need to restart loop
         break
     }
     drawCanvas()
@@ -1176,14 +1224,14 @@ export default function InstagramPostCreator() {
         {/* ─── RIGHT PANEL: Canvas & Controls */}
         <div className="w-[600px] flex flex-col">
           <div
-            className="w-[540px] aspect-[4/5] bg-white rounded-lg shadow-lg mb-4 relative overflow-hidden"
+            className="w-[540px] h-[675px] bg-white rounded-lg shadow-lg mb-4 relative overflow-hidden"
             style={{ backgroundColor }}
           >
             <canvas
               ref={canvasRef}
-              width={1080}
+              width={1080}        // internal bitmap resolution
               height={1350}
-              className="absolute inset-0 w-full h-full"
+              className="absolute inset-0 w-full h-full"    // stretch to the box edges
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
@@ -1335,6 +1383,22 @@ export default function InstagramPostCreator() {
                   }
                 }}
               />
+            </div>
+            <div>
+              <Label htmlFor="orderSelect">Line Animation Order</Label>
+              <Select
+                id="orderSelect"
+                value={reverseShrink ? 'reverse' : 'normal'}
+                onValueChange={v => setReverseShrink(v === 'reverse')}
+              >
+                <SelectTrigger className="w-full mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="normal">Grow → Shrink</SelectItem>
+                  <SelectItem value="reverse">Shrink → Grow</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </DialogContent>
