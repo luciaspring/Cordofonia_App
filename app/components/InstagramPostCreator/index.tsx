@@ -1201,23 +1201,35 @@ export default function InstagramPostCreator() {
         </div>
 
         {/* ─── RIGHT PANEL: Canvas & Controls */}
-        <div className="w-[600px] flex flex-col">
+        <div className="flex flex-col">
           <div
-            className="w-[540px] h-[675px] bg-white rounded-lg shadow-lg mb-4 relative overflow-hidden"
-            style={{ backgroundColor }}
+            className="bg-white rounded-lg shadow-lg mb-4 relative overflow-hidden"
+            style={{ 
+              backgroundColor,
+              width: '540px',
+              height: '675px',
+              minWidth: '540px',
+              minHeight: '675px',
+              maxWidth: '540px',
+              maxHeight: '675px'
+            }}
           >
             <canvas
               ref={canvasRef}
               width={1080}
               height={1350}
-              className="absolute inset-0 w-full h-full"
+              className="absolute inset-0"
+              style={{
+                width: '540px',
+                height: '675px'
+              }}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
             />
           </div>
-          <div className="flex space-x-2 w-[540px]">
+          <div className="flex space-x-2" style={{ width: '540px' }}>
             <Button
               variant={currentFrame === 1 ? "default" : "outline"}
               onClick={() => handleFrameChange(1)}
