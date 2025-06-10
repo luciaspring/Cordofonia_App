@@ -97,6 +97,7 @@ export default function InstagramPostCreator() {
   const [fontLoaded, setFontLoaded] = useState(false)
   const [selectedLineIndex, setSelectedLineIndex] = useState<number | null>(null)
   const [isDraggingLine, setIsDraggingLine] = useState(false)
+  const [editingEnd, setEditingEnd] = useState<'start' | 'end' | null>(null)
 
   const [titlePositionsFrame1, setTitlePositionsFrame1] = useState<TextPosition[]>([
     { x: 40, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 },
@@ -937,15 +938,15 @@ export default function InstagramPostCreator() {
 
     if (clickedIdx !== -1) {
       setSelectedLineIndex(clickedIdx)
-
       const ln = lines[clickedIdx]
       const nearStart = isPointNear({ x, y }, ln.start)
       const nearEnd = isPointNear({ x, y }, ln.end)
 
       if (nearStart || nearEnd) {
-        setEditingLineIndex(clickedIdx)        // edit endpoints
+        setEditingLineIndex(clickedIdx)
+        setEditingEnd(nearStart ? 'start' : 'end')   // remember which point we grabbed
       } else {
-        setIsDraggingLine(true)                // drag whole line
+        setIsDraggingLine(true)
       }
       return
     }
@@ -977,6 +978,17 @@ export default function InstagramPostCreator() {
       lastMousePosition.current = { x, y }
       drawCanvas()
       return
+    } else if (editingLineIndex !== null && editingEnd !== null) {
+      setLines(prev => {
+        const arr = [...prev]
+        const ln = { ...arr[editingLineIndex] }
+        if (editingEnd === 'start') ln.start = { x, y }
+        else ln.end = { x, y }
+        arr[editingLineIndex] = ln
+        return arr
+      })
+      drawCanvas()
+      return
     }
 
     if (selectedTexts.length > 0 && currentFrame === 2) {
@@ -1004,19 +1016,6 @@ export default function InstagramPostCreator() {
     } else if (currentLine) {
       setCurrentLine(prev => prev ? { ...prev, end: { x, y } } : null)
       drawCanvas()
-    } else if (editingLineIndex !== null) {
-      setLines(prev => {
-        const arr = [...prev]
-        const ln = { ...arr[editingLineIndex] }
-        if (isPointNear({ x, y }, ln.start)) {
-          ln.start = { x, y }
-        } else if (isPointNear({ x, y }, ln.end)) {
-          ln.end = { x, y }
-        }
-        arr[editingLineIndex] = ln
-        return arr
-      })
-      drawCanvas()
     }
     updateCursor(canvas, x, y)
   }
@@ -1034,6 +1033,7 @@ export default function InstagramPostCreator() {
     setResizeHandle(null)
     setResizeStartPosition(null)
     setIsDraggingLine(false)
+    setEditingEnd(null)
     lastMousePosition.current = null
     drawCanvas()
   }
