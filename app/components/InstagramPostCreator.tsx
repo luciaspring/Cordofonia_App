@@ -1165,12 +1165,12 @@ export default function InstagramPostCreator() {
     const msPerBaseFrame = 1000 / baseFps
     const normalized = elapsed / (msPerBaseFrame * 150)
     let progress = normalized
-    if (progress > 2.25) {      // was 2.15
+    if (progress > 2.416) {              // was 2.25
       if (isLooping) {
         startTimeRef.current = timestamp
         progress = 0
       } else {
-        progress = 2.25
+        progress = 2.416
         setIsPlaying(false)
       }
     }
@@ -1194,32 +1194,55 @@ export default function InstagramPostCreator() {
     const f1 = lines.filter(l => l.frame === 1)
     const f2 = lines.filter(l => l.frame === 2)
 
-    // 0.00-0.30  grow lines frame-1
-    if (p <= 0.30) { drawStaticText(ctx,1); drawAnimatedLines(ctx, p/0.30, f1,[], 'grow'); return }
+    // frame-1 lines: grow ↓ shrink
+    if (p <= 0.30) { drawStaticText(ctx, 1); drawAnimatedLines(ctx, p / 0.30, f1, [], 'grow'); return }
+    if (p <= 0.60) { drawStaticText(ctx, 1); drawAnimatedLines(ctx, (p - 0.30) / 0.30, f1, [], 'shrink'); return }
 
-    // 0.30-0.60  shrink lines frame-1
-    if (p <= 0.60) { drawStaticText(ctx,1); drawAnimatedLines(ctx,(p-0.30)/0.30,f1,[],'shrink'); return }
+    /* TEXT TRANSITION:
+       move  0.6–0.833  (≈1s)
+       pause 0.833–0.95 (≈0.5s)
+       scale 0.95–1.183 (≈1s)
+    */
+    if (p <= 0.833) {                        // move
+      const t = (p - 0.60) / 0.233
+      drawAnimatedText(ctx, t, 0, 1, 2)
+      return
+    }
+    if (p <= 0.95) {                         // pause
+      drawAnimatedText(ctx, 1, 0, 1, 2)
+      return
+    }
+    if (p <= 1.183) {                        // scale
+      const t = (p - 0.95) / 0.233
+      drawAnimatedText(ctx, 1, t, 1, 2)
+      return
+    }
 
-    // 0.60-0.85  MOVE (≈1 s)
-    if (p <= 0.85) { const t=(p-0.60)/0.25; drawAnimatedText(ctx, t, 0, 1, 2); return }
+    // frame-2 lines: grow ↓ shrink (unchanged)
+    if (p <= 1.533) { drawStaticText(ctx, 2); drawAnimatedLines(ctx, (p - 1.183) / 0.35, [], f2, 'grow'); return }
+    if (p <= 1.833) { drawStaticText(ctx, 2); drawAnimatedLines(ctx, (p - 1.533) / 0.30, [], f2, 'shrink'); return }
 
-    // 0.85-1.10  SCALE (≈1 s)
-    if (p <= 1.10) { const t=(p-0.85)/0.25; drawAnimatedText(ctx, 1, t, 1, 2); return }
+    /* REVERSE TEXT TRANSITION (mirror):
+       move-back 1.833–2.066
+       pause-back 2.066–2.183
+       scale-back 2.183–2.416
+    */
+    if (p <= 2.066) {                        // move back
+      const t = (p - 1.833) / 0.233
+      drawAnimatedText(ctx, 1 - t, 1, 2, 1)
+      return
+    }
+    if (p <= 2.183) {                        // pause back
+      drawAnimatedText(ctx, 0, 1, 2, 1)
+      return
+    }
+    if (p <= 2.416) {                        // scale back
+      const t = (p - 2.183) / 0.233
+      drawAnimatedText(ctx, 0, 1 - t, 2, 1)
+      return
+    }
 
-    // 1.10-1.45  grow lines frame-2
-    if (p <= 1.45) { drawStaticText(ctx,2); drawAnimatedLines(ctx,(p-1.10)/0.35,[],f2,'grow'); return }
-
-    // 1.45-1.75  shrink lines frame-2
-    if (p <= 1.75) { drawStaticText(ctx,2); drawAnimatedLines(ctx,(p-1.45)/0.30,[],f2,'shrink'); return }
-
-    // 1.75-2.00  MOVE BACK (≈1 s)
-    if (p <= 2.00) { const t=(p-1.75)/0.25; drawAnimatedText(ctx, 1-t, 1, 2, 1); return }
-
-    // 2.00-2.25  SCALE BACK (≈1 s)
-    if (p <= 2.25) { const t=(p-2.00)/0.25; drawAnimatedText(ctx, 0, 1-t, 2, 1); return }
-
-    // fallback
-    drawStaticText(ctx,1)
+    drawStaticText(ctx, 1)
   }
 
   // ─── FRAME CONTROLS ─────────────────────────────────────────────────────────────
