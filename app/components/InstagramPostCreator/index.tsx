@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
+import { Switch } from "@/components/ui/switch"
 import { PlayIcon, PauseIcon, RotateCcwIcon, Settings, ShareIcon } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -48,6 +49,7 @@ export default function InstagramPostCreator() {
   const [lines, setLines] = useState<Line[]>([])
   const [currentLine, setCurrentLine] = useState<Line | null>(null)
   const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null)
+  const [lineDisappearEffect, setLineDisappearEffect] = useState(false)
 
   const [titlePositionsFrame1, setTitlePositionsFrame1] = useState<TextPosition[]>([
     { x: 40, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 },
@@ -129,7 +131,8 @@ export default function InstagramPostCreator() {
     lines,
     lineThickness,
     tremblingIntensity,
-    frameRate
+    frameRate,
+    lineDisappearEffect
   ])
 
   useEffect(() => {
@@ -193,19 +196,19 @@ export default function InstagramPostCreator() {
 
       if (progress <= 0.3) {
         drawStaticText(ctx, 1)
-        drawAnimatedLines(ctx, progress / 0.3, frame1Lines, [], 'grow')
+        drawAnimatedLines(ctx, progress / 0.3, frame1Lines, [], 'grow', lineDisappearEffect)
       } else if (progress <= 0.6) {
         drawStaticText(ctx, 1)
-        drawAnimatedLines(ctx, (progress - 0.3) / 0.3, frame1Lines, [], 'shrink')
+        drawAnimatedLines(ctx, (progress - 0.3) / 0.3, frame1Lines, [], 'shrink', lineDisappearEffect)
       } else if (progress <= 0.7) {
         const t = (progress - 0.6) / 0.1
         drawAnimatedText(ctx, t, 1, 2)
       } else if (progress <= 1.0) {
         drawStaticText(ctx, 2)
-        drawAnimatedLines(ctx, (progress - 0.7) / 0.3, [], frame2Lines, 'grow')
+        drawAnimatedLines(ctx, (progress - 0.7) / 0.3, [], frame2Lines, 'grow', lineDisappearEffect)
       } else if (progress <= 1.3) {
         drawStaticText(ctx, 2)
-        drawAnimatedLines(ctx, (progress - 1.0) / 0.3, [], frame2Lines, 'shrink')
+        drawAnimatedLines(ctx, (progress - 1.0) / 0.3, [], frame2Lines, 'shrink', lineDisappearEffect)
       } else if (progress <= 1.4) {
         const t = (progress - 1.3) / 0.1
         drawAnimatedText(ctx, t, 2, 1)
@@ -304,7 +307,8 @@ export default function InstagramPostCreator() {
     progress: number,
     frame1Lines: Line[],
     frame2Lines: Line[],
-    animationType: 'grow' | 'shrink'
+    animationType: 'grow' | 'shrink',
+    lineDisappearEffect: boolean
   ) => {
     ctx.lineWidth = lineThickness
     ctx.lineCap = 'butt'
@@ -320,14 +324,37 @@ export default function InstagramPostCreator() {
         let t = Math.max(0, Math.min(1, (fgProgress - idx * adjustedStagger) / animationDuration))
         t = easeInOutQuint(t)
         const { start, end } = ln
-        const currentEnd = {
-          x: start.x + (end.x - start.x) * (animationType === 'grow' ? t : 1 - t),
-          y: start.y + (end.y - start.y) * (animationType === 'grow' ? t : 1 - t)
+        
+        let currentStart, currentEnd
+        
+        if (animationType === 'grow') {
+          currentStart = start
+          currentEnd = {
+            x: start.x + (end.x - start.x) * t,
+            y: start.y + (end.y - start.y) * t
+          }
+        } else { // shrink
+          if (lineDisappearEffect) {
+            // Lines disappear from start
+            currentStart = {
+              x: start.x + (end.x - start.x) * t,
+              y: start.y + (end.y - start.y) * t
+            }
+            currentEnd = end
+          } else {
+            // Lines disappear from end (original behavior)
+            currentStart = start
+            currentEnd = {
+              x: start.x + (end.x - start.x) * (1 - t),
+              y: start.y + (end.y - start.y) * (1 - t)
+            }
+          }
         }
+        
         const tremX = (Math.random() - 0.5) * tremblingIntensity
         const tremY = (Math.random() - 0.5) * tremblingIntensity
         ctx.beginPath()
-        ctx.moveTo(start.x + tremX, start.y + tremY)
+        ctx.moveTo(currentStart.x + tremX, currentStart.y + tremY)
         ctx.lineTo(currentEnd.x + tremX, currentEnd.y + tremY)
         ctx.stroke()
       })
@@ -1176,7 +1203,7 @@ export default function InstagramPostCreator() {
         {/* ─── RIGHT PANEL: Canvas & Controls */}
         <div className="w-[600px] flex flex-col">
           <div
-            className="w-[540px] aspect-[4/5] bg-white rounded-lg shadow-lg mb-4 relative overflow-hidden"
+            className="w-[540px] h-[675px] bg-white rounded-lg shadow-lg mb-4 relative overflow-hidden"
             style={{ backgroundColor }}
           >
             <canvas
@@ -1335,6 +1362,14 @@ export default function InstagramPostCreator() {
                   }
                 }}
               />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="lineDisappearEffect"
+                checked={lineDisappearEffect}
+                onCheckedChange={setLineDisappearEffect}
+              />
+              <Label htmlFor="lineDisappearEffect">Lines disappear from start</Label>
             </div>
           </div>
         </DialogContent>
