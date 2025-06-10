@@ -145,7 +145,7 @@ export function drawCanvas(
     ctx.restore()
   }
 
-  if (state.fontLoaded) {
+  if (state.fontLoaded || fontLoaded) {
     drawText()
   } else {
     // If font isn't loaded yet, wait for it
@@ -162,11 +162,11 @@ export function drawCanvas(
   state.lines.forEach(line => {
     if (line.frame === state.currentFrame) {
       ctx.beginPath()
-      ctx.moveTo(line.start.x, line.start.y)
-      ctx.lineTo(line.end.x, line.end.y)
+      ctx.moveTo(line.points[0].x, line.points[0].y)
+      ctx.lineTo(line.points[1].x, line.points[1].y)
       ctx.stroke()
     }
   })
   
-  state.setDebug(`Canvas rendered. Progress: ${progress.toFixed(2)}, Frame: ${state.currentFrame}, Font loaded: ${state.fontLoaded}`)
+  state.setDebug(`Canvas rendered. Progress: ${progress.toFixed(2)}, Frame: ${state.currentFrame}, Font loaded: ${state.fontLoaded || fontLoaded}`)
 }
