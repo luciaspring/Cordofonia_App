@@ -123,7 +123,7 @@ export function drawCanvas(
       ctx.save()
       ctx.translate(x + pos1.width / 2, y + pos1.height / 2)
       ctx.rotate(rotation)
-      ctx.font = `${pos1.fontSize}px SulSans-Bold`
+      ctx.font = `${pos1.fontSize}px ${fontLoaded ? 'SulSans-Bold' : 'sans-serif'}`
       ctx.fillText(title, -pos1.width / 2, -pos1.height / 2)
       ctx.restore()
     })
@@ -138,7 +138,7 @@ export function drawCanvas(
     ctx.save()
     ctx.translate(subX + subPos1.width / 2, subY + subPos1.height / 2)
     ctx.rotate(subRotation)
-    ctx.font = `${subPos1.fontSize}px SulSans-Bold`
+    ctx.font = `${subPos1.fontSize}px ${fontLoaded ? 'SulSans-Bold' : 'sans-serif'}`
     ctx.fillText(state.subtitle, -subPos1.width / 2, -subPos1.height / 2)
     ctx.restore()
   }
