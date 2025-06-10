@@ -198,35 +198,32 @@ export default function InstagramPostCreator() {
         const pos1 = titlePositionsFrame1[index]
         const pos2 = titlePositionsFrame2[index]
         
-        let x, y, rotation, fontSize, width, height
+        let x, y, rotation, fontSize
 
         if (progress < placementEndTime) {
-          // PHASE 1: PLACEMENT ONLY - Position animates, scale stays at Frame 1
+          // PHASE 1: POSITION & ROTATION ONLY - Scale stays at Frame 1
           const placementProgress = easeInOutCubic(progress / placementEndTime)
           
+          // Position and rotation animate
           x = pos1.x + (pos2.x - pos1.x) * placementProgress
           y = pos1.y + (pos2.y - pos1.y) * placementProgress
           rotation = pos1.rotation + (pos2.rotation - pos1.rotation) * placementProgress
           
-          // Scale remains at Frame 1 values during placement
+          // Font size LOCKED at Frame 1 value
           fontSize = pos1.fontSize
-          width = pos1.width
-          height = pos1.height
           
         } else if (progress < scaleEndTime) {
-          // PHASE 2: SCALE ONLY - Position locked at Frame 2, scale animates
+          // PHASE 2: SCALE ONLY - Position locked at Frame 2
           const scalePhaseProgress = (progress - placementEndTime) / (scaleEndTime - placementEndTime)
           const scaleProgress = easeInOutCubic(scalePhaseProgress)
           
-          // Position locked at Frame 2 values
+          // Position and rotation LOCKED at Frame 2 values
           x = pos2.x
           y = pos2.y
           rotation = pos2.rotation
           
-          // Scale animates from Frame 1 to Frame 2
+          // Only font size animates
           fontSize = pos1.fontSize + (pos2.fontSize - pos1.fontSize) * scaleProgress
-          width = pos1.width + (pos2.width - pos1.width) * scaleProgress
-          height = pos1.height + (pos2.height - pos1.height) * scaleProgress
           
         } else {
           // PHASE 3: BOTH COMPLETE - Everything at Frame 2 values
@@ -234,15 +231,19 @@ export default function InstagramPostCreator() {
           y = pos2.y
           rotation = pos2.rotation
           fontSize = pos2.fontSize
-          width = pos2.width
-          height = pos2.height
         }
         
         ctx.save()
-        ctx.translate(x + width / 2, y + height / 2)
+        ctx.translate(x + pos1.width / 2, y + pos1.height / 2)
         ctx.rotate(rotation)
         ctx.font = `${fontSize}px SulSans-Bold, sans-serif`
-        ctx.fillText(title, -width / 2, -height / 2)
+        
+        // Measure text to center it properly
+        const metrics = ctx.measureText(title)
+        const textWidth = metrics.width
+        const textHeight = fontSize // Approximate height
+        
+        ctx.fillText(title, -textWidth / 2, -textHeight / 2)
         ctx.restore()
       })
 
@@ -251,35 +252,31 @@ export default function InstagramPostCreator() {
         const subPos1 = subtitlePositionFrame1
         const subPos2 = subtitlePositionFrame2
         
-        let subX, subY, subRotation, subFontSize, subWidth, subHeight
+        let subX, subY, subRotation, subFontSize
 
         if (progress < placementEndTime) {
-          // PHASE 1: PLACEMENT ONLY
+          // PHASE 1: POSITION & ROTATION ONLY
           const placementProgress = easeInOutCubic(progress / placementEndTime)
           
           subX = subPos1.x + (subPos2.x - subPos1.x) * placementProgress
           subY = subPos1.y + (subPos2.y - subPos1.y) * placementProgress
           subRotation = subPos1.rotation + (subPos2.rotation - subPos1.rotation) * placementProgress
           
-          // Scale remains at Frame 1
+          // Font size LOCKED at Frame 1
           subFontSize = subPos1.fontSize
-          subWidth = subPos1.width
-          subHeight = subPos1.height
           
         } else if (progress < scaleEndTime) {
           // PHASE 2: SCALE ONLY
           const scalePhaseProgress = (progress - placementEndTime) / (scaleEndTime - placementEndTime)
           const scaleProgress = easeInOutCubic(scalePhaseProgress)
           
-          // Position locked at Frame 2
+          // Position LOCKED at Frame 2
           subX = subPos2.x
           subY = subPos2.y
           subRotation = subPos2.rotation
           
-          // Scale animates
+          // Only font size animates
           subFontSize = subPos1.fontSize + (subPos2.fontSize - subPos1.fontSize) * scaleProgress
-          subWidth = subPos1.width + (subPos2.width - subPos1.width) * scaleProgress
-          subHeight = subPos1.height + (subPos2.height - subPos1.height) * scaleProgress
           
         } else {
           // PHASE 3: BOTH COMPLETE
@@ -287,15 +284,19 @@ export default function InstagramPostCreator() {
           subY = subPos2.y
           subRotation = subPos2.rotation
           subFontSize = subPos2.fontSize
-          subWidth = subPos2.width
-          subHeight = subPos2.height
         }
 
         ctx.save()
-        ctx.translate(subX + subWidth / 2, subY + subHeight / 2)
+        ctx.translate(subX + subPos1.width / 2, subY + subPos1.height / 2)
         ctx.rotate(subRotation)
         ctx.font = `${subFontSize}px SulSans-Bold, sans-serif`
-        ctx.fillText(subtitle, -subWidth / 2, -subHeight / 2)
+        
+        // Measure text to center it properly
+        const metrics = ctx.measureText(subtitle)
+        const textWidth = metrics.width
+        const textHeight = subFontSize // Approximate height
+        
+        ctx.fillText(subtitle, -textWidth / 2, -textHeight / 2)
         ctx.restore()
       }
     }
@@ -307,17 +308,23 @@ export default function InstagramPostCreator() {
 
     // Enhanced debug info
     let phase = 'Complete'
+    let phaseProgress = 0
+    
     if (progress < placementEndTime) {
-      phase = 'Placement'
+      phase = 'Position/Rotation'
+      phaseProgress = (progress / placementEndTime) * 100
     } else if (progress < scaleEndTime) {
-      phase = 'Scale'
+      phase = 'Scale Only'
+      phaseProgress = ((progress - placementEndTime) / (scaleEndTime - placementEndTime)) * 100
     } else if (progress < (PLACEMENT_DURATION + SCALE_DURATION + LINES_DELAY) / TOTAL_ANIMATION_DURATION) {
       phase = 'Waiting for Lines'
+      phaseProgress = 100
     } else {
       phase = 'Lines'
+      phaseProgress = 100
     }
 
-    setDebug(`Progress: ${progress.toFixed(3)} | Phase: ${phase} | Frame: ${currentFrame}`)
+    setDebug(`Progress: ${progress.toFixed(3)} | Phase: ${phase} (${phaseProgress.toFixed(0)}%) | Frame: ${currentFrame}`)
   }, [
     backgroundColor,
     titles,
