@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
-import { Switch } from "@/components/ui/switch"
 
 interface SettingsModalProps {
   open: boolean
@@ -20,8 +19,6 @@ interface SettingsModalProps {
   setStaggerDelay: React.Dispatch<React.SetStateAction<number>>
   tremblingIntensity: number
   setTremblingIntensity: React.Dispatch<React.SetStateAction<number>>
-  lineDisappearEffect: boolean
-  setLineDisappearEffect: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 export default function SettingsModal({
@@ -34,9 +31,7 @@ export default function SettingsModal({
   staggerDelay,
   setStaggerDelay,
   tremblingIntensity,
-  setTremblingIntensity,
-  lineDisappearEffect,
-  setLineDisappearEffect
+  setTremblingIntensity
 }: SettingsModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -88,14 +83,6 @@ export default function SettingsModal({
               value={[tremblingIntensity]}
               onValueChange={(value) => setTremblingIntensity(value[0])}
             />
-          </div>
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="lineDisappearEffect"
-              checked={lineDisappearEffect}
-              onCheckedChange={setLineDisappearEffect}
-            />
-            <Label htmlFor="lineDisappearEffect">Line Disappear Effect</Label>
           </div>
         </div>
       </DialogContent>
