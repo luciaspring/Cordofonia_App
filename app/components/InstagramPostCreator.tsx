@@ -151,6 +151,9 @@ export default function InstagramPostCreator() {
   const isShiftPressed = useRef(false)
   const lastClickTime = useRef<number>(0)
 
+  // Add this with other state declarations at the top
+  const [pauseHold, setPauseHold] = useState(0.5)    // seconds of pause between move & scale
+
   // ─── EFFECT HOOKS ───────────────────────────────────────────────────────────────
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -1181,7 +1184,7 @@ export default function InstagramPostCreator() {
     const f2 = lines.filter(l => l.frame === 2)
     const ease = easeInOutQuint
 
-    // frame-1 lines: grow ↓ shrink
+    // frame-1 lines
     if (p <= 0.30) {
       drawStaticText(ctx, 1)
       drawAnimatedLines(ctx, p / 0.30, f1, [], 'grow')
@@ -1193,57 +1196,71 @@ export default function InstagramPostCreator() {
       return
     }
 
-    /* TEXT: move → pause → scale (1s move, 0.5s pause, 1s scale) */
-    // move:   0.60 → 0.833  (0.233)  
-    if (p <= 0.833) {
-      const t = ease((p - 0.60) / 0.233)
-      drawAnimatedText(ctx, t, 0, 1, 2)  // animate position only, no scale
+    // TEXT transition with dynamic pause
+    const cycle = 2.416
+    const moveStart = 0.60
+    const moveDur   = 0.233
+    const scaleDur  = 0.233
+    const pauseDur  = pauseHold / cycle        // normalized
+    const moveEnd   = moveStart + moveDur
+    const pauseEnd  = moveEnd + pauseDur
+    const scaleEnd  = pauseEnd + scaleDur
+
+    // move phase
+    if (p <= moveEnd) {
+      const t = ease((p - moveStart) / moveDur)
+      drawAnimatedText(ctx, t, 0, 1, 2)
       return
     }
-    // pause:  0.833 → 0.950  (0.117)
-    if (p <= 0.950) {
-      drawAnimatedText(ctx, 1, 0, 1, 2)  // fully moved, no scale
+    // pause phase
+    if (p <= pauseEnd) {
+      drawAnimatedText(ctx, 1, 0, 1, 2)
       return
     }
-    // scale:  0.950 → 1.183  (0.233)
-    if (p <= 1.183) {
-      const s = ease((p - 0.950) / 0.233)
-      drawAnimatedText(ctx, 1, s, 1, 2)  // keep position, animate scale
+    // scale phase
+    if (p <= scaleEnd) {
+      const s = ease((p - pauseEnd) / scaleDur)
+      drawAnimatedText(ctx, 1, s, 1, 2)
       return
     }
 
-    // frame-2 lines: grow ↓ shrink
-    if (p <= 1.533) {
+    // frame-2 lines
+    if (p <= scaleEnd + 0.35) {
       drawStaticText(ctx, 2)
-      drawAnimatedLines(ctx, (p - 1.183) / 0.35, [], f2, 'grow')
+      drawAnimatedLines(ctx, (p - scaleEnd) / 0.35, [], f2, 'grow')
       return
     }
-    if (p <= 1.833) {
+    if (p <= scaleEnd + 0.65) {
       drawStaticText(ctx, 2)
-      drawAnimatedLines(ctx, (p - 1.533) / 0.30, [], f2, 'shrink')
+      drawAnimatedLines(ctx, (p - (scaleEnd + 0.35)) / 0.30, [], f2, 'shrink')
       return
     }
 
-    /* REVERSE TEXT (mirror) */
-    // move-back: 1.833 → 2.066
-    if (p <= 2.066) {
-      const t = ease((p - 1.833) / 0.233)
-      drawAnimatedText(ctx, 1 - t, 1, 2, 1)  // reverse position, keep scale
+    // reverse transition (mirror, using same pauseDur)
+    const revStart   = scaleEnd + 0.65
+    const revMoveDur = moveDur
+    const revPauseDur= pauseDur
+    const revScaleDur= scaleDur
+    const m1 = revStart
+    const m2 = m1 + revMoveDur
+    const p2 = m2 + revPauseDur
+    const s2 = p2 + revScaleDur
+
+    if (p <= m2) {
+      const t = ease((p - m1) / revMoveDur)
+      drawAnimatedText(ctx, 1 - t, 1, 2, 1)
       return
     }
-    // pause-back: 2.066 → 2.183
-    if (p <= 2.183) {
-      drawAnimatedText(ctx, 0, 1, 2, 1)  // back in place, still scaled
+    if (p <= p2) {
+      drawAnimatedText(ctx, 0, 1, 2, 1)
       return
     }
-    // scale-back: 2.183 → 2.416
-    if (p <= 2.416) {
-      const s = ease((p - 2.183) / 0.233)
-      drawAnimatedText(ctx, 0, 1 - s, 2, 1)  // keep position, reverse scale
+    if (p <= s2) {
+      const s = ease((p - p2) / revScaleDur)
+      drawAnimatedText(ctx, 0, 1 - s, 2, 1)
       return
     }
 
-    // final fallback
     drawStaticText(ctx, 1)
   }
 
@@ -1512,6 +1529,17 @@ export default function InstagramPostCreator() {
                     handleSettingsChange('frameRate', num)
                   }
                 }}
+              />
+            </div>
+            <div>
+              <Label htmlFor="pauseSlider">Text pause (s)</Label>
+              <Slider
+                id="pauseSlider"
+                min={0}
+                max={2}
+                step={0.1}
+                value={[pauseHold]}
+                onValueChange={([v]) => setPauseHold(v)}
               />
             </div>
           </div>
