@@ -20,11 +20,11 @@ export default function InstagramPostCreator() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const animationRef = useRef<number | null>(null)
 
-  // ─── FONT LOADING STATE ────────────────────────────────────────────────────────────
-  const [fontLoaded, setFontLoaded] = useState(false)
   const [debug, setDebug] = useState('')
+  
+  // ─── FONT LOADING - ONLY ADDITION ──────────────────────────────────────────────────
+  const [fontLoaded, setFontLoaded] = useState(false)
 
-  // ─── FONT LOADING EFFECT ───────────────────────────────────────────────────────────
   useEffect(() => {
     const loadFont = async () => {
       try {
@@ -41,13 +41,6 @@ export default function InstagramPostCreator() {
   }, [])
 
   const state = useAnimationState()
-  
-  // Add fontLoaded to the state object
-  const stateWithFont = {
-    ...state,
-    fontLoaded,
-    setDebug
-  }
 
   const [positionModalOpen, setPositionModalOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -64,9 +57,15 @@ export default function InstagramPostCreator() {
     setPositionModalOpen
   }
 
+  const stateWithDebug = {
+    ...state,
+    setDebug,
+    fontLoaded  // ← ONLY ADDITION TO STATE
+  }
+
   const { handleMouseDown, handleMouseMove, handleMouseUp, drawCanvas } = useCanvasOperations(
     canvasRef,
-    stateWithFont,
+    stateWithDebug,
     canvasActions
   )
 
@@ -96,7 +95,7 @@ export default function InstagramPostCreator() {
     state.groupRotation,
     state.lineThickness,
     state.tremblingIntensity,
-    fontLoaded,
+    fontLoaded,  // ← ONLY ADDITION TO DEPENDENCIES
     drawCanvas
   ])
 
