@@ -5,11 +5,50 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
-import { Switch } from "@/components/ui/switch"
-import { PlayIcon, PauseIcon, RotateCcwIcon, Settings, ShareIcon } from 'lucide-react'
+import { PlayIcon, PauseIcon, RotateCcwIcon, ShareIcon, Settings } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Point, Line, TextPosition, GroupBoundingBox } from './types'
+
+// ─── TYPES & INTERFACES ─────────────────────────────────────────────────────────
+
+interface Point {
+  x: number
+  y: number
+}
+
+interface Line {
+  start: Point
+  end: Point
+  frame: number
+}
+
+interface TextPosition {
+  x: number
+  y: number
+  width: number
+  height: number
+  rotation: number
+  fontSize: number
+  aspectRatio?: number
+}
+
+interface GroupBoundingBox {
+  x: number
+  y: number
+  width: number
+  height: number
+  rotation: number
+}
+
+interface RigidBoundingBox {
+  x: number
+  y: number
+  width: number
+  height: number
+  rotation: number
+  centerX: number
+  centerY: number
+}
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────────
 
@@ -28,12 +67,6 @@ const MAX_LINE_THICKNESS = 10
 const MIN_LINE_THICKNESS = 1
 const MIN_FRAME_RATE = 10
 const BASE_FPS = 60
-
-// Fixed canvas dimensions
-const CANVAS_WIDTH = 540
-const CANVAS_HEIGHT = 675
-const CANVAS_INTERNAL_WIDTH = 1080
-const CANVAS_INTERNAL_HEIGHT = 1350
 
 // Ease In-Out Quint easing function (piecewise)
 const easeInOutQuint = (t: number): number => {
@@ -57,7 +90,6 @@ export default function InstagramPostCreator() {
   const [lines, setLines] = useState<Line[]>([])
   const [currentLine, setCurrentLine] = useState<Line | null>(null)
   const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null)
-  const [lineDisappearEffect, setLineDisappearEffect] = useState(false)
 
   const [titlePositionsFrame1, setTitlePositionsFrame1] = useState<TextPosition[]>([
     { x: 40, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 },
@@ -139,8 +171,7 @@ export default function InstagramPostCreator() {
     lines,
     lineThickness,
     tremblingIntensity,
-    frameRate,
-    lineDisappearEffect
+    frameRate
   ])
 
   useEffect(() => {
@@ -204,19 +235,19 @@ export default function InstagramPostCreator() {
 
       if (progress <= 0.3) {
         drawStaticText(ctx, 1)
-        drawAnimatedLines(ctx, progress / 0.3, frame1Lines, [], 'grow', lineDisappearEffect)
+        drawAnimatedLines(ctx, progress / 0.3, frame1Lines, [], 'grow')
       } else if (progress <= 0.6) {
         drawStaticText(ctx, 1)
-        drawAnimatedLines(ctx, (progress - 0.3) / 0.3, frame1Lines, [], 'shrink', lineDisappearEffect)
+        drawAnimatedLines(ctx, (progress - 0.3) / 0.3, frame1Lines, [], 'shrink')
       } else if (progress <= 0.7) {
         const t = (progress - 0.6) / 0.1
         drawAnimatedText(ctx, t, 1, 2)
       } else if (progress <= 1.0) {
         drawStaticText(ctx, 2)
-        drawAnimatedLines(ctx, (progress - 0.7) / 0.3, [], frame2Lines, 'grow', lineDisappearEffect)
+        drawAnimatedLines(ctx, (progress - 0.7) / 0.3, [], frame2Lines, 'grow')
       } else if (progress <= 1.3) {
         drawStaticText(ctx, 2)
-        drawAnimatedLines(ctx, (progress - 1.0) / 0.3, [], frame2Lines, 'shrink', lineDisappearEffect)
+        drawAnimatedLines(ctx, (progress - 1.0) / 0.3, [], frame2Lines, 'shrink')
       } else if (progress <= 1.4) {
         const t = (progress - 1.3) / 0.1
         drawAnimatedText(ctx, t, 2, 1)
@@ -315,8 +346,7 @@ export default function InstagramPostCreator() {
     progress: number,
     frame1Lines: Line[],
     frame2Lines: Line[],
-    animationType: 'grow' | 'shrink',
-    lineDisappearEffect: boolean
+    animationType: 'grow' | 'shrink'
   ) => {
     ctx.lineWidth = lineThickness
     ctx.lineCap = 'butt'
@@ -332,35 +362,14 @@ export default function InstagramPostCreator() {
         let t = Math.max(0, Math.min(1, (fgProgress - idx * adjustedStagger) / animationDuration))
         t = easeInOutQuint(t)
         const { start, end } = ln
-        
-        let currentStart = start
-        let currentEnd = end
-        
-        if (animationType === 'grow') {
-          currentEnd = {
-            x: start.x + (end.x - start.x) * t,
-            y: start.y + (end.y - start.y) * t
-          }
-        } else { // shrink
-          if (lineDisappearEffect) {
-            // Lines disappear from start
-            currentStart = {
-              x: start.x + (end.x - start.x) * t,
-              y: start.y + (end.y - start.y) * t
-            }
-          } else {
-            // Lines disappear from end (original behavior)
-            currentEnd = {
-              x: start.x + (end.x - start.x) * (1 - t),
-              y: start.y + (end.y - start.y) * (1 - t)
-            }
-          }
+        const currentEnd = {
+          x: start.x + (end.x - start.x) * (animationType === 'grow' ? t : 1 - t),
+          y: start.y + (end.y - start.y) * (animationType === 'grow' ? t : 1 - t)
         }
-        
         const tremX = (Math.random() - 0.5) * tremblingIntensity
         const tremY = (Math.random() - 0.5) * tremblingIntensity
         ctx.beginPath()
-        ctx.moveTo(currentStart.x + tremX, currentStart.y + tremY)
+        ctx.moveTo(start.x + tremX, start.y + tremY)
         ctx.lineTo(currentEnd.x + tremX, currentEnd.y + tremY)
         ctx.stroke()
       })
@@ -657,7 +666,6 @@ export default function InstagramPostCreator() {
         ...prev,
         x: prev.x + dx,
         y: prev.y + dy
-      
       }))
     } else {
       setTitlePositionsFrame2(prev => {
@@ -855,8 +863,8 @@ export default function InstagramPostCreator() {
     const canvas = canvasRef.current
     if (!canvas) return
     const rect = canvas.getBoundingClientRect()
-    const x = (e.clientX - rect.left) * (CANVAS_INTERNAL_WIDTH / CANVAS_WIDTH)
-    const y = (e.clientY - rect.top) * (CANVAS_INTERNAL_HEIGHT / CANVAS_HEIGHT)
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width)
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height)
 
     lastMousePosition.current = { x, y }
 
@@ -900,8 +908,8 @@ export default function InstagramPostCreator() {
     const canvas = canvasRef.current
     if (!canvas) return
     const rect = canvas.getBoundingClientRect()
-    const x = (e.clientX - rect.left) * (CANVAS_INTERNAL_WIDTH / CANVAS_WIDTH)
-    const y = (e.clientY - rect.top) * (CANVAS_INTERNAL_HEIGHT / CANVAS_HEIGHT)
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width)
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height)
 
     if (selectedTexts.length > 0 && currentFrame === 2) {
       if (isRotating) {
@@ -1142,6 +1150,7 @@ export default function InstagramPostCreator() {
         break
       case 'frameRate':
         setFrameRate(val)
+        // Throttling happening inside animate; no need to restart loop
         break
     }
     drawCanvas()
@@ -1207,42 +1216,23 @@ export default function InstagramPostCreator() {
         </div>
 
         {/* ─── RIGHT PANEL: Canvas & Controls */}
-        <div className="flex flex-col">
+        <div className="w-[600px] flex flex-col">
           <div
-            style={{
-              width: `${CANVAS_WIDTH}px`,
-              height: `${CANVAS_HEIGHT}px`,
-              minWidth: `${CANVAS_WIDTH}px`,
-              minHeight: `${CANVAS_HEIGHT}px`,
-              maxWidth: `${CANVAS_WIDTH}px`,
-              maxHeight: `${CANVAS_HEIGHT}px`,
-              backgroundColor: backgroundColor,
-              borderRadius: '8px',
-              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-              marginBottom: '16px',
-              position: 'relative',
-              overflow: 'hidden'
-            }}
+            className="w-[540px] h-[675px] bg-white rounded-lg shadow-lg mb-4 relative overflow-hidden"
+            style={{ backgroundColor }}
           >
             <canvas
               ref={canvasRef}
-              width={CANVAS_INTERNAL_WIDTH}
-              height={CANVAS_INTERNAL_HEIGHT}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: `${CANVAS_WIDTH}px`,
-                height: `${CANVAS_HEIGHT}px`,
-                display: 'block'
-              }}
+              width={1080}
+              height={1350}
+              className="absolute inset-0 w-full h-full"
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
             />
           </div>
-          <div className="flex space-x-2" style={{ width: `${CANVAS_WIDTH}px` }}>
+          <div className="flex space-x-2 w-[540px]">
             <Button
               variant={currentFrame === 1 ? "default" : "outline"}
               onClick={() => handleFrameChange(1)}
@@ -1387,14 +1377,6 @@ export default function InstagramPostCreator() {
                   }
                 }}
               />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="lineDisappearEffect"
-                checked={lineDisappearEffect}
-                onCheckedChange={setLineDisappearEffect}
-              />
-              <Label htmlFor="lineDisappearEffect">Lines disappear from start</Label>
             </div>
           </div>
         </DialogContent>
