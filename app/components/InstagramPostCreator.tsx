@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const SUL_SANS = 'SulSans-Bold'
+const AFFAIRS = 'Affairs-Regular'
 
 // ─── TYPES & INTERFACES ─────────────────────────────────────────────────────────
 
@@ -163,9 +164,11 @@ export default function InstagramPostCreator() {
     let cancelled = false
     const load = async () => {
       try {
-        const face = new FontFace(SUL_SANS, 'url(/fonts/SulSans-Bold.otf)')
-        await face.load()
-        document.fonts.add(face)
+        const sul = new FontFace(SUL_SANS, 'url(/fonts/SulSans-Bold.otf)')
+        const aff = new FontFace(AFFAIRS, 'url(/fonts/Affairs-Regular.otf)')
+        await Promise.all([sul.load(), aff.load()])
+        document.fonts.add(sul)
+        document.fonts.add(aff)
         await document.fonts.ready
         if (!cancelled) setFontLoaded(true)
       } catch {}
@@ -320,7 +323,7 @@ export default function InstagramPostCreator() {
     ctx.save()
     ctx.translate(subPos.x + subPos.width/2 + tremXsub, subPos.y + subPos.height/2 + tremYsub)
     ctx.rotate(subPos.rotation)
-    ctx.font = `bold ${subPos.fontSize}px "${SUL_SANS}", sans-serif`
+    ctx.font = `${subPos.fontSize}px "${AFFAIRS}", sans-serif`
     ctx.fillStyle = getContrastColor(backgroundColor)
     ctx.textBaseline = 'middle'
     ctx.textAlign = 'center'
@@ -430,7 +433,7 @@ export default function InstagramPostCreator() {
       const tremY = (Math.random() - 0.5) * tremblingIntensity
 
       ctx.save()
-      ctx.translate(midPos.x + midPos.width / 2 + tremX, midPos.y + midPos.height / 2 + tremY)
+      ctx.translate(midPos.x + midPos.width/2 + tremX, midPos.y + midPos.height/2 + tremY)
       ctx.rotate(midPos.rotation)
       ctx.font = `bold ${midPos.fontSize}px "${SUL_SANS}", sans-serif`
       ctx.fillStyle = getContrastColor(backgroundColor)
@@ -448,9 +451,9 @@ export default function InstagramPostCreator() {
     const tremYsub = (Math.random() - 0.5) * tremblingIntensity
 
     ctx.save()
-    ctx.translate(midSub.x + midSub.width / 2 + tremXsub, midSub.y + midSub.height / 2 + tremYsub)
+    ctx.translate(midSub.x + midSub.width/2 + tremXsub, midSub.y + midSub.height/2 + tremYsub)
     ctx.rotate(midSub.rotation)
-    ctx.font = `bold ${midSub.fontSize}px "${SUL_SANS}", sans-serif`
+    ctx.font = `${midSub.fontSize}px "${AFFAIRS}", sans-serif`
     ctx.fillStyle = getContrastColor(backgroundColor)
     ctx.textBaseline = 'middle'
     ctx.textAlign = 'center'
