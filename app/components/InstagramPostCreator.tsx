@@ -13,6 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 const SUL_SANS = 'SulSans-Bold'
 const AFFAIRS = 'Affairs-Regular'
 
+const HANDLE_ICON = 10    // visual square – stays the same size
+const HANDLE_DETECT = 28  // invisible hit-area – much larger
+
 // ─── TYPES & INTERFACES ─────────────────────────────────────────────────────────
 
 interface Point {
@@ -480,7 +483,7 @@ export default function InstagramPostCreator() {
     ctx.strokeStyle = 'rgba(0, 120, 255, 0.8)'
     ctx.lineWidth = 2
     ctx.strokeRect(-hw, -hh, pos.width, pos.height)
-    const handleSize = 10
+    const handleSize = HANDLE_ICON        // only the icon uses this size
     const corners = [
       [-hw, -hh],
       [hw, -hh],
@@ -510,7 +513,7 @@ export default function InstagramPostCreator() {
     ctx.strokeStyle = 'rgba(0, 120, 255, 0.8)'
     ctx.lineWidth = 2
     ctx.strokeRect(-hw, -hh, box.width, box.height)
-    const handleSize = 10
+    const handleSize = HANDLE_ICON        // only the icon uses this size
     const corners = [
       [-hw, -hh],
       [hw, -hh],
@@ -559,7 +562,7 @@ export default function InstagramPostCreator() {
     y: number,
     position: TextPosition | GroupBoundingBox
   ): string | null => {
-    const handleSize = 20
+    const handleSize = HANDLE_DETECT      // much easier to hit
     const cx = position.x + position.width / 2
     const cy = position.y + position.height / 2
     const rot = position.rotation
@@ -584,8 +587,8 @@ export default function InstagramPostCreator() {
     y: number,
     position: TextPosition | GroupBoundingBox
   ): boolean => {
-    const handleSize = 20
-    const rotArea = 15
+    const handleSize = HANDLE_DETECT
+    const rotArea = 20                 // keep rotation ring generous
     const cx = position.x + position.width / 2
     const cy = position.y + position.height / 2
     const rot = position.rotation
