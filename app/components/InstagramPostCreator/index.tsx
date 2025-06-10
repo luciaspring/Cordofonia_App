@@ -118,7 +118,7 @@ export default function InstagramPostCreator() {
   const [tremblingIntensity, setTremblingIntensity] = useState<number>(3)             // preset at 3
   const [frameRate, setFrameRate] = useState<number>(MIN_FRAME_RATE)                   // preset at 10
   const [baseFps, setBaseFps] = useState<number>(35)                                   // preset at 35
-  const [lineDisappearEffect, setLineDisappearEffect] = useState<boolean>(true)       // NEW: lines disappear at end point
+  const [lineDisappearEffect, setLineDisappearEffect] = useState<boolean>(true)       // New disappear effect
 
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [groupRotation, setGroupRotation] = useState(0)
@@ -370,23 +370,22 @@ export default function InstagramPostCreator() {
         let currentEnd: Point
 
         if (animationType === 'grow') {
-          // Growing: line appears from start to end
+          // Growing: line draws from start to end
           currentStart = start
           currentEnd = {
             x: start.x + (end.x - start.x) * t,
             y: start.y + (end.y - start.y) * t
           }
         } else {
-          // Shrinking: NEW BEHAVIOR - both points converge at end point
+          // Shrinking: point A (start) moves toward point B (end), point B stays fixed
           if (lineDisappearEffect) {
-            // Both start and end move toward the end point
             currentStart = {
               x: start.x + (end.x - start.x) * t,
               y: start.y + (end.y - start.y) * t
             }
-            currentEnd = end
+            currentEnd = end // Point B stays fixed
           } else {
-            // Original behavior: line shrinks from end to start
+            // Original behavior: point B moves toward point A
             currentStart = start
             currentEnd = {
               x: start.x + (end.x - start.x) * (1 - t),
@@ -1413,7 +1412,7 @@ export default function InstagramPostCreator() {
                 checked={lineDisappearEffect}
                 onCheckedChange={setLineDisappearEffect}
               />
-              <Label htmlFor="lineDisappearEffect">Lines disappear at end point</Label>
+              <Label htmlFor="lineDisappearEffect">Line Disappear Effect</Label>
             </div>
           </div>
         </DialogContent>
