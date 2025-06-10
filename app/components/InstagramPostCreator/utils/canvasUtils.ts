@@ -95,8 +95,6 @@ export function drawCanvas(
     staggerDelay: number
     tremblingIntensity: number
     isPlaying: boolean
-    fontLoaded?: boolean
-    setDebug: React.Dispatch<React.SetStateAction<string>>
   },
   progress: number = 0
 ) {
@@ -125,8 +123,7 @@ export function drawCanvas(
       ctx.save()
       ctx.translate(x + pos1.width / 2, y + pos1.height / 2)
       ctx.rotate(rotation)
-      // ← ONLY CHANGE: Use SulSans-Bold when fontLoaded or state.fontLoaded is true
-      ctx.font = `${pos1.fontSize}px ${(fontLoaded || state.fontLoaded) ? 'SulSans-Bold' : 'sans-serif'}`
+      ctx.font = `${pos1.fontSize}px SulSans-Bold`
       ctx.fillText(title, -pos1.width / 2, -pos1.height / 2)
       ctx.restore()
     })
@@ -141,13 +138,12 @@ export function drawCanvas(
     ctx.save()
     ctx.translate(subX + subPos1.width / 2, subY + subPos1.height / 2)
     ctx.rotate(subRotation)
-    // ← ONLY CHANGE: Use SulSans-Bold when fontLoaded or state.fontLoaded is true
-    ctx.font = `${subPos1.fontSize}px ${(fontLoaded || state.fontLoaded) ? 'SulSans-Bold' : 'sans-serif'}`
+    ctx.font = `${subPos1.fontSize}px SulSans-Bold`
     ctx.fillText(state.subtitle, -subPos1.width / 2, -subPos1.height / 2)
     ctx.restore()
   }
 
-  if (fontLoaded || state.fontLoaded) {
+  if (fontLoaded) {
     drawText()
   } else {
     // If font isn't loaded yet, wait for it
@@ -159,14 +155,14 @@ export function drawCanvas(
     })
   }
 
-  // Draw lines - KEEP ORIGINAL STRUCTURE
+  // Draw lines
   ctx.strokeStyle = getContrastColor(state.backgroundColor)
   ctx.lineWidth = state.lineThickness
   state.lines.forEach(line => {
     if (line.frame === state.currentFrame) {
       ctx.beginPath()
-      ctx.moveTo(line.points[0].x, line.points[0].y)
-      ctx.lineTo(line.points[1].x, line.points[1].y)
+      ctx.moveTo(line.start.x, line.start.y)
+      ctx.lineTo(line.end.x, line.end.y)
       ctx.stroke()
     }
   })
