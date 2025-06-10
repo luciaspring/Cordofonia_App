@@ -926,7 +926,6 @@ export default function InstagramPostCreator() {
 
     if (!isShiftPressed.current) {
       setSelectedTexts([])
-      setGroupRotation(0)
     }
 
     const clickedIdx = lines.findIndex(line =>
@@ -1062,8 +1061,10 @@ export default function InstagramPostCreator() {
         const newSel = prev.includes(textType)
           ? prev.filter(t => t !== textType)
           : [...prev, textType]
+
         if (newSel.length > 1) {
-          setGroupRotation(groupRotation)
+          // take the rotation of the element we just clicked
+          setGroupRotation(position.rotation)
         }
         return newSel
       })
