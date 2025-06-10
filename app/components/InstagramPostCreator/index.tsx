@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect, useState, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
-import { Play, Pause, RotateCcw, Download, Settings, Move, Pencil } from 'lucide-react'
+import { Play, Pause, RotateCcw, Download, Settings, Move } from 'lucide-react'
 import Canvas from './Canvas'
 import ControlPanel from './ControlPanel'
 import PositionModal from './PositionModal'
@@ -26,8 +26,6 @@ export default function InstagramPostCreator() {
   const [errorModalOpen, setErrorModalOpen] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [lineDisappearEffect, setLineDisappearEffect] = useState(true)
-  const [isDrawingMode, setIsDrawingMode] = useState(false)
-  const [currentLine, setCurrentLine] = useState<Point | null>(null)
 
   const state = useAnimationState()
   const {
@@ -69,6 +67,28 @@ export default function InstagramPostCreator() {
     setExportType
   } = state
 
+  const canvasOperations = useCanvasOperations(
+    canvasRef,
+    { ...state, setDebug },
+    {
+      setTitlePositionsFrame2,
+      setSubtitlePositionFrame2,
+      setLines,
+      setSelectedTexts,
+      setGroupRotation,
+      setPositionModalOpen
+    }
+  )
+
+  const exportOperations = useExport(
+    canvasRef,
+    mediaRecorderRef,
+    exportType,
+    setIsPlaying,
+    setErrorMessage,
+    setErrorModalOpen
+  )
+
   // Animation timing constants
   const PLACEMENT_DURATION = 2.0 // seconds for placement animation
   const SCALE_DURATION = 1.5 // seconds for scale animation
@@ -78,49 +98,6 @@ export default function InstagramPostCreator() {
   const easeInOutCubic = (t: number): number => {
     return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
   }
-
-  // Handle line drawing
-  const handleCanvasMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawingMode) return
-
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const rect = canvas.getBoundingClientRect()
-    const scaleX = canvas.width / canvas.offsetWidth
-    const scaleY = canvas.height / canvas.offsetHeight
-    const x = (e.clientX - rect.left) * scaleX
-    const y = (e.clientY - rect.top) * scaleY
-
-    setCurrentLine({ x, y })
-  }, [isDrawingMode])
-
-  const handleCanvasMouseUp = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawingMode || !currentLine) return
-
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const rect = canvas.getBoundingClientRect()
-    const scaleX = canvas.width / canvas.offsetWidth
-    const scaleY = canvas.height / canvas.offsetHeight
-    const x = (e.clientX - rect.left) * scaleX
-    const y = (e.clientY - rect.top) * scaleY
-
-    // Only add line if there's significant distance
-    const distance = Math.sqrt(Math.pow(x - currentLine.x, 2) + Math.pow(y - currentLine.y, 2))
-    if (distance > 10) {
-      const newLine: Line = {
-        points: [currentLine, { x, y }],
-        frame: currentFrame
-      }
-
-      setLines(prev => [...prev, newLine])
-    }
-
-    setCurrentLine(null)
-    drawCanvas(currentFrame === 1 ? 0 : 1)
-  }, [isDrawingMode, currentLine, currentFrame, setLines])
 
   const drawAnimatedLines = useCallback((ctx: CanvasRenderingContext2D, progress: number) => {
     if (lines.length === 0) return
@@ -149,7 +126,7 @@ export default function InstagramPostCreator() {
       let startX, startY, endX, endY
 
       if (easedProgress <= 0.5) {
-        // Growing phase (0 to 0.5) - line grows from point A to point B
+        // Growing phase (0 to 0.5)
         const growProgress = easedProgress * 2
         startX = line.points[0].x
         startY = line.points[0].y
@@ -166,7 +143,7 @@ export default function InstagramPostCreator() {
           endX = line.points[1].x
           endY = line.points[1].y
         } else {
-          // Original behavior: point B moves toward point A, point A stays fixed
+          // Original behavior: point B moves toward point A
           startX = line.points[0].x
           startY = line.points[0].y
           endX = line.points[1].x - (line.points[1].x - line.points[0].x) * shrinkProgress
@@ -190,23 +167,6 @@ export default function InstagramPostCreator() {
       ctx.stroke()
     })
   }, [lines, currentFrame, backgroundColor, lineThickness, staggerDelay, tremblingIntensity, lineDisappearEffect, PLACEMENT_DURATION, SCALE_DURATION, LINES_DELAY, TOTAL_ANIMATION_DURATION])
-
-  const drawStaticLines = useCallback((ctx: CanvasRenderingContext2D) => {
-    if (lines.length === 0) return
-
-    ctx.strokeStyle = getContrastColor(backgroundColor)
-    ctx.lineWidth = lineThickness
-    ctx.lineCap = 'round'
-
-    lines.forEach((line) => {
-      if (line.frame !== currentFrame) return
-
-      ctx.beginPath()
-      ctx.moveTo(line.points[0].x, line.points[0].y)
-      ctx.lineTo(line.points[1].x, line.points[1].y)
-      ctx.stroke()
-    })
-  }, [lines, currentFrame, backgroundColor, lineThickness])
 
   const drawCanvas = useCallback((progress: number = 0) => {
     const canvas = canvasRef.current
@@ -344,26 +304,8 @@ export default function InstagramPostCreator() {
 
     drawText()
 
-    // Draw lines - animated during animation, static otherwise
-    if (isPlaying) {
-      drawAnimatedLines(ctx, progress)
-    } else {
-      drawStaticLines(ctx)
-    }
-
-    // Draw current line being drawn
-    if (currentLine && isDrawingMode) {
-      ctx.strokeStyle = getContrastColor(backgroundColor)
-      ctx.lineWidth = lineThickness
-      ctx.lineCap = 'round'
-      ctx.setLineDash([5, 5])
-      
-      ctx.beginPath()
-      ctx.moveTo(currentLine.x, currentLine.y)
-      // Draw to mouse position (we'll need to track this)
-      ctx.stroke()
-      ctx.setLineDash([])
-    }
+    // Draw animated lines (only after placement and scale animations are complete)
+    drawAnimatedLines(ctx, progress)
 
     // Enhanced debug info
     let phase = 'Complete'
@@ -383,7 +325,7 @@ export default function InstagramPostCreator() {
       phaseProgress = 100
     }
 
-    setDebug(`Progress: ${progress.toFixed(3)} | Phase: ${phase} (${phaseProgress.toFixed(0)}%) | Frame: ${currentFrame} | Lines: ${lines.filter(l => l.frame === currentFrame).length}`)
+    setDebug(`Progress: ${progress.toFixed(3)} | Phase: ${phase} (${phaseProgress.toFixed(0)}%) | Frame: ${currentFrame}`)
   }, [
     backgroundColor,
     titles,
@@ -394,12 +336,6 @@ export default function InstagramPostCreator() {
     subtitlePositionFrame2,
     currentFrame,
     drawAnimatedLines,
-    drawStaticLines,
-    currentLine,
-    isDrawingMode,
-    lineThickness,
-    lines,
-    isPlaying,
     PLACEMENT_DURATION,
     SCALE_DURATION,
     TOTAL_ANIMATION_DURATION
@@ -453,33 +389,6 @@ export default function InstagramPostCreator() {
     setCurrentFrame(currentFrame === 1 ? 2 : 1)
   }
 
-  const clearLines = () => {
-    setLines(prev => prev.filter(line => line.frame !== currentFrame))
-    drawCanvas(currentFrame === 1 ? 0 : 1)
-  }
-
-  const canvasOperations = useCanvasOperations(
-    canvasRef,
-    { ...state, setDebug },
-    {
-      setTitlePositionsFrame2,
-      setSubtitlePositionFrame2,
-      setLines,
-      setSelectedTexts,
-      setGroupRotation,
-      setPositionModalOpen
-    }
-  )
-
-  const exportOperations = useExport(
-    canvasRef,
-    mediaRecorderRef,
-    exportType,
-    setIsPlaying,
-    setErrorMessage,
-    setErrorModalOpen
-  )
-
   // Initial draw and frame switching effect
   useEffect(() => {
     drawCanvas(currentFrame === 1 ? 0 : 1)
@@ -501,9 +410,9 @@ export default function InstagramPostCreator() {
           <Canvas
             canvasRef={canvasRef}
             backgroundColor={backgroundColor}
-            handleMouseDown={isDrawingMode ? handleCanvasMouseDown : canvasOperations.handleMouseDown}
+            handleMouseDown={canvasOperations.handleMouseDown}
             handleMouseMove={canvasOperations.handleMouseMove}
-            handleMouseUp={isDrawingMode ? handleCanvasMouseUp : canvasOperations.handleMouseUp}
+            handleMouseUp={canvasOperations.handleMouseUp}
           />
           
           <div className="flex gap-2 mb-4">
@@ -517,17 +426,6 @@ export default function InstagramPostCreator() {
               <Move className="w-4 h-4" />
               Frame {currentFrame}
             </Button>
-            <Button 
-              onClick={() => setIsDrawingMode(!isDrawingMode)} 
-              variant={isDrawingMode ? "default" : "outline"} 
-              size="sm"
-            >
-              <Pencil className="w-4 h-4" />
-              {isDrawingMode ? 'Drawing' : 'Draw'}
-            </Button>
-            <Button onClick={clearLines} variant="outline" size="sm">
-              Clear Lines
-            </Button>
             <Button onClick={() => setSettingsModalOpen(true)} variant="outline" size="sm">
               <Settings className="w-4 h-4" />
             </Button>
@@ -539,12 +437,6 @@ export default function InstagramPostCreator() {
           <div className="text-xs text-gray-500 max-w-md text-center">
             {debug}
           </div>
-          
-          {isDrawingMode && (
-            <div className="text-xs text-blue-600 max-w-md text-center mt-2">
-              Click and drag to draw lines on Frame {currentFrame}
-            </div>
-          )}
         </div>
 
         <ControlPanel
