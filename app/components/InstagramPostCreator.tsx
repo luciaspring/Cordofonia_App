@@ -275,7 +275,7 @@ export default function InstagramPostCreator() {
         drawAnimatedLines(ctx, (progress - 0.3) / 0.3, frame1Lines, [], 'shrink')
       } else if (progress <= 0.7) {
         const t = (progress - 0.6) / 0.1
-        drawAnimatedText(ctx, t, 1, 2)
+        drawAnimatedText(ctx, t, 0, 1, 2)
       } else if (progress <= 1.0) {
         drawStaticText(ctx, 2)
         drawAnimatedLines(ctx, (progress - 0.7) / 0.3, [], frame2Lines, 'grow')
@@ -284,7 +284,7 @@ export default function InstagramPostCreator() {
         drawAnimatedLines(ctx, (progress - 1.0) / 0.3, [], frame2Lines, 'shrink')
       } else if (progress <= 1.4) {
         const t = (progress - 1.3) / 0.1
-        drawAnimatedText(ctx, t, 2, 1)
+        drawAnimatedText(ctx, t, 1, 2, 1)
       }
       return
     }
@@ -423,7 +423,13 @@ export default function InstagramPostCreator() {
     if (frame2Lines.length) drawFrameLines(frame2Lines, progress)
   }
 
-  const drawAnimatedText = (ctx: CanvasRenderingContext2D, progress: number, fromFrame: number, toFrame: number) => {
+  const drawAnimatedText = (
+    ctx: CanvasRenderingContext2D,
+    moveT: number,          // 0-1 for position interpolation
+    scaleT: number,        // 0-1 for size interpolation
+    fromFrame: number,     // starting frame (1 or 2)
+    toFrame: number        // ending frame (1 or 2)
+  ) => {
     const interpolate = (a: number, b: number, t: number) => a + (b - a) * t
     const interpolatePos = (p1: TextPosition, p2: TextPosition, t: number): TextPosition => ({
       x: interpolate(p1.x, p2.x, t),
@@ -433,20 +439,19 @@ export default function InstagramPostCreator() {
       rotation: interpolate(p1.rotation, p2.rotation, t),
       fontSize: interpolate(p1.fontSize, p2.fontSize, t)
     })
-    const t = easeInOutQuint(progress)
 
     // Draw titles with trembling
     titles.forEach((text, idx) => {
       const pos1 = fromFrame === 1 ? titlePositionsFrame1[idx] : titlePositionsFrame2[idx]
       const pos2 = toFrame === 1 ? titlePositionsFrame1[idx] : titlePositionsFrame2[idx]
-      const midPos = interpolatePos(pos1, pos2, t)
+      const midPos = interpolatePos(pos1, pos2, moveT)
       const tremX = (Math.random() - 0.5) * tremblingIntensity
       const tremY = (Math.random() - 0.5) * tremblingIntensity
 
       ctx.save()
       ctx.translate(midPos.x + midPos.width/2 + tremX, midPos.y + midPos.height/2 + tremY)
       ctx.rotate(midPos.rotation)
-      ctx.font = `bold ${midPos.fontSize}px "${SUL_SANS}", sans-serif`
+      ctx.font = `bold ${midPos.fontSize * (1 + (scaleT - 1) * 0.2)}px "${SUL_SANS}", sans-serif`
       ctx.fillStyle = getContrastColor(backgroundColor)
       ctx.textBaseline = 'middle'
       ctx.textAlign = 'center'
@@ -457,14 +462,14 @@ export default function InstagramPostCreator() {
     // Draw subtitle with trembling
     const sub1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
     const sub2 = toFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
-    const midSub = interpolatePos(sub1, sub2, t)
+    const midSub = interpolatePos(sub1, sub2, moveT)
     const tremXsub = (Math.random() - 0.5) * tremblingIntensity
     const tremYsub = (Math.random() - 0.5) * tremblingIntensity
 
     ctx.save()
     ctx.translate(midSub.x + midSub.width/2 + tremXsub, midSub.y + midSub.height/2 + tremYsub)
     ctx.rotate(midSub.rotation)
-    ctx.font = `${midSub.fontSize}px "${AFFAIRS}", sans-serif`
+    ctx.font = `${midSub.fontSize * (1 + (scaleT - 1) * 0.2)}px "${AFFAIRS}", sans-serif`
     ctx.fillStyle = getContrastColor(backgroundColor)
     ctx.textBaseline = 'middle'
     ctx.textAlign = 'center'
@@ -1237,6 +1242,92 @@ export default function InstagramPostCreator() {
     const b = parseInt(bgColor.slice(5, 7), 16)
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
     return luminance > 0.5 ? '#000000' : '#FFFFFF'
+  }
+
+  const drawAnimatedContent = (ctx: CanvasRenderingContext2D, progress: number) => {
+    const frame1Lines = lines.filter(l => l.frame === 1)
+    const frame2Lines = lines.filter(l => l.frame === 2)
+
+    // 0.00–0.30  grow frame-1 lines
+    if (progress <= 0.30) {
+      drawStaticText(ctx, 1)
+      drawAnimatedLines(ctx, progress / 0.30, frame1Lines, [], 'grow')
+      return
+    }
+
+    // 0.30–0.60  shrink frame-1 lines
+    if (progress <= 0.60) {
+      drawStaticText(ctx, 1)
+      drawAnimatedLines(ctx, (progress - 0.30) / 0.30, frame1Lines, [], 'shrink')
+      return
+    }
+
+    /*──────────────────────────────────────────────────────────────
+      TEXT TRANSITION (frame-1 → frame-2)
+
+      ┌────────────┬───────────┬─────────────┐
+      │ 0.60–0.75  │ 0.75–0.80 │ 0.80–0.95   │
+      │ move only  │  pause    │  scale only │
+      └────────────┴───────────┴─────────────┘
+    */
+    if (progress <= 0.75) {                 // move (location) 15 %
+      const t = (progress - 0.60) / 0.15
+      drawAnimatedText(ctx, t, 0, 1, 2)     // location t, scale 0, frame1→2
+      return
+    }
+
+    if (progress <= 0.80) {                 // tiny pause 5 %
+      drawAnimatedText(ctx, 1, 0, 1, 2)     // fully moved, not scaled
+      return
+    }
+
+    if (progress <= 0.95) {                 // scale 15 %
+      const t = (progress - 0.80) / 0.15
+      drawAnimatedText(ctx, 1, t, 1, 2)     // location done, scale t
+      return
+    }
+
+    // 0.95–1.30   grow frame-2 lines
+    if (progress <= 1.30) {
+      drawStaticText(ctx, 2)
+      drawAnimatedLines(ctx, (progress - 0.95) / 0.35, [], frame2Lines, 'grow')
+      return
+    }
+
+    // 1.30–1.60   shrink frame-2 lines
+    if (progress <= 1.60) {
+      drawStaticText(ctx, 2)
+      drawAnimatedLines(ctx, (progress - 1.30) / 0.30, [], frame2Lines, 'shrink')
+      return
+    }
+
+    /*──────────────────────────────────────────────────────────────
+      REVERSE TEXT TRANSITION (frame-2 → frame-1)
+
+      ┌────────────┬───────────┬─────────────┐
+      │ 1.60–1.75  │ 1.75–1.80 │ 1.80–1.95   │
+      │ move back  │  pause    │  scale back │
+      └────────────┴───────────┴─────────────┘
+    */
+    if (progress <= 1.75) {                 // move back
+      const t = (progress - 1.60) / 0.15
+      drawAnimatedText(ctx, 1 - t, 1, 2, 1) // reverse location, keep scale
+      return
+    }
+
+    if (progress <= 1.80) {                 // pause
+      drawAnimatedText(ctx, 0, 1, 2, 1)     // back in place, still scaled
+      return
+    }
+
+    if (progress <= 1.95) {                 // scale back
+      const t = (progress - 1.80) / 0.15
+      drawAnimatedText(ctx, 0, 1 - t, 2, 1) // no move, reverse scale
+      return
+    }
+
+    // 1.95–2.00   final static frame-1 (leave exactly as before)
+    drawStaticText(ctx, 1)
   }
 
   // ─── JSX ────────────────────────────────────────────────────────────────────────
