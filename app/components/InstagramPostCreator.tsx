@@ -98,6 +98,7 @@ export default function InstagramPostCreator() {
   const [selectedLineIndex, setSelectedLineIndex] = useState<number | null>(null)
   const [isDraggingLine, setIsDraggingLine] = useState(false)
   const [editingEnd, setEditingEnd] = useState<'start' | 'end' | null>(null)
+  const [initialPosition, setInitialPosition] = useState<TextPosition | null>(null)
 
   const [titlePositionsFrame1, setTitlePositionsFrame1] = useState<TextPosition[]>([
     { x: 40, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 },
@@ -745,89 +746,88 @@ export default function InstagramPostCreator() {
     textType: 'title1' | 'title2' | 'subtitle',
     handle: string
   ) => {
-    if (!resizeStartPosition) return
-    const centerX = position.x + position.width / 2
-    const centerY = position.y + position.height / 2
-    const startVec = { x: resizeStartPosition.x - centerX, y: resizeStartPosition.y - centerY }
-    const currentVec = { x: x - centerX, y: y - centerY }
-    const resizeSpeedFactor = 0.1
+    if (!resizeStartPosition || !initialPosition) return
+
+    const ref = initialPosition                  // always use original box
+    const cx = ref.x + ref.width / 2
+    const cy = ref.y + ref.height / 2
+
+    const startVec = { x: resizeStartPosition.x - cx, y: resizeStartPosition.y - cy }
+    const currVec = { x: x - cx, y: y - cy }
+
     let scale = 1
     if (handle.includes('e') || handle.includes('w')) {
-      const startDist = Math.abs(startVec.x)
-      const currentDist = Math.abs(currentVec.x)
-      scale = startDist !== 0 ? 1 + ((currentDist / startDist - 1) * resizeSpeedFactor) : 1
+      scale = Math.abs(currVec.x) / Math.abs(startVec.x)
     } else if (handle.includes('n') || handle.includes('s')) {
-      const startDist = Math.abs(startVec.y)
-      const currentDist = Math.abs(currentVec.y)
-      scale = startDist !== 0 ? 1 + ((currentDist / startDist - 1) * resizeSpeedFactor) : 1
+      scale = Math.abs(currVec.y) / Math.abs(startVec.y)
+    } else {                                     // corner handles
+      scale = Math.hypot(currVec.x, currVec.y) / Math.hypot(startVec.x, startVec.y)
     }
     scale = Math.max(0.1, scale)
-    const newW = position.width * scale
-    const newH = position.height * scale
-    const newX = centerX - newW / 2
-    const newY = centerY - newH / 2
+
+    const newW = ref.width * scale
+    const newH = ref.height * scale
+    const newX = cx - newW / 2
+    const newY = cy - newH / 2
     const newPos: TextPosition = {
       ...position,
-      x: newX,
-      y: newY,
-      width: newW,
-      height: newH,
-      fontSize: position.fontSize * scale
+      x: newX, y: newY, width: newW, height: newH,
+      fontSize: ref.fontSize * scale
     }
+
     if (textType === 'subtitle') {
       setSubtitlePositionFrame2(newPos)
     } else {
-      setTitlePositionsFrame2(prev => {
-        const arr = [...prev]
-        const idx = textType === 'title1' ? 0 : 1
-        arr[idx] = newPos
-        return arr
+      setTitlePositionsFrame2(p => {
+        const a = [...p]
+        a[textType === 'title1' ? 0 : 1] = newPos
+        return a
       })
     }
   }
 
   const resizeGroup = (x: number, y: number, handle: string) => {
     if (!initialGroupBox || !resizeStartPosition) return
-    const dx = x - resizeStartPosition.x
-    const dy = y - resizeStartPosition.y
+
     const cx = initialGroupBox.x + initialGroupBox.width / 2
     const cy = initialGroupBox.y + initialGroupBox.height / 2
+
+    const startVec = { x: resizeStartPosition.x - cx, y: resizeStartPosition.y - cy }
+    const currVec = { x: x - cx, y: y - cy }
+
     let scale = 1
     if (handle.includes('e') || handle.includes('w')) {
-      scale = 1 + (dx / initialGroupBox.width) * 0.5
+      scale = Math.abs(currVec.x) / Math.abs(startVec.x)
     } else if (handle.includes('n') || handle.includes('s')) {
-      scale = 1 + (dy / initialGroupBox.height) * 0.5
+      scale = Math.abs(currVec.y) / Math.abs(startVec.y)
+    } else {
+      scale = Math.hypot(currVec.x, currVec.y) / Math.hypot(startVec.x, startVec.y)
     }
     scale = Math.max(0.1, scale)
-    const newW = initialGroupBox.width * scale
-    const newH = initialGroupBox.height * scale
-    const newX = cx - newW / 2
-    const newY = cy - newH / 2
 
-    const updatePos = (pos: TextPosition) => {
-      const relX = (pos.x + pos.width / 2 - cx) / (initialGroupBox.width / 2)
-      const relY = (pos.y + pos.height / 2 - cy) / (initialGroupBox.height / 2)
+    const apply = (pos: TextPosition) => {
+      const relCX = (pos.x + pos.width / 2 - cx) / initialGroupBox.width
+      const relCY = (pos.y + pos.height / 2 - cy) / initialGroupBox.height
+      const w = pos.width * scale
+      const h = pos.height * scale
       return {
         ...pos,
-        x: cx + relX * (newW / 2) - pos.width * scale / 2,
-        y: cy + relY * (newH / 2) - pos.height * scale / 2,
-        width: pos.width * scale,
-        height: pos.height * scale,
+        x: cx + relCX * initialGroupBox.width * scale - w / 2,
+        y: cy + relCY * initialGroupBox.height * scale - h / 2,
+        width: w,
+        height: h,
         fontSize: pos.fontSize * scale
       }
     }
 
-    setTitlePositionsFrame2(prev =>
-      prev.map((pos, idx) =>
-        selectedTexts.includes(`title${idx + 1}` as 'title1' | 'title2')
-          ? updatePos(pos)
-          : pos
+    setTitlePositionsFrame2(p =>
+      p.map((pos, i) =>
+        selectedTexts.includes(`title${i + 1}` as 'title1' | 'title2') ? apply(pos) : pos
       )
     )
     if (selectedTexts.includes('subtitle')) {
-      setSubtitlePositionFrame2(prev => updatePos(prev))
+      setSubtitlePositionFrame2(apply)
     }
-    setInitialGroupBox({ x: newX, y: newY, width: newW, height: newH, rotation: initialGroupBox.rotation })
   }
 
   const rotateSingle = (
@@ -1089,8 +1089,7 @@ export default function InstagramPostCreator() {
           setResizeHandle(handle)
           setIsResizing(true)
           setResizeStartPosition({ x, y })
-          const g = calculateGroupBoundingBox()
-          if (g) setInitialGroupBox(g)
+          setInitialPosition(position)
         }
       } else {
         setIsDragging(true)
