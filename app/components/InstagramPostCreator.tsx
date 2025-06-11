@@ -110,7 +110,7 @@ const FieldGroup: React.FC<{ step: number; label: string; children: React.ReactN
   children,
 }) => (
   <div className="space-y-2">
-    <p className="text-[11px] font-semibold tracking-wide uppercase text-gray-500 mb-2">
+    <p className="text-[11px] font-semibold tracking-wide text-gray-500 mb-2">
       {step}. {label}
     </p>
     {children}
@@ -1413,7 +1413,7 @@ export default function InstagramPostCreator() {
       <div className="bg-gray-100 p-4 rounded-lg font-ui">
         <div className="flex space-x-2">
           {/* ─── LEFT PANEL ───────────────────────────────────────── */}
-          <div className="w-[260px] pt-6 pr-6 space-y-4">
+          <div className="w-[260px] pt-4 pr-6 space-y-4">
 
             <h1 className="text-[11px] font-semibold uppercase tracking-wide text-black mb-4">
               Cordofonia Instagram<br />Posts Creator Tool
