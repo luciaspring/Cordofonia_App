@@ -1444,14 +1444,19 @@ export default function InstagramPostCreator() {
 
             {/* Colors */}
             <FieldGroup step={3} label="Pick a color">
-              <div className="flex gap-2 pt-1">
+              <div className="flex flex-wrap gap-2 mt-2">
                 {colorOptions.map(c => (
                   <button
                     key={c.value}
                     onClick={() => setBackgroundColor(c.value)}
                     aria-label={c.name}
-                    className="w-6 h-6 rounded-full border border-gray-300"
                     style={{ backgroundColor: c.value }}
+                    className={`
+                      w-8 h-8 rounded-none
+                      ${backgroundColor === c.value
+                        ? 'ring-2 ring-black'
+                        : 'ring-0'}
+                    `}
                   />
                 ))}
               </div>
