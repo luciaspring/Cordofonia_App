@@ -1333,8 +1333,8 @@ export default function InstagramPostCreator() {
 
   // ─── JSX ────────────────────────────────────────────────────────────────────────
   return (
-    <div className="bg-gray-100 p-2 flex justify-center">
-      <div className="w-[848px]">
+    <div className="bg-gray-100 p-2">
+      <div className="max-w-[848px] mx-auto">
         <h1 className="text-2xl font-bold mb-2">Instagram Post Creator</h1>
         <div className="flex space-x-2">
           {/* ─── LEFT PANEL: Text Inputs & Color Picker */}
@@ -1383,7 +1383,7 @@ export default function InstagramPostCreator() {
           </div>
 
           {/* ─── RIGHT PANEL: Canvas & Controls */}
-          <div className="w-[600px] flex flex-col">
+          <div className="w-[540px] flex flex-col">
             <div
               className="w-[540px] h-[675px] bg-white rounded-lg mb-2 relative overflow-hidden"
               style={{ backgroundColor }}
@@ -1399,33 +1399,27 @@ export default function InstagramPostCreator() {
                 onMouseLeave={handleMouseUp}
               />
             </div>
-            <div className="flex gap-2 w-[540px] mx-auto">
-              {/* 540px total minus 2×48px squares leaves 444px,
-                  divided by 3 = 148px each for the first three */}
+            <div className="flex gap-2 w-[540px]">
               <Button
                 onClick={() => handleFrameChange(1)}
                 className="w-[148px] h-12 bg-gray-200 rounded-none hover:bg-gray-300"
               >
                 Frame 1
               </Button>
-
               <Button
                 onClick={() => handleFrameChange(2)}
                 className="w-[148px] h-12 bg-gray-200 rounded-none hover:bg-gray-300"
               >
                 Frame 2
               </Button>
-
               <Button
                 onClick={togglePlay}
                 className="w-[148px] h-12 bg-gray-200 rounded-full hover:bg-gray-300 flex items-center justify-center"
               >
                 {isPlaying
                   ? <PauseIcon className="h-5 w-5 text-black" />
-                  : <PlayIcon  className="h-5 w-5 text-black" />}
+                  : <PlayIcon className="h-5 w-5 text-black" />}
               </Button>
-
-              {/* two 48×48 squares */}
               <Button
                 onClick={() => setSettingsOpen(true)}
                 className="w-12 h-12 bg-gray-200 rounded-none hover:bg-gray-300 flex items-center justify-center"
@@ -1438,10 +1432,10 @@ export default function InstagramPostCreator() {
               >
                 <ShareIcon className="h-5 w-5 text-black" />
               </Button>
-            </div>  {/* end of controls */}
+            </div>
           </div>
         </div>
-      </div>    {/* end of w-[848px] wrapper */}
+      </div>
 
       {/* ─── MODALS ─────────────────────────────────────────────────────────────── */}
       <Dialog open={positionModalOpen} onOpenChange={setPositionModalOpen}>
@@ -1629,6 +1623,6 @@ export default function InstagramPostCreator() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>  {/* end of bg-gray-100 flex container */}
+    </div>
   )
 }
