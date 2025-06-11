@@ -1251,25 +1251,23 @@ export default function InstagramPostCreator() {
       return
     }
 
-    /* REWIND: SCALE‐BACK first, then MOVE‐BACK */
+    /* REWIND: SCALE-BACK first, then MOVE-BACK */
     const revScaleStart = scaleEnd + 0.65
     const revScaleEnd   = revScaleStart + scaleDur
     const revMoveStart  = revScaleEnd
     const revMoveEnd    = revMoveStart + moveDur
 
-    // 1) un‐scale (hold frame-2 position)
+    // 1) un-scale (hold frame-2 position)
     if (p <= revScaleEnd) {
       const s = ease((p - revScaleStart) / scaleDur)
-      // locationT = 0 → stay at frame-2 coords; scaleT = 1→0
-      drawAnimatedText(ctx, 0, 1 - s, 2, 1)
+      drawAnimatedText(ctx, 0, s, 2, 1)        // ✅ stays big, then shrinks
       return
     }
 
-    // 2) then un‐move (hold frame-1 scale)
+    // 2) then un-move (hold frame-1 scale)
     if (p <= revMoveEnd) {
       const t = ease((p - revMoveStart) / moveDur)
-      // locationT = 0→1 moves pos; scaleT = 0 keeps size at frame-1
-      drawAnimatedText(ctx, t, 0, 2, 1)
+      drawAnimatedText(ctx, t, 1, 2, 1)        // ✅ size already small, just slide back
       return
     }
 
