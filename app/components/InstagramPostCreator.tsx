@@ -1553,17 +1553,45 @@ export default function InstagramPostCreator() {
                 Frame&nbsp;2
               </Button>
 
-              {/* Play / Pause */}
-              <Button
-                onClick={togglePlay}
-                className={`
-                  flex-1 h-12 rounded-full flex items-center justify-center
-                  ${isPlaying ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
-                  transition-colors
-                `}
-              >
-                {isPlaying ? <PauseIcon className="h-5 w-5" /> : <PlayIcon className="h-5 w-5" />}
-              </Button>
+              {/* Play / Pause OR Progress-bar */}
+              {isPlaying ? (
+                /* ——— merged progress bar ——— */
+                <div
+                  className="
+                    flex-1 h-12 rounded-none overflow-hidden relative
+                    bg-gray-200           /* <— same base color as normal buttons */
+                  "
+                >
+                  {/* growing black overlay */}
+                  <div
+                    className="absolute inset-y-0 left-0 bg-black transition-[width]"
+                    style={{ width: `${playProgress * 100}%` }}
+                  />
+
+                  {/* still show the two frame labels */}
+                  <div
+                    className="
+                      absolute inset-0 flex items-center justify-between
+                      text-[11px] font-medium tracking-wide select-none
+                      px-3 pointer-events-none
+                    "
+                  >
+                    <span>Frame 1</span>
+                    <span>Frame 2</span>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  onClick={togglePlay}
+                  className={`
+                    flex-1 h-12 rounded-full flex items-center justify-center
+                    ${isPlaying ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
+                    transition-colors
+                  `}
+                >
+                  {isPlaying ? <PauseIcon className="h-5 w-5" /> : <PlayIcon className="h-5 w-5" />}
+                </Button>
+              )}
 
               {/* Settings */}
               <Button
