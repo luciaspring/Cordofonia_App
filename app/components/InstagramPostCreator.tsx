@@ -125,6 +125,7 @@ export default function InstagramPostCreator() {
   const [currentFrame, setCurrentFrame] = useState(1)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isLooping, setIsLooping] = useState(true)
+  const [playProgress, setPlayProgress] = useState(0)    // 0 ... 1
   const [lines, setLines] = useState<Line[]>([])
   const [currentLine, setCurrentLine] = useState<Line | null>(null)
   const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null)
@@ -1237,6 +1238,7 @@ export default function InstagramPostCreator() {
     // Throttle visible updates to mimic stop-motion
     if (timestamp - lastDisplayTimeRef.current >= 1000 / frameRate) {
       drawCanvas(progress)
+      setPlayProgress(Math.min(progress, 1))      // NEW
       lastDisplayTimeRef.current = timestamp
     }
 
@@ -1324,7 +1326,10 @@ export default function InstagramPostCreator() {
     drawCanvas()
   }
 
-  const togglePlay = () => setIsPlaying(prev => !prev)
+  const togglePlay = () => {
+    setIsPlaying(prev => !prev)
+    if (isPlaying) setPlayProgress(0)           // NEW
+  }
   const toggleLoop = () => setIsLooping(prev => !prev)
 
   // ─── POSITION MODAL & SETTINGS HANDLERS ────────────────────────────────────────
@@ -1486,31 +1491,50 @@ export default function InstagramPostCreator() {
               />
             </div>
             <div className="flex w-[540px] gap-2 mx-auto">
-              {/* Frame 1 */}
-              <Button
-                onClick={() => handleFrameChange(1)}
-                className={`
-                  flex-1 h-12 rounded-none
-                  ${currentFrame === 1 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
-                  active:bg-black active:text-white
-                  transition-colors
-                `}
-              >
-                Frame 1
-              </Button>
+              {isPlaying ? (
+                /* NEW – merged progress bar */
+                <div
+                  className={`
+                    relative flex-1 h-12 overflow-hidden rounded-none
+                    bg-gray-200 transition-[filter] duration-300
+                    ${isPlaying ? 'filter-[url(#gooey)]' : ''}
+                  `}
+                >
+                  {/* black fill */}
+                  <div
+                    className="absolute inset-y-0 left-0 bg-black transition-all duration-75"
+                    style={{ width: `${playProgress * 100}%` }}
+                  />
+                </div>
+              ) : (
+                <>
+                  {/* Frame 1 button */}
+                  <Button
+                    onClick={() => handleFrameChange(1)}
+                    className={`
+                      flex-1 h-12 rounded-none
+                      ${currentFrame === 1
+                        ? 'bg-black text-white'
+                        : 'bg-gray-200 text-black hover:bg-gray-400'}
+                    `}
+                  >
+                    Frame 1
+                  </Button>
 
-              {/* Frame 2 */}
-              <Button
-                onClick={() => handleFrameChange(2)}
-                className={`
-                  flex-1 h-12 rounded-none
-                  ${currentFrame === 2 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
-                  active:bg-black active:text-white
-                  transition-colors
-                `}
-              >
-                Frame 2
-              </Button>
+                  {/* Frame 2 button */}
+                  <Button
+                    onClick={() => handleFrameChange(2)}
+                    className={`
+                      flex-1 h-12 rounded-none
+                      ${currentFrame === 2
+                        ? 'bg-black text-white'
+                        : 'bg-gray-200 text-black hover:bg-gray-400'}
+                    `}
+                  >
+                    Frame 2
+                  </Button>
+                </>
+              )}
 
               {/* Play / Pause */}
               <Button
@@ -1544,6 +1568,26 @@ export default function InstagramPostCreator() {
           </div>
         </div>
       </div>
+
+      {/* ─── Gooey filter, once per app ─── */}
+      <svg className="absolute w-0 h-0 pointer-events-none">
+        <defs>
+          <filter id="gooey">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur" />
+            <feColorMatrix
+              in="blur"
+              mode="matrix"
+              values="
+                1 0 0 0 0
+                0 1 0 0 0
+                0 0 1 0 0
+                0 0 0 20 -10"
+              result="goo"
+            />
+            <feBlend in="SourceGraphic" in2="goo" />
+          </filter>
+        </defs>
+      </svg>
 
       {/* ─── MODALS ─────────────────────────────────────────────────────────────── */}
       <Dialog open={positionModalOpen} onOpenChange={setPositionModalOpen}>
