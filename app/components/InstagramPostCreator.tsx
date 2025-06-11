@@ -1514,72 +1514,78 @@ export default function InstagramPostCreator() {
               />
             </div>
             <div className="relative flex w-[540px] gap-2 mx-auto">
-              {/* progress bar */}
-              <div
-                ref={barRef}
-                className="absolute left-0 top-0 h-12 bg-black rounded-none
-                         transition-[width] duration-75 ease-linear
-                         pointer-events-none z-0"
-                style={{ width: barW }}
-              />
-
-              {/* Frame 1 */}
-              <Button
-                ref={frame1Ref}
-                disabled={isPlaying}
-                onClick={() => handleFrameChange(1)}
-                className={`
-                  relative z-10 flex-1 h-12 rounded-none
-                  ${currentFrame === 1 ? 'bg-black text-white' : 'bg-transparent text-white'}
-                  ${!isPlaying && 'bg-gray-200 text-black hover:bg-gray-400'}
-                  transition-colors
-                `}
-              >
-                Frame&nbsp;1
-              </Button>
-
-              {/* Frame 2 */}
-              <Button
-                ref={frame2Ref}
-                disabled={isPlaying}
-                onClick={() => handleFrameChange(2)}
-                className={`
-                  relative z-10 flex-1 h-12 rounded-none
-                  ${currentFrame === 2 ? 'bg-black text-white' : 'bg-transparent text-white'}
-                  ${!isPlaying && 'bg-gray-200 text-black hover:bg-gray-400'}
-                  transition-colors
-                `}
-              >
-                Frame&nbsp;2
-              </Button>
-
-              {/* Play / Pause OR Progress-bar */}
+              {/* ───── Frame buttons OR merged progress bar ───── */}
               {isPlaying ? (
-                /* ——— merged progress bar ——— */
+                /* merged bar takes the place of both buttons */
                 <div
                   className="
-                    flex-1 h-12 rounded-none overflow-hidden relative
-                    bg-gray-200           /* <— same base color as normal buttons */
+                    flex-[2]              /* width of the two buttons together   */
+                    h-12 rounded-none
+                    bg-gray-200           /* same idle colour                   */
+                    relative overflow-hidden
                   "
                 >
-                  {/* growing black overlay */}
+                  {/* progress overlay */}
                   <div
                     className="absolute inset-y-0 left-0 bg-black transition-[width]"
                     style={{ width: `${playProgress * 100}%` }}
                   />
 
-                  {/* still show the two frame labels */}
+                  {/* keep the two labels visible */}
                   <div
                     className="
-                      absolute inset-0 flex items-center justify-between
+                      absolute inset-0 px-3
+                      flex items-center justify-between
                       text-[11px] font-medium tracking-wide select-none
-                      px-3 pointer-events-none
+                      pointer-events-none
                     "
                   >
                     <span>Frame 1</span>
                     <span>Frame 2</span>
                   </div>
                 </div>
+              ) : (
+                <>
+                  {/* Frame 1 button */}
+                  <Button
+                    onClick={() => handleFrameChange(1)}
+                    className={`
+                      flex-1 h-12 rounded-none
+                      ${currentFrame === 1
+                        ? 'bg-black text-white'
+                        : 'bg-gray-200 text-black hover:bg-gray-400'}
+                    `}
+                  >
+                    Frame 1
+                  </Button>
+
+                  {/* Frame 2 button */}
+                  <Button
+                    onClick={() => handleFrameChange(2)}
+                    className={`
+                      flex-1 h-12 rounded-none
+                      ${currentFrame === 2
+                        ? 'bg-black text-white'
+                        : 'bg-gray-200 text-black hover:bg-gray-400'}
+                    `}
+                  >
+                    Frame 2
+                  </Button>
+                </>
+              )}
+
+              {/* Play / Pause */}
+              {isPlaying ? (
+                <Button
+                  onClick={togglePlay}
+                  className={`
+                    flex-1 h-12 rounded-full flex items-center justify-center
+                    ${isPlaying ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
+                    transition-colors
+                  `}
+                >
+                  <PauseIcon className="h-5 w-5" />
+                </Button>
               ) : (
                 <Button
                   onClick={togglePlay}
@@ -1589,7 +1595,7 @@ export default function InstagramPostCreator() {
                     transition-colors
                   `}
                 >
-                  {isPlaying ? <PauseIcon className="h-5 w-5" /> : <PlayIcon className="h-5 w-5" />}
+                  <PlayIcon className="h-5 w-5" />
                 </Button>
               )}
 
