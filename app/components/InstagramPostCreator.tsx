@@ -1411,9 +1411,11 @@ export default function InstagramPostCreator() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-white">
       <div className="bg-gray-100 p-4 rounded-lg font-ui">
-        <div className="flex space-x-2">
+        {/* widen gap so the new, wider left column sits clear of the frame */}
+        <div className="flex space-x-8">
           {/* ─── LEFT PANEL ───────────────────────────────────────── */}
-          <div className="w-[260px] pt-0 pr-6 space-y-4">
+          {/* 312 px = 8 squares × 32 px  + 7 gaps × 8 px  → allow a little breathing room */}
+          <div className="w-[336px] pt-0 pr-6 space-y-4">
 
             <h1 className="text-[11px] font-semibold tracking-wide text-black mb-4">
               Cordofonia Instagram<br />Posts Creator Tool
@@ -1444,7 +1446,8 @@ export default function InstagramPostCreator() {
 
             {/* Colors */}
             <FieldGroup step={3} label="Pick a color">
-              <div className="flex flex-wrap gap-2 mt-2">
+              {/* keep all squares on one line */}
+              <div className="flex flex-nowrap gap-2 mt-2">
                 {colorOptions.map(c => (
                   <button
                     key={c.value}
@@ -1465,7 +1468,8 @@ export default function InstagramPostCreator() {
           </div>
 
           {/* ─── RIGHT PANEL: Canvas & Controls */}
-          <div className="w-[540px] flex flex-col">
+          {/* push frame to the right by exactly the width of the colour-picker row */}
+          <div className="w-[540px] flex flex-col ml-[336px]">
             <div
               className="w-[540px] h-[675px] bg-white rounded-none mb-2 relative overflow-hidden"
               style={{ backgroundColor }}
