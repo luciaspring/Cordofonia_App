@@ -150,6 +150,21 @@ export default function InstagramPostCreator() {
   const [pauseHold, setPauseHold] = useState(0)    // normalized pause (0–0.5)
   const [easingPower, setEasingPower] = useState(5)       // 2–10 range
 
+  // Add these inside the Settings modal, with other sliders
+  const [lineEasePower, setLineEasePower] = useState(5)
+  const [textEasePower, setTextEasePower] = useState(5)
+
+  // Add these easing functions near the top, after state declarations
+  const easeLines = (t: number) =>
+    t < 0.5
+      ? 0.5 * Math.pow(2 * t, lineEasePower)
+      : 1 - 0.5 * Math.pow(2 * (1 - t), lineEasePower)
+
+  const easeText = (t: number) =>
+    t < 0.5
+      ? 0.5 * Math.pow(2 * t, textEasePower)
+      : 1 - 0.5 * Math.pow(2 * (1 - t), textEasePower)
+
   // ─── EFFECT HOOKS ───────────────────────────────────────────────────────────────
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -370,7 +385,7 @@ export default function InstagramPostCreator() {
       const adjustedStagger = linesArr.length > 1 ? maxStaggerDelay / (linesArr.length - 1) : 0
       linesArr.forEach((ln, idx) => {
         let t = Math.max(0, Math.min(1, (fgProgress - idx * adjustedStagger) / animationDuration))
-        t = ease(t)
+        t = easeLines(t)
         const { start, end } = ln
         let currentStart, currentEnd
 
@@ -1182,6 +1197,7 @@ export default function InstagramPostCreator() {
   const drawAnimatedContent = (ctx: CanvasRenderingContext2D, p: number) => {
     const f1 = lines.filter(l => l.frame === 1)
     const f2 = lines.filter(l => l.frame === 2)
+    const ease = easeText
 
     if (p <= 0.30) {
       drawStaticText(ctx, 1)
@@ -1534,6 +1550,28 @@ export default function InstagramPostCreator() {
                 step={1}
                 value={[easingPower]}
                 onValueChange={([v]) => setEasingPower(v)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="lineEaseSlider">Line Easing Power</Label>
+              <Slider
+                id="lineEaseSlider"
+                min={2}
+                max={10}
+                step={1}
+                value={[lineEasePower]}
+                onValueChange={([v]) => setLineEasePower(v)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="textEaseSlider">Text Easing Power</Label>
+              <Slider
+                id="textEaseSlider"
+                min={2}
+                max={10}
+                step={1}
+                value={[textEasePower]}
+                onValueChange={([v]) => setTextEasePower(v)}
               />
             </div>
           </div>
