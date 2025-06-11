@@ -103,6 +103,24 @@ export const defaultSubtitlePosition: TextPosition = {
 
 // ─── COMPONENT ───────────────────────────────────────────────────────────────────
 
+/* ─── Small wrapper to reuse identical spacing & label strip ─── */
+const FieldGroup: React.FC<{ step: number; label: string; children: React.ReactNode }> = ({
+  step,
+  label,
+  children,
+}) => (
+  <div className="space-y-3">
+    {/* light-gray strip */}
+    <div className="bg-gray-100 px-1 py-1">
+      <span className="text-xs font-medium text-gray-500">
+        {step}.&nbsp;
+        <span className="uppercase tracking-wide">{label}</span>
+      </span>
+    </div>
+    {children}
+  </div>
+);
+
 export default function InstagramPostCreator() {
   // ─── STATE HOOKS ────────────────────────────────────────────────────────────────
   const [titles, setTitles] = useState<string[]>(['John', 'Doe'])
@@ -1398,50 +1416,51 @@ export default function InstagramPostCreator() {
     <div className="bg-gray-100 p-4 rounded-lg">
       <div className="max-w-[848px] mx-auto">
         <div className="flex space-x-2">
-          {/* ─── LEFT PANEL: Text Inputs & Color Picker */}
-          <div className="w-[300px] space-y-2">
-            <h1 className="text-2xl font-bold mb-4">Instagram Post Creator</h1>
-            <div>
-              <Label htmlFor="title1" className="text-sm text-gray-600">Title 1</Label>
+          {/* ─── LEFT PANEL ───────────────────────────────────────── */}
+          <div className="w-[260px] pt-6 pl-6 pr-6 space-y-6">
+
+            <h1 className="text-[28px] font-extrabold leading-none">
+              Instagram Post Creator
+            </h1>
+
+            {/* Title fields */}
+            <FieldGroup step={1} label="Write a title">
               <Input
-                id="title1"
                 value={titles[0]}
                 onChange={e => setTitles([e.target.value, titles[1]])}
-                className="mt-1 bg-white rounded text-lg h-10"
+                className="h-9 text-[15px]"
               />
-            </div>
-            <div>
-              <Label htmlFor="title2" className="text-sm text-gray-600">Title 2</Label>
               <Input
-                id="title2"
                 value={titles[1]}
                 onChange={e => setTitles([titles[0], e.target.value])}
-                className="mt-1 bg-white rounded text-lg h-10"
+                className="h-9 text-[15px]"
               />
-            </div>
-            <div>
-              <Label htmlFor="subtitle" className="text-sm text-gray-600">Subtitle</Label>
+            </FieldGroup>
+
+            {/* Instrument */}
+            <FieldGroup step={2} label="Write the instrument">
               <Input
-                id="subtitle"
                 value={subtitle}
                 onChange={e => setSubtitle(e.target.value)}
-                className="mt-1 bg-white rounded text-lg h-10"
+                className="h-9 text-[15px]"
               />
-            </div>
-            <div>
-              <Label className="text-sm text-gray-600">Background Color</Label>
-              <div className="flex flex-wrap gap-2 mt-2">
+            </FieldGroup>
+
+            {/* Colors */}
+            <FieldGroup step={3} label="Pick a color">
+              <div className="flex gap-2 pt-1">
                 {colorOptions.map(c => (
                   <button
                     key={c.value}
                     onClick={() => setBackgroundColor(c.value)}
-                    className="w-8 h-8 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    style={{ backgroundColor: c.value }}
                     aria-label={c.name}
+                    className="w-6 h-6 rounded-full border border-gray-300"
+                    style={{ backgroundColor: c.value }}
                   />
                 ))}
               </div>
-            </div>
+            </FieldGroup>
+
           </div>
 
           {/* ─── RIGHT PANEL: Canvas & Controls */}
