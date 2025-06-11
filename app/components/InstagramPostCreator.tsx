@@ -187,6 +187,9 @@ export default function InstagramPostCreator() {
   const lastMousePosition = useRef<Point | null>(null)
   const isShiftPressed = useRef(false)
   const lastClickTime = useRef<number>(0)
+  const frame1Ref = useRef<HTMLButtonElement>(null)
+  const frame2Ref = useRef<HTMLButtonElement>(null)
+  const [barW, setBarW] = useState<number>(0)
 
   /* ——— MediaRecorder support ——— */
   const recordingRef = useRef<MediaRecorder | null>(null)
@@ -282,6 +285,17 @@ export default function InstagramPostCreator() {
     }
     return () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current)
+    }
+  }, [isPlaying])
+
+  useEffect(() => {
+    if (isPlaying) {
+      const gap = 8                // same .gap-2 used in the flex row
+      const w1 = frame1Ref.current?.offsetWidth || 0
+      const w2 = frame2Ref.current?.offsetWidth || 0
+      setBarW(w1 + gap + w2)
+    } else {
+      setBarW(0)
     }
   }, [isPlaying])
 
@@ -1490,51 +1504,46 @@ export default function InstagramPostCreator() {
                 onMouseLeave={handleMouseUp}
               />
             </div>
-            <div className="flex w-[540px] gap-2 mx-auto">
-              {isPlaying ? (
-                /* NEW – merged progress bar */
-                <div
-                  className={`
-                    relative flex-1 h-12 overflow-hidden rounded-none
-                    bg-gray-200 transition-[filter] duration-300
-                    ${isPlaying ? 'filter-[url(#gooey)]' : ''}
-                  `}
-                >
-                  {/* black fill */}
-                  <div
-                    className="absolute inset-y-0 left-0 bg-black transition-all duration-75"
-                    style={{ width: `${playProgress * 100}%` }}
-                  />
-                </div>
-              ) : (
-                <>
-                  {/* Frame 1 button */}
-                  <Button
-                    onClick={() => handleFrameChange(1)}
-                    className={`
-                      flex-1 h-12 rounded-none
-                      ${currentFrame === 1
-                        ? 'bg-black text-white'
-                        : 'bg-gray-200 text-black hover:bg-gray-400'}
-                    `}
-                  >
-                    Frame 1
-                  </Button>
+            <div className="relative flex w-[540px] gap-2 mx-auto">
+              {/* ─── Black progress bar (hidden until play) ─── */}
+              <div
+                style={{ width: barW }}
+                className={`
+                  absolute left-0 h-12 bg-black rounded-none
+                  transition-[width] duration-300 ease-[cubic-bezier(.4,0,.2,1)]
+                  pointer-events-none
+                `}
+              />
 
-                  {/* Frame 2 button */}
-                  <Button
-                    onClick={() => handleFrameChange(2)}
-                    className={`
-                      flex-1 h-12 rounded-none
-                      ${currentFrame === 2
-                        ? 'bg-black text-white'
-                        : 'bg-gray-200 text-black hover:bg-gray-400'}
-                    `}
-                  >
-                    Frame 2
-                  </Button>
-                </>
-              )}
+              {/* Frame 1 button */}
+              <Button
+                ref={frame1Ref}
+                disabled={isPlaying}
+                onClick={() => handleFrameChange(1)}
+                className={`
+                  flex-1 h-12 rounded-none transition-colors
+                  ${isPlaying ? 'opacity-0' : currentFrame === 1
+                    ? 'bg-black text-white'
+                    : 'bg-gray-200 text-black hover:bg-gray-400'}
+                `}
+              >
+                Frame 1
+              </Button>
+
+              {/* Frame 2 button */}
+              <Button
+                ref={frame2Ref}
+                disabled={isPlaying}
+                onClick={() => handleFrameChange(2)}
+                className={`
+                  flex-1 h-12 rounded-none transition-colors
+                  ${isPlaying ? 'opacity-0' : currentFrame === 2
+                    ? 'bg-black text-white'
+                    : 'bg-gray-200 text-black hover:bg-gray-400'}
+                `}
+              >
+                Frame 2
+              </Button>
 
               {/* Play / Pause */}
               <Button
@@ -1542,25 +1551,24 @@ export default function InstagramPostCreator() {
                 className={`
                   flex-1 h-12 rounded-full flex items-center justify-center
                   ${isPlaying ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
-                  active:bg-black active:text-white
                   transition-colors
                 `}
               >
-                {isPlaying
-                  ? <PauseIcon className="h-5 w-5" />
-                  : <PlayIcon className="h-5 w-5" />}
+                {isPlaying ? <PauseIcon className="h-5 w-5" /> : <PlayIcon className="h-5 w-5" />}
               </Button>
 
-              {/* Settings & Export */}
+              {/* Settings */}
               <Button
                 onClick={() => setSettingsOpen(true)}
-                className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 transition-colors flex items-center justify-center"
+                className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
               >
                 <Settings className="h-5 w-5 text-black" />
               </Button>
+
+              {/* Export */}
               <Button
                 onClick={exportVideo}
-                className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 transition-colors flex items-center justify-center"
+                className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
               >
                 <ShareIcon className="h-5 w-5 text-black" />
               </Button>
