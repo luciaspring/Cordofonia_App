@@ -166,6 +166,9 @@ export default function InstagramPostCreator() {
       ? 0.5 * Math.pow(2 * t, textEasePower)
       : 1 - 0.5 * Math.pow(2 * (1 - t), textEasePower)
 
+  // Add this inside the Settings modal
+  const [scaleAnchor, setScaleAnchor] = useState<'corner' | 'center'>('corner')
+
   // ─── EFFECT HOOKS ───────────────────────────────────────────────────────────────
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -759,41 +762,50 @@ export default function InstagramPostCreator() {
     handle: string
   ) => {
     if (!resizeStartPosition || !initialPosition) return
+    const ref = initialPosition
+    const cx = ref.x + ref.width/2
+    const cy = ref.y + ref.height/2
 
-    const ref = initialPosition                  // always use original box
-    const cx = ref.x + ref.width / 2
-    const cy = ref.y + ref.height / 2
-
-    const startVec = { x: resizeStartPosition.x - cx, y: resizeStartPosition.y - cy }
-    const currVec = { x: x - cx, y: y - cy }
-
-    let scale = 1
-    if (handle.includes('e') || handle.includes('w')) {
-      scale = Math.abs(currVec.x) / Math.abs(startVec.x)
-    } else if (handle.includes('n') || handle.includes('s')) {
-      scale = Math.abs(currVec.y) / Math.abs(startVec.y)
-    } else {                                     // corner handles
-      scale = Math.hypot(currVec.x, currVec.y) / Math.hypot(startVec.x, startVec.y)
+    let scale: number
+    if (scaleAnchor === 'center') {
+      // always scale relative to center
+      const startDist = Math.hypot(resizeStartPosition.x - cx, resizeStartPosition.y - cy)
+      const currDist  = Math.hypot(x - cx, y - cy)
+      scale = startDist ? currDist / startDist : 1
+    } else {
+      // original corner/edge logic
+      const startVec = { x: resizeStartPosition.x - cx, y: resizeStartPosition.y - cy }
+      const currVec  = { x: x - cx, y: y - cy }
+      if (handle.includes('e') || handle.includes('w')) {
+        scale = Math.abs(currVec.x) / Math.abs(startVec.x)
+      } else if (handle.includes('n') || handle.includes('s')) {
+        scale = Math.abs(currVec.y) / Math.abs(startVec.y)
+      } else {
+        scale = Math.hypot(currVec.x, currVec.y) / Math.hypot(startVec.x, startVec.y)
+      }
     }
     scale = Math.max(0.1, scale)
 
-    const newW = ref.width * scale
+    const newW = ref.width  * scale
     const newH = ref.height * scale
-    const newX = cx - newW / 2
-    const newY = cy - newH / 2
+    const newX = cx - newW/2
+    const newY = cy - newH/2
     const newPos: TextPosition = {
       ...position,
-      x: newX, y: newY, width: newW, height: newH,
+      x: newX,
+      y: newY,
+      width: newW,
+      height: newH,
       fontSize: ref.fontSize * scale
     }
 
     if (textType === 'subtitle') {
       setSubtitlePositionFrame2(newPos)
     } else {
-      setTitlePositionsFrame2(p => {
-        const a = [...p]
-        a[textType === 'title1' ? 0 : 1] = newPos
-        return a
+      setTitlePositionsFrame2(arr => {
+        const out = [...arr]
+        out[textType === 'title1' ? 0 : 1] = newPos
+        return out
       })
     }
   }
@@ -1572,6 +1584,18 @@ export default function InstagramPostCreator() {
                 value={[textEasePower]}
                 onValueChange={([v]) => setTextEasePower(v)}
               />
+            </div>
+            <div>
+              <Label htmlFor="scaleAnchor">Scale Anchor</Label>
+              <Select value={scaleAnchor} onValueChange={setScaleAnchor}>
+                <SelectTrigger id="scaleAnchor" className="w-full">
+                  <SelectValue placeholder="corner/center" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="corner">Corner</SelectItem>
+                  <SelectItem value="center">Center</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </DialogContent>
