@@ -80,36 +80,38 @@ const BASE_FPS = 60
 const lineEase = BezierEasing(0.83, 0, 0.17, 1)
 const textEase = BezierEasing(0.95, 0, 0.05, 1)
 
+// 1080 × 1350 canvas, 4:5 ratio
+const LEFT = 16            // 16 px inside the canvas
+const TITLE_WIDTH = 600    // you can adjust later
+const SUB_WIDTH = 720
+
 // Default positions for 1080 x 1350 layout
 export const defaultTitlePositions: TextPosition[] = [
   {
-    x: 540,           // centered horizontally
-    y: 550,           // top of title block
-    width: 600,       // wide enough for short names
-    height: 286,
+    x: LEFT + TITLE_WIDTH / 2,   // ⬅️ centred on the left margin
+    y: 550,                      // first line block-top
+    width: TITLE_WIDTH,
+    height: 286,                 // block height you measured
     rotation: 0,
-    fontSize: 180,    // adjust as needed to match visual size
-    aspectRatio: 3.2, // optional, just in case
+    fontSize: 180,
   },
   {
-    x: 540,
-    y: 550 + 140,     // second word slightly lower within the title block
-    width: 600,
+    x: LEFT + TITLE_WIDTH / 2,   // same X, just lower Y
+    y: 550 + 140,               // tweak until the two lines look right
+    width: TITLE_WIDTH,
     height: 286,
     rotation: 0,
     fontSize: 180,
-    aspectRatio: 3.2,
   },
 ]
 
 export const defaultSubtitlePosition: TextPosition = {
-  x: 540,
-  y: 550 + 286 + 60, // space after title block
-  width: 800,
-  height: 391,
+  x: LEFT + SUB_WIDTH / 2,
+  y: 550 + 286 + 60,            // 60 px gap below the title block
+  width: SUB_WIDTH,
+  height: 80,
   rotation: 0,
   fontSize: 48,
-  aspectRatio: 12,   // very wide block of text
 }
 
 // ─── COMPONENT ───────────────────────────────────────────────────────────────────
