@@ -134,23 +134,23 @@ export default function InstagramPostCreator() {
   const [editingEnd, setEditingEnd] = useState<'start' | 'end' | null>(null)
   const [initialPosition, setInitialPosition] = useState<TextPosition | null>(null)
 
-  // ─── FRAME 1 defaults ───────────────────────────────────────────
+  // ─── FRAME 1 defaults ───────────────────────────────────────────────
   const [titlePositionsFrame1, setTitlePositionsFrame1] = useState<TextPosition[]>([
     { x: M, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 }, // John
     { x: M, y: 580, width: 1000, height: 200, rotation: 0, fontSize: 180 }  // Doe  (-30 px tighter)
   ])
 
   const [subtitlePositionFrame1, setSubtitlePositionFrame1] = 
-    useState<TextPosition>({ x: 40, y: 1000, width: 1000, height: 30, rotation: 0, fontSize: 20 })
+    useState<TextPosition>({ x: M, y: 840, width: 1000, height: 60, rotation: 0, fontSize: 48 })
 
-  // ─── FRAME 2 defaults (identical) ───────────────────────────────
+  // ─── FRAME 2 defaults (identical) ───────────────────────────────────
   const [titlePositionsFrame2, setTitlePositionsFrame2] = useState<TextPosition[]>([
     { x: M, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 },
     { x: M, y: 580, width: 1000, height: 200, rotation: 0, fontSize: 180 }
   ])
 
   const [subtitlePositionFrame2, setSubtitlePositionFrame2] = 
-    useState<TextPosition>({ x: 40, y: 1000, width: 1000, height: 30, rotation: 0, fontSize: 20 })
+    useState<TextPosition>({ x: M, y: 840, width: 1000, height: 60, rotation: 0, fontSize: 48 })
 
   const [selectedTexts, setSelectedTexts] = useState<('title1' | 'title2' | 'subtitle')[]>([])
   const [resizeHandle, setResizeHandle] = useState<string | null>(null)
@@ -1409,8 +1409,8 @@ export default function InstagramPostCreator() {
 
   // ─── JSX ────────────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-white">
-      <div className="bg-[#F3F4F6] p-6 rounded-lg shadow-md font-ui">
+    <div className="min-h-screen w-full flex items-center justify-center bg-[#E5E5E5]">
+      <div className="bg-white p-4 rounded-lg font-ui">
         <div className="flex space-x-2">
           {/* ─── LEFT PANEL ───────────────────────────────────────── */}
           <div className="w-[260px] pt-6 pl-6 pr-6 space-y-4">
@@ -1440,9 +1440,6 @@ export default function InstagramPostCreator() {
                 onChange={e => setSubtitle(e.target.value)}
                 className="h-9 text-[15px]"
               />
-              <div className="rounded-lg p-6 bg-white mt-4">
-                <p className="text-[20px] font-serif">Instrumento: {subtitle}</p>
-              </div>
             </FieldGroup>
 
             {/* Colors */}
