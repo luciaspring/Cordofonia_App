@@ -82,6 +82,9 @@ const BASE_FPS = 60
 const lineEase = BezierEasing(0.83, 0, 0.17, 1)
 const textEase = BezierEasing(0.95, 0, 0.05, 1)
 
+// Progress value when the on-screen action is really done
+const PROGRESS_END = 2.182             // = revMoveEnd in drawAnimatedContent
+
 // 16 px inner margin → text block must be centred on (16 + blockWidth / 2)
 const Wt = 600         // title block width (keeps both lines flush-left)
 const Ws = 720         // subtitle block width
@@ -1256,7 +1259,7 @@ export default function InstagramPostCreator() {
       }
     }
 
-    const cycleMs = msPerBaseFrame * 150 * 2.416   // exact full-cycle duration
+    const cycleMs = msPerBaseFrame * 150 * PROGRESS_END   // exact visual length
     setBarProgress(Math.min(elapsed / cycleMs, 1))
 
     // Throttle visible updates to mimic stop-motion
@@ -1430,7 +1433,7 @@ export default function InstagramPostCreator() {
     }
 
     /* 2. start animation & recording */
-    const fullCycleMs = (2.416 * 150 * 1000) / baseFps    // ≈10.4 s with FPS 35
+    const fullCycleMs = (PROGRESS_END * 150 * 1000) / baseFps
     recordingRef.current.start()
     setIsLooping(false)        // play one cycle only
     setIsPlaying(true)
