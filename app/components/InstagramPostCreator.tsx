@@ -432,9 +432,11 @@ export default function InstagramPostCreator() {
       const tremX = (Math.random() - 0.5) * tremblingIntensity
       const tremY = (Math.random() - 0.5) * tremblingIntensity
 
-      // 4) DRAW
+      // 4) DRAW with dynamic center based on scale
+      const dynW = p1.width  + (p2.width  - p1.width)  * scaleT
+      const dynH = p1.height + (p2.height - p1.height) * scaleT
       ctx.save()
-      ctx.translate(x + p1.width / 2 + tremX, y + p1.height / 2 + tremY)
+      ctx.translate(x + dynW/2 + tremX, y + dynH/2 + tremY)
       ctx.rotate(rotation)
       ctx.font = `bold ${fontSize}px "${SUL_SANS}", sans-serif`
       ctx.fillStyle    = getContrastColor(backgroundColor)
@@ -455,8 +457,10 @@ export default function InstagramPostCreator() {
     const streX     = (Math.random() - 0.5) * tremblingIntensity
     const streY     = (Math.random() - 0.5) * tremblingIntensity
 
+    const dynSW = sub1.width  + (sub2.width  - sub1.width)  * scaleT
+    const dynSH = sub1.height + (sub2.height - sub1.height) * scaleT
     ctx.save()
-    ctx.translate(sx + sub1.width / 2 + streX, sy + sub1.height / 2 + streY)
+    ctx.translate(sx + dynSW/2 + streX, sy + dynSH/2 + streY)
     ctx.rotate(srot)
     ctx.font = `${sFontSize}px "${AFFAIRS}", sans-serif`
     ctx.fillStyle    = getContrastColor(backgroundColor)
