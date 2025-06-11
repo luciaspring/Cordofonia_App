@@ -189,6 +189,8 @@ export default function InstagramPostCreator() {
   const lastClickTime = useRef<number>(0)
   const frame1Ref = useRef<HTMLButtonElement>(null)
   const frame2Ref = useRef<HTMLButtonElement>(null)
+  const barRef = useRef<HTMLDivElement>(null)
+  const totalBarWRef = useRef<number>(0)          // save once when play starts
   const [barW, setBarW] = useState<number>(0)
 
   /* ——— MediaRecorder support ——— */
@@ -290,11 +292,13 @@ export default function InstagramPostCreator() {
 
   useEffect(() => {
     if (isPlaying) {
-      const gap = 8                // same .gap-2 used in the flex row
+      const gap = 8
       const w1 = frame1Ref.current?.offsetWidth || 0
       const w2 = frame2Ref.current?.offsetWidth || 0
-      setBarW(w1 + gap + w2)
+      totalBarWRef.current = w1 + gap + w2          // remember full length
+      setBarW(0)                                    // start empty
     } else {
+      totalBarWRef.current = 0
       setBarW(0)
     }
   }, [isPlaying])
@@ -1254,6 +1258,11 @@ export default function InstagramPostCreator() {
       drawCanvas(progress)
       setPlayProgress(Math.min(progress, 1))      // NEW
       lastDisplayTimeRef.current = timestamp
+
+      if (barRef.current && totalBarWRef.current) {
+        const pct = Math.min(progress / 2.416, 1)     // 0 → 1 over the whole cycle
+        barRef.current.style.width = `${totalBarWRef.current * pct}px`
+      }
     }
 
     // Only continue if still playing
