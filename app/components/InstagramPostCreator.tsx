@@ -77,7 +77,8 @@ const MIN_FRAME_RATE = 10
 const BASE_FPS = 60
 
 // Ease In-Out Quint easing function (piecewise)
-const ease = BezierEasing(0.83, 0, 0.17, 1)
+const lineEase = BezierEasing(0.83, 0, 0.17, 1)
+const textEase = BezierEasing(0.95, 0, 0.05, 1)
 
 // ─── COMPONENT ───────────────────────────────────────────────────────────────────
 
@@ -384,18 +385,17 @@ export default function InstagramPostCreator() {
     const drawFrameLines = (linesArr: Line[], fgProgress: number) => {
       const adjustedStagger = linesArr.length > 1 ? maxStaggerDelay / (linesArr.length - 1) : 0
       linesArr.forEach((ln, idx) => {
-        let t = Math.max(0, Math.min(1, (fgProgress - idx * adjustedStagger) / animationDuration))
-        t = easeLines(t)
+        const t = lineEase(Math.max(0, Math.min(1, (fgProgress - idx * adjustedStagger) / animationDuration)))
         const { start, end } = ln
         let currentStart, currentEnd
 
-        if (animationType === 'grow') { // grow - point A is fixed, point B moves
+        if (animationType === 'grow') {
           currentStart = start
           currentEnd = {
             x: start.x + (end.x - start.x) * t,
             y: start.y + (end.y - start.y) * t
           }
-        } else { // shrink - point A moves toward point B
+        } else {
           currentStart = {
             x: start.x + (end.x - start.x) * t,
             y: start.y + (end.y - start.y) * t
@@ -1197,16 +1197,15 @@ export default function InstagramPostCreator() {
   const drawAnimatedContent = (ctx: CanvasRenderingContext2D, p: number) => {
     const f1 = lines.filter(l => l.frame === 1)
     const f2 = lines.filter(l => l.frame === 2)
-    const ease = easeText
 
     if (p <= 0.30) {
       drawStaticText(ctx, 1)
-      drawAnimatedLines(ctx, ease(p / 0.30), f1, [], 'grow')
+      drawAnimatedLines(ctx, p / 0.30, f1, [], 'grow')
       return
     }
     if (p <= 0.60) {
       drawStaticText(ctx, 1)
-      drawAnimatedLines(ctx, ease((p - 0.30) / 0.30), f1, [], 'shrink')
+      drawAnimatedLines(ctx, (p - 0.30) / 0.30, f1, [], 'shrink')
       return
     }
 
@@ -1218,7 +1217,7 @@ export default function InstagramPostCreator() {
     const scaleEnd  = pauseEnd + scaleDur    // next
 
     if (p <= moveEnd) {
-      const t = ease((p - moveStart) / moveDur)
+      const t = textEase((p - moveStart) / moveDur)
       drawAnimatedText(ctx, t, 0, 1, 2)
       return
     }
@@ -1227,19 +1226,19 @@ export default function InstagramPostCreator() {
       return
     }
     if (p <= scaleEnd) {
-      const s = ease((p - pauseEnd) / scaleDur)
+      const s = textEase((p - pauseEnd) / scaleDur)
       drawAnimatedText(ctx, 1, s, 1, 2)
       return
     }
 
     if (p <= scaleEnd + 0.35) {
       drawStaticText(ctx, 2)
-      drawAnimatedLines(ctx, ease((p - scaleEnd) / 0.35), [], f2, 'grow')
+      drawAnimatedLines(ctx, (p - scaleEnd) / 0.35, [], f2, 'grow')
       return
     }
     if (p <= scaleEnd + 0.65) {
       drawStaticText(ctx, 2)
-      drawAnimatedLines(ctx, ease((p - (scaleEnd + 0.35)) / 0.30), [], f2, 'shrink')
+      drawAnimatedLines(ctx, (p - (scaleEnd + 0.35)) / 0.30, [], f2, 'shrink')
       return
     }
 
@@ -1250,12 +1249,12 @@ export default function InstagramPostCreator() {
     const revScaleEnd= revMoveEnd + revScaleDur
 
     if (p <= revMoveEnd) {
-      const t = ease((p - revStart) / revMoveDur)
+      const t = textEase((p - revStart) / revMoveDur)
       drawAnimatedText(ctx, 1 - t, 1, 2, 1)
       return
     }
     if (p <= revScaleEnd) {
-      const s = ease((p - revMoveEnd) / revScaleDur)
+      const s = textEase((p - revMoveEnd) / revScaleDur)
       drawAnimatedText(ctx, 0, 1 - s, 2, 1)
       return
     }
