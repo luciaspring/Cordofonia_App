@@ -1251,24 +1251,29 @@ export default function InstagramPostCreator() {
       return
     }
 
-    // rewind: SCALE-BACK first, then MOVE-BACK
+    /* REWIND: SCALE‐BACK first, then MOVE‐BACK */
     const revScaleStart = scaleEnd + 0.65
     const revScaleEnd   = revScaleStart + scaleDur
     const revMoveStart  = revScaleEnd
-    const revMoveEnd    = revMoveStart  + moveDur
+    const revMoveEnd    = revMoveStart + moveDur
 
+    // 1) un‐scale (hold frame-2 position)
     if (p <= revScaleEnd) {
       const s = ease((p - revScaleStart) / scaleDur)
-      drawAnimatedText(ctx, 1, 1 - s, 2, 1)
-      return
-    }
-    if (p <= revMoveEnd) {
-      const t = ease((p - revMoveStart) / moveDur)
-      drawAnimatedText(ctx, 1 - t, 0, 2, 1)
+      // locationT = 0 → stay at frame-2 coords; scaleT = 1→0
+      drawAnimatedText(ctx, 0, 1 - s, 2, 1)
       return
     }
 
-    // final fallback
+    // 2) then un‐move (hold frame-1 scale)
+    if (p <= revMoveEnd) {
+      const t = ease((p - revMoveStart) / moveDur)
+      // locationT = 0→1 moves pos; scaleT = 0 keeps size at frame-1
+      drawAnimatedText(ctx, t, 0, 2, 1)
+      return
+    }
+
+    // fallback
     drawStaticText(ctx, 1)
   }
 
@@ -1394,23 +1399,32 @@ export default function InstagramPostCreator() {
             />
           </div>
           <div className="flex space-x-2 w-[540px]">
+            {/* Frame 1 */}
             <Button
-              variant={currentFrame === 1 ? "default" : "outline"}
               onClick={() => handleFrameChange(1)}
-              className="flex-1 h-[40px] rounded"
+              className="w-36 h-12 bg-gray-200 rounded-none text-black hover:bg-gray-300"
             >
               Frame 1
             </Button>
+
+            {/* Frame 2 */}
             <Button
-              variant={currentFrame === 2 ? "default" : "outline"}
               onClick={() => handleFrameChange(2)}
-              className="flex-1 h-[40px] rounded"
+              className="w-36 h-12 bg-gray-200 rounded-none text-black hover:bg-gray-300"
             >
               Frame 2
             </Button>
-            <Button onClick={togglePlay} className="w-[40px] h-[40px] p-0 rounded-full bg-black">
-              {isPlaying ? <PauseIcon className="h-5 w-5 text-white" /> : <PlayIcon className="h-5 w-5 text-white" />}
+
+            {/* Play */}
+            <Button
+              onClick={togglePlay}
+              className="w-36 h-12 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300"
+            >
+              {isPlaying
+                ? <PauseIcon className="h-5 w-5 text-black" />
+                : <PlayIcon  className="h-5 w-5 text-black" />}
             </Button>
+
             <Button onClick={toggleLoop} className={`w-[40px] h-[40px] p-0 rounded bg-black ${isLooping ? 'ring-2 ring-blue-500' : ''}`}>
               <RotateCcwIcon className="h-5 w-5 text-white" />
             </Button>
