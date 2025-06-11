@@ -1399,7 +1399,7 @@ export default function InstagramPostCreator() {
                 onMouseLeave={handleMouseUp}
               />
             </div>
-            <div className="flex gap-2 w-[540px]">
+            <div className="flex gap-2 w-[540px] mx-auto">
               {/* 540px total minus 2×48px squares leaves 444px,
                   divided by 3 = 148px each for the first three */}
               <Button
