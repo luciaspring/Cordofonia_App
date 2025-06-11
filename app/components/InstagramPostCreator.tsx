@@ -1252,23 +1252,26 @@ export default function InstagramPostCreator() {
       return
     }
 
-    const revStart   = scaleEnd + 0.65
-    const revMoveDur = moveDur
-    const revScaleDur= scaleDur
-    const revMoveEnd = revStart + revMoveDur
-    const revScaleEnd= revMoveEnd + revScaleDur
+    /* REVERSE TEXT: rewind (scale-back → move-back) */
+    const revScaleStart = scaleEnd + 0.65
+    const revScaleEnd   = revScaleStart + scaleDur   // first, un-scale
+    const revMoveStart  = revScaleEnd
+    const revMoveEnd    = revMoveStart  + moveDur    // then, un-move
 
-    if (p <= revMoveEnd) {
-      const t = textEase((p - revStart) / revMoveDur)
-      drawAnimatedText(ctx, 1 - t, 1, 2, 1)
-      return
-    }
     if (p <= revScaleEnd) {
-      const s = textEase((p - revMoveEnd) / revScaleDur)
-      drawAnimatedText(ctx, 0, 1 - s, 2, 1)
+      const s = textEase((p - revScaleStart) / scaleDur)
+      // keep position, reverse scale
+      drawAnimatedText(ctx, 1, 1 - s, 2, 1)
+      return
+    }
+    if (p <= revMoveEnd) {
+      const t = textEase((p - revMoveStart) / moveDur)
+      // reverse position, no scale
+      drawAnimatedText(ctx, 1 - t, 0, 2, 1)
       return
     }
 
+    // final fallback
     drawStaticText(ctx, 1)
   }
 
