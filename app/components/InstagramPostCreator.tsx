@@ -1333,7 +1333,7 @@ export default function InstagramPostCreator() {
 
   // ─── JSX ────────────────────────────────────────────────────────────────────────
   return (
-    <div className="bg-gray-100 p-6">
+    <div className="bg-gray-100 p-2">
       <h1 className="text-2xl font-bold mb-6">Instagram Post Creator</h1>
       <div className="flex space-x-6">
         {/* ─── LEFT PANEL: Text Inputs & Color Picker */}
