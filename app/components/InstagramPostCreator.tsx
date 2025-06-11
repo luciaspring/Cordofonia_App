@@ -109,7 +109,7 @@ const FieldGroup: React.FC<{ step: number; label: string; children: React.ReactN
   label,
   children,
 }) => (
-  <div className="space-y-3">
+  <div className="space-y-2">
     {/* light-gray strip */}
     <div className="bg-gray-100 px-1 py-1">
       <span className="text-xs font-medium text-gray-500">
@@ -1417,7 +1417,7 @@ export default function InstagramPostCreator() {
       <div className="max-w-[848px] mx-auto">
         <div className="flex space-x-2">
           {/* ─── LEFT PANEL ───────────────────────────────────────── */}
-          <div className="w-[260px] pt-6 pl-6 pr-6 space-y-6">
+          <div className="w-[260px] pt-6 pl-6 pr-6 space-y-4">
 
             <h1 className="text-[28px] font-extrabold leading-none">
               Instagram Post Creator
