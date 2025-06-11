@@ -1334,10 +1334,10 @@ export default function InstagramPostCreator() {
   // ─── JSX ────────────────────────────────────────────────────────────────────────
   return (
     <div className="bg-gray-100 p-2">
-      <h1 className="text-2xl font-bold mb-6">Instagram Post Creator</h1>
+      <h1 className="text-2xl font-bold mb-2">Instagram Post Creator</h1>
       <div className="flex space-x-2">
         {/* ─── LEFT PANEL: Text Inputs & Color Picker */}
-        <div className="w-[300px] space-y-5">
+        <div className="w-[300px] space-y-2">
           <div>
             <Label htmlFor="title1" className="text-sm text-gray-600">Title 1</Label>
             <Input
@@ -1384,7 +1384,7 @@ export default function InstagramPostCreator() {
         {/* ─── RIGHT PANEL: Canvas & Controls */}
         <div className="w-[600px] flex flex-col">
           <div
-            className="w-[540px] h-[675px] bg-white rounded-lg mb-4 relative overflow-hidden"
+            className="w-[540px] h-[675px] bg-white rounded-lg mb-2 relative overflow-hidden"
             style={{ backgroundColor }}
           >
             <canvas
@@ -1398,7 +1398,7 @@ export default function InstagramPostCreator() {
               onMouseLeave={handleMouseUp}
             />
           </div>
-          <div className="flex w-[540px] gap-2">
+          <div className="flex gap-2 w-[540px]">
             {/* 540px total minus 2×48px squares leaves 444px,
                 divided by 3 = 148px each for the first three */}
             <Button
@@ -1448,7 +1448,7 @@ export default function InstagramPostCreator() {
             <DialogTitle>Edit Position</DialogTitle>
           </DialogHeader>
           {editingPosition && editingBaseFontSize !== null && (
-            <div className="space-y-4">
+            <div className="space-y-2">
               <div>
                 <Label htmlFor="xPos">X Position</Label>
                 <Input
@@ -1503,7 +1503,7 @@ export default function InstagramPostCreator() {
           <DialogHeader>
             <DialogTitle>Settings</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-2">
             <div className="flex items-center space-x-2">
               <input
                 id="loopToggle"
