@@ -1440,6 +1440,9 @@ export default function InstagramPostCreator() {
                 onChange={e => setSubtitle(e.target.value)}
                 className="h-9 text-[15px]"
               />
+              <div className="rounded-lg p-6 bg-[#F3F4F6]">
+                <p className="text-[20px] font-serif">Instrumento: {subtitle}</p>
+              </div>
             </FieldGroup>
 
             {/* Colors */}
