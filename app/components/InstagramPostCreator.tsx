@@ -1530,19 +1530,6 @@ export default function InstagramPostCreator() {
                     className="absolute inset-y-0 left-0 bg-black transition-[width]"
                     style={{ width: `${playProgress * 100}%` }}
                   />
-
-                  {/* keep the two labels visible */}
-                  <div
-                    className="
-                      absolute inset-0 px-3
-                      flex items-center justify-between
-                      text-[11px] font-medium tracking-wide select-none
-                      pointer-events-none
-                    "
-                  >
-                    <span>Frame 1</span>
-                    <span>Frame 2</span>
-                  </div>
                 </div>
               ) : (
                 <>
