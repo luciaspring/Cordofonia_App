@@ -1259,20 +1259,9 @@ export default function InstagramPostCreator() {
       }
     }
 
-    const cycleMs = msPerBaseFrame * 150 * PROGRESS_END   // exact visual length
-    setBarProgress(Math.min(elapsed / cycleMs, 1))
-
-    // Throttle visible updates to mimic stop-motion
-    if (timestamp - lastDisplayTimeRef.current >= 1000 / frameRate) {
-      drawCanvas(progress)
-      setPlayProgress(Math.min(progress, 1))      // NEW
-      lastDisplayTimeRef.current = timestamp
-
-      if (barRef.current && totalBarWRef.current) {
-        const pct = Math.min(progress / 2.416, 1)     // 0 → 1 over the whole cycle
-        barRef.current.style.width = `${totalBarWRef.current * pct}px`
-      }
-    }
+    // new – based directly on the current progress value
+    const visualP = Math.min(progress, PROGRESS_END)
+    setBarProgress(visualP / PROGRESS_END)
 
     // Only continue if still playing
     if (isPlaying) {
