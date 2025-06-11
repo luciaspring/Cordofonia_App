@@ -1403,13 +1403,12 @@ export default function InstagramPostCreator() {
               {/* Frame 1 */}
               <Button
                 onClick={() => handleFrameChange(1)}
-                className="
+                className={`
                   flex-1 h-12
-                  bg-gray-200 text-black
-                  hover:bg-gray-400
+                  ${currentFrame === 1 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
                   active:bg-black active:text-white
                   transition-colors
-                "
+                `}
               >
                 Frame 1
               </Button>
@@ -1417,13 +1416,12 @@ export default function InstagramPostCreator() {
               {/* Frame 2 */}
               <Button
                 onClick={() => handleFrameChange(2)}
-                className="
+                className={`
                   flex-1 h-12
-                  bg-gray-200 text-black
-                  hover:bg-gray-400
+                  ${currentFrame === 2 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
                   active:bg-black active:text-white
                   transition-colors
-                "
+                `}
               >
                 Frame 2
               </Button>
@@ -1431,15 +1429,12 @@ export default function InstagramPostCreator() {
               {/* Play / Pause */}
               <Button
                 onClick={togglePlay}
-                className="
-                  flex-1 h-12
-                  bg-gray-200 text-black
-                  hover:bg-gray-400
+                className={`
+                  flex-1 h-12 rounded-full flex items-center justify-center
+                  ${isPlaying ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
                   active:bg-black active:text-white
-                  rounded-full
-                  flex items-center justify-center
                   transition-colors
-                "
+                `}
               >
                 {isPlaying
                   ? <PauseIcon className="h-5 w-5" />
