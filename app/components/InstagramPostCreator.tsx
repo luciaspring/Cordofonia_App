@@ -1629,6 +1629,6 @@ export default function InstagramPostCreator() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>      {/* end of bg-gray-100 flex container */}
+    </div>  {/* end of bg-gray-100 flex container */}
   )
 }
