@@ -101,22 +101,23 @@ export default function InstagramPostCreator() {
 
   // ─── FRAME 1 defaults ───────────────────────────────────────────────
   const [titlePositionsFrame1, setTitlePositionsFrame1] = useState<TextPosition[]>([
-    { x: 40, y: 270,       width: 1000, height: 240, rotation: 0, fontSize: 180 }, // top of John ≈ 158 px below canvas
-    { x: 40, y: 270 + 240, width: 1000, height: 240, rotation: 0, fontSize: 180 }  // Doe directly under
+    { x: 40, y: 226,       width: 1000, height: 240, rotation: 0, fontSize: 180 }, // 350-124
+    { x: 40, y: 466,       width: 1000, height: 240, rotation: 0, fontSize: 180 }  // 590-124
   ])
 
+  const subY1 = 226 + 240*2 + 84   // 790
   const [subtitlePositionFrame1, setSubtitlePositionFrame1] = 
-    useState<TextPosition>({ x: 40, y: 270 + 240*2 + 84, width: 1000, height: 30, rotation: 0, fontSize: 36 })
-                                /*  ↑  headline-block bottom + 84 px gap */
+    useState<TextPosition>({ x: 40, y: subY1, width: 1000, height: 30, rotation: 0, fontSize: 36 })
 
   // ─── FRAME 2 defaults (identical) ───────────────────────────────────
   const [titlePositionsFrame2, setTitlePositionsFrame2] = useState<TextPosition[]>([
-    { x: 40, y: 270,       width: 1000, height: 240, rotation: 0, fontSize: 180 },
-    { x: 40, y: 270 + 240, width: 1000, height: 240, rotation: 0, fontSize: 180 }
+    { x: 40, y: 226,       width: 1000, height: 240, rotation: 0, fontSize: 180 },
+    { x: 40, y: 466,       width: 1000, height: 240, rotation: 0, fontSize: 180 }
   ])
 
+  const subY2 = 226 + 240*2 + 84
   const [subtitlePositionFrame2, setSubtitlePositionFrame2] = 
-    useState<TextPosition>({ x: 40, y: 270 + 240*2 + 84, width: 1000, height: 30, rotation: 0, fontSize: 36 })
+    useState<TextPosition>({ x: 40, y: subY2, width: 1000, height: 30, rotation: 0, fontSize: 36 })
 
   const [selectedTexts, setSelectedTexts] = useState<('title1' | 'title2' | 'subtitle')[]>([])
   const [resizeHandle, setResizeHandle] = useState<string | null>(null)
