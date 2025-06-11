@@ -238,7 +238,7 @@ export default function InstagramPostCreator() {
     return () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current)
     }
-  }, [isPlaying, isLooping])
+  }, [isPlaying])
 
   // ─── TEXT DIMENSION UPDATER ──────────────────────────────────────────────────────
   const updateTextDimensions = (ctx: CanvasRenderingContext2D) => {
@@ -1181,13 +1181,14 @@ export default function InstagramPostCreator() {
     const msPerBaseFrame = 1000 / baseFps
     const normalized = elapsed / (msPerBaseFrame * 150)
     let progress = normalized
+
     if (progress > 2.416) {      // was 2.25 or 2.15
       if (isLooping) {
         startTimeRef.current = timestamp
         progress = 0
       } else {
-        progress = 2.416
         setIsPlaying(false)
+        return
       }
     }
 
@@ -1197,12 +1198,9 @@ export default function InstagramPostCreator() {
       lastDisplayTimeRef.current = timestamp
     }
 
-    // Always continue bouncing the loop, even if not currently drawing
-    if (isPlaying || isLooping) {
+    // Only continue if still playing
+    if (isPlaying) {
       animationRef.current = requestAnimationFrame(animate)
-    } else {
-      // Ensure final static frame draws once
-      drawCanvas()
     }
   }
 
