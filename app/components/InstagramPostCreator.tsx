@@ -110,13 +110,9 @@ const FieldGroup: React.FC<{ step: number; label: string; children: React.ReactN
   children,
 }) => (
   <div className="space-y-2">
-    {/* light-gray strip */}
-    <div className="bg-gray-100 px-1 py-1">
-      <span className="text-xs font-medium text-gray-500">
-        {step}.&nbsp;
-        <span className="uppercase tracking-wide">{label}</span>
-      </span>
-    </div>
+    <p className="text-[11px] font-semibold tracking-wide uppercase text-gray-500 mb-2">
+      {step}. {label}
+    </p>
     {children}
   </div>
 );
