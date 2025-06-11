@@ -1409,8 +1409,8 @@ export default function InstagramPostCreator() {
 
   // ─── JSX ────────────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen w-full flex items-center justify-center">
-      <div className="bg-white p-4 rounded-lg font-ui">
+    <div className="min-h-screen w-full flex items-center justify-center bg-white">
+      <div className="bg-[#F3F4F6] p-6 rounded-lg shadow-md font-ui">
         <div className="flex space-x-2">
           {/* ─── LEFT PANEL ───────────────────────────────────────── */}
           <div className="w-[260px] pt-6 pl-6 pr-6 space-y-4">
