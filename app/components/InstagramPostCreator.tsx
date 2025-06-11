@@ -1398,43 +1398,47 @@ export default function InstagramPostCreator() {
               onMouseLeave={handleMouseUp}
             />
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex gap-2 w-[540px]">
+            {/* Frame 1 */}
             <Button
               onClick={() => handleFrameChange(1)}
-              className="w-36 h-12 bg-gray-200 rounded-none text-black hover:bg-gray-300"
+              className="flex-1 h-12 bg-gray-200 rounded-none hover:bg-gray-300"
             >
               Frame 1
             </Button>
 
+            {/* Frame 2 */}
             <Button
               onClick={() => handleFrameChange(2)}
-              className="w-36 h-12 bg-gray-200 rounded-none text-black hover:bg-gray-300"
+              className="flex-1 h-12 bg-gray-200 rounded-none hover:bg-gray-300"
             >
               Frame 2
             </Button>
 
+            {/* Play */}
             <Button
               onClick={togglePlay}
-              className="w-36 h-12 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300"
+              className="flex-1 h-12 bg-gray-200 rounded-full hover:bg-gray-300 flex items-center justify-center"
             >
               {isPlaying
                 ? <PauseIcon className="h-5 w-5 text-black" />
                 : <PlayIcon  className="h-5 w-5 text-black" />}
             </Button>
 
-            {/* square buttons for Settings & Export */}
+            {/* Settings */}
             <Button
               onClick={() => setSettingsOpen(true)}
-              className="w-12 h-12 bg-gray-200 rounded-none text-black hover:bg-gray-300 flex items-center justify-center"
+              className="flex-1 h-12 bg-gray-200 rounded-none hover:bg-gray-300 flex items-center justify-center"
             >
-              <Settings className="h-5 w-5" />
+              <Settings className="h-5 w-5 text-black" />
             </Button>
 
+            {/* Export */}
             <Button
-              onClick={() => console.log("Export functionality not implemented")}
-              className="w-12 h-12 bg-gray-200 rounded-none text-black hover:bg-gray-300 flex items-center justify-center"
+              onClick={() => console.log("Export not implemented")}
+              className="flex-1 h-12 bg-gray-200 rounded-none hover:bg-gray-300 flex items-center justify-center"
             >
-              <ShareIcon className="h-5 w-5" />
+              <ShareIcon className="h-5 w-5 text-black" />
             </Button>
           </div>
         </div>
