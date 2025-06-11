@@ -1514,44 +1514,43 @@ export default function InstagramPostCreator() {
               />
             </div>
             <div className="relative flex w-[540px] gap-2 mx-auto">
-              {/* ─── Black progress bar (hidden until play) ─── */}
+              {/* progress bar */}
               <div
+                ref={barRef}
+                className="absolute left-0 top-0 h-12 bg-black rounded-none
+                         transition-[width] duration-75 ease-linear
+                         pointer-events-none z-0"
                 style={{ width: barW }}
-                className={`
-                  absolute left-0 h-12 bg-black rounded-none
-                  transition-[width] duration-300 ease-[cubic-bezier(.4,0,.2,1)]
-                  pointer-events-none
-                `}
               />
 
-              {/* Frame 1 button */}
+              {/* Frame 1 */}
               <Button
                 ref={frame1Ref}
                 disabled={isPlaying}
                 onClick={() => handleFrameChange(1)}
                 className={`
-                  flex-1 h-12 rounded-none transition-colors
-                  ${isPlaying ? 'opacity-0' : currentFrame === 1
-                    ? 'bg-black text-white'
-                    : 'bg-gray-200 text-black hover:bg-gray-400'}
+                  relative z-10 flex-1 h-12 rounded-none
+                  ${currentFrame === 1 ? 'bg-black text-white' : 'bg-transparent text-white'}
+                  ${!isPlaying && 'bg-gray-200 text-black hover:bg-gray-400'}
+                  transition-colors
                 `}
               >
-                Frame 1
+                Frame&nbsp;1
               </Button>
 
-              {/* Frame 2 button */}
+              {/* Frame 2 */}
               <Button
                 ref={frame2Ref}
                 disabled={isPlaying}
                 onClick={() => handleFrameChange(2)}
                 className={`
-                  flex-1 h-12 rounded-none transition-colors
-                  ${isPlaying ? 'opacity-0' : currentFrame === 2
-                    ? 'bg-black text-white'
-                    : 'bg-gray-200 text-black hover:bg-gray-400'}
+                  relative z-10 flex-1 h-12 rounded-none
+                  ${currentFrame === 2 ? 'bg-black text-white' : 'bg-transparent text-white'}
+                  ${!isPlaying && 'bg-gray-200 text-black hover:bg-gray-400'}
+                  transition-colors
                 `}
               >
-                Frame 2
+                Frame&nbsp;2
               </Button>
 
               {/* Play / Pause */}
