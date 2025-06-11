@@ -205,6 +205,9 @@ export default function InstagramPostCreator() {
   const [lineEasePower, setLineEasePower] = useState(5)
   const [textEasePower, setTextEasePower] = useState(5)
 
+  /* timeline progress 0 → 1 for the merged bar */
+  const [barProgress, setBarProgress] = useState(0)
+
   // Add these easing functions near the top, after state declarations
   const easeLines = (t: number) =>
     t < 0.5
@@ -1253,6 +1256,9 @@ export default function InstagramPostCreator() {
       }
     }
 
+    /* update merged-bar progress (0-1) */
+    setBarProgress(Math.min(progress, 2.416) / 2.416)
+
     // Throttle visible updates to mimic stop-motion
     if (timestamp - lastDisplayTimeRef.current >= 1000 / frameRate) {
       drawCanvas(progress)
@@ -1350,6 +1356,7 @@ export default function InstagramPostCreator() {
   }
 
   const togglePlay = () => {
+    setBarProgress(0)
     setIsPlaying(prev => !prev)
     if (isPlaying) setPlayProgress(0)           // NEW
   }
@@ -1528,7 +1535,7 @@ export default function InstagramPostCreator() {
                   {/* progress overlay */}
                   <div
                     className="absolute inset-y-0 left-0 bg-black transition-[width]"
-                    style={{ width: `${playProgress * 100}%` }}
+                    style={{ width: `${barProgress * 100}%` }}
                   />
                 </div>
               ) : (
