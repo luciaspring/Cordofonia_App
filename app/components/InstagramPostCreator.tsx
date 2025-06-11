@@ -1399,36 +1399,63 @@ export default function InstagramPostCreator() {
                 onMouseLeave={handleMouseUp}
               />
             </div>
-            <div className="flex gap-2 w-[540px]">
+            <div className="flex w-[540px] gap-2 mx-auto">
+              {/* Frame 1 */}
               <Button
                 onClick={() => handleFrameChange(1)}
-                className="w-[148px] h-12 bg-gray-200 rounded-none hover:bg-gray-300"
+                className="
+                  flex-1 h-12
+                  bg-gray-200 text-black
+                  hover:bg-gray-400
+                  active:bg-black active:text-white
+                  transition-colors
+                "
               >
                 Frame 1
               </Button>
+
+              {/* Frame 2 */}
               <Button
                 onClick={() => handleFrameChange(2)}
-                className="w-[148px] h-12 bg-gray-200 rounded-none hover:bg-gray-300"
+                className="
+                  flex-1 h-12
+                  bg-gray-200 text-black
+                  hover:bg-gray-400
+                  active:bg-black active:text-white
+                  transition-colors
+                "
               >
                 Frame 2
               </Button>
+
+              {/* Play / Pause */}
               <Button
                 onClick={togglePlay}
-                className="w-[148px] h-12 bg-gray-200 rounded-full hover:bg-gray-300 flex items-center justify-center"
+                className="
+                  flex-1 h-12
+                  bg-gray-200 text-black
+                  hover:bg-gray-400
+                  active:bg-black active:text-white
+                  rounded-full
+                  flex items-center justify-center
+                  transition-colors
+                "
               >
                 {isPlaying
-                  ? <PauseIcon className="h-5 w-5 text-black" />
-                  : <PlayIcon className="h-5 w-5 text-black" />}
+                  ? <PauseIcon className="h-5 w-5" />
+                  : <PlayIcon className="h-5 w-5" />}
               </Button>
+
+              {/* Settings & Export remain squares */}
               <Button
                 onClick={() => setSettingsOpen(true)}
-                className="w-12 h-12 bg-gray-200 rounded-none hover:bg-gray-300 flex items-center justify-center"
+                className="w-12 h-12 bg-gray-200 hover:bg-gray-300 transition-colors flex items-center justify-center"
               >
                 <Settings className="h-5 w-5 text-black" />
               </Button>
               <Button
-                onClick={() => console.log("Export not implemented")}
-                className="w-12 h-12 bg-gray-200 rounded-none hover:bg-gray-300 flex items-center justify-center"
+                onClick={() => console.log('Export')}
+                className="w-12 h-12 bg-gray-200 hover:bg-gray-300 transition-colors flex items-center justify-center"
               >
                 <ShareIcon className="h-5 w-5 text-black" />
               </Button>
