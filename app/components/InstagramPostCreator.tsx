@@ -1423,6 +1423,13 @@ export default function InstagramPostCreator() {
             </Button>
 
             <Button
+              onClick={() => setSettingsOpen(true)}
+              className="w-36 h-12 bg-gray-200 rounded-none text-black hover:bg-gray-300"
+            >
+              <Settings className="h-5 w-5" />
+            </Button>
+
+            <Button
               onClick={() => console.log("Export functionality not implemented")}
               className="w-36 h-12 bg-gray-200 rounded-none text-black hover:bg-gray-300"
             >
