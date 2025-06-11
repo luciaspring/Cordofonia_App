@@ -1409,14 +1409,14 @@ export default function InstagramPostCreator() {
 
   // ─── JSX ────────────────────────────────────────────────────────────────────────
   return (
-    <div className="bg-gray-100 p-4 rounded-lg">
+    <div className="bg-gray-100 p-4 rounded-lg font-ui">
       <div className="max-w-[848px] mx-auto">
         <div className="flex space-x-2">
           {/* ─── LEFT PANEL ───────────────────────────────────────── */}
           <div className="w-[260px] pt-6 pl-6 pr-6 space-y-4">
 
-            <h1 className="text-[28px] font-extrabold leading-none">
-              Instagram Post Creator
+            <h1 className="text-lg font-bold mb-4">
+              Cordofonia Instagram<br />Posts Creator Tool
             </h1>
 
             {/* Title fields */}
