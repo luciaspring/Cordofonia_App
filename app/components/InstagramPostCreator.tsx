@@ -153,6 +153,7 @@ export default function InstagramPostCreator() {
 
   // Add this with other state declarations at the top
   const [pauseHold, setPauseHold] = useState(0)    // normalized pause (0–0.5)
+  const [easingPower, setEasingPower] = useState(5)       // 2–10 range
 
   // ─── EFFECT HOOKS ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -1186,7 +1187,7 @@ export default function InstagramPostCreator() {
   const drawAnimatedContent = (ctx: CanvasRenderingContext2D, p: number) => {
     const f1 = lines.filter(l => l.frame === 1)
     const f2 = lines.filter(l => l.frame === 2)
-    const ease = easeInOutQuint
+    const ease = easeDynamic
 
     if (p <= 0.30) {
       drawStaticText(ctx, 1)
@@ -1304,6 +1305,11 @@ export default function InstagramPostCreator() {
     const b = parseInt(bgColor.slice(5, 7), 16)
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
     return luminance > 0.5 ? '#000000' : '#FFFFFF'
+  }
+
+  const easeDynamic = (t: number) => {
+    if (t < 0.5) return 0.5 * Math.pow(2 * t, easingPower)
+    return 1 - 0.5 * Math.pow(2 * (1 - t), easingPower)
   }
 
   // ─── JSX ────────────────────────────────────────────────────────────────────────
@@ -1528,6 +1534,17 @@ export default function InstagramPostCreator() {
                 step={0.01}
                 value={[pauseHold]}
                 onValueChange={([v]) => setPauseHold(v)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="easingSlider">Easing Power</Label>
+              <Slider
+                id="easingSlider"
+                min={2}
+                max={10}
+                step={1}
+                value={[easingPower]}
+                onValueChange={([v]) => setEasingPower(v)}
               />
             </div>
           </div>
