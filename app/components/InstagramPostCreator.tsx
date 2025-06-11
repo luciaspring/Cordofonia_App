@@ -80,6 +80,38 @@ const BASE_FPS = 60
 const lineEase = BezierEasing(0.83, 0, 0.17, 1)
 const textEase = BezierEasing(0.95, 0, 0.05, 1)
 
+// Default positions for 1080 x 1350 layout
+export const defaultTitlePositions: TextPosition[] = [
+  {
+    x: 540,           // centered horizontally
+    y: 550,           // top of title block
+    width: 600,       // wide enough for short names
+    height: 286,
+    rotation: 0,
+    fontSize: 180,    // adjust as needed to match visual size
+    aspectRatio: 3.2, // optional, just in case
+  },
+  {
+    x: 540,
+    y: 550 + 140,     // second word slightly lower within the title block
+    width: 600,
+    height: 286,
+    rotation: 0,
+    fontSize: 180,
+    aspectRatio: 3.2,
+  },
+]
+
+export const defaultSubtitlePosition: TextPosition = {
+  x: 540,
+  y: 550 + 286 + 60, // space after title block
+  width: 800,
+  height: 391,
+  rotation: 0,
+  fontSize: 48,
+  aspectRatio: 12,   // very wide block of text
+}
+
 // ─── COMPONENT ───────────────────────────────────────────────────────────────────
 
 export default function InstagramPostCreator() {
@@ -100,24 +132,12 @@ export default function InstagramPostCreator() {
   const [initialPosition, setInitialPosition] = useState<TextPosition | null>(null)
 
   // ─── FRAME 1 defaults ───────────────────────────────────────────────
-  const [titlePositionsFrame1, setTitlePositionsFrame1] = useState<TextPosition[]>([
-    { x: 40, y: 226,       width: 1000, height: 240, rotation: 0, fontSize: 180 }, // 350-124
-    { x: 40, y: 466,       width: 1000, height: 240, rotation: 0, fontSize: 180 }  // 590-124
-  ])
-
-  const subY1 = 226 + 240*2 + 84   // 790
-  const [subtitlePositionFrame1, setSubtitlePositionFrame1] = 
-    useState<TextPosition>({ x: 40, y: subY1, width: 1000, height: 30, rotation: 0, fontSize: 36 })
+  const [titlePositionsFrame1, setTitlePositionsFrame1] = useState<TextPosition[]>(defaultTitlePositions)
+  const [subtitlePositionFrame1, setSubtitlePositionFrame1] = useState<TextPosition>(defaultSubtitlePosition)
 
   // ─── FRAME 2 defaults (identical) ───────────────────────────────────
-  const [titlePositionsFrame2, setTitlePositionsFrame2] = useState<TextPosition[]>([
-    { x: 40, y: 226,       width: 1000, height: 240, rotation: 0, fontSize: 180 },
-    { x: 40, y: 466,       width: 1000, height: 240, rotation: 0, fontSize: 180 }
-  ])
-
-  const subY2 = 226 + 240*2 + 84
-  const [subtitlePositionFrame2, setSubtitlePositionFrame2] = 
-    useState<TextPosition>({ x: 40, y: subY2, width: 1000, height: 30, rotation: 0, fontSize: 36 })
+  const [titlePositionsFrame2, setTitlePositionsFrame2] = useState<TextPosition[]>(defaultTitlePositions)
+  const [subtitlePositionFrame2, setSubtitlePositionFrame2] = useState<TextPosition>(defaultSubtitlePosition)
 
   const [selectedTexts, setSelectedTexts] = useState<('title1' | 'title2' | 'subtitle')[]>([])
   const [resizeHandle, setResizeHandle] = useState<string | null>(null)
