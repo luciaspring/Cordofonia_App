@@ -1207,7 +1207,9 @@ export default function InstagramPostCreator() {
   const drawAnimatedContent = (ctx: CanvasRenderingContext2D, p: number) => {
     const f1 = lines.filter(l => l.frame === 1)
     const f2 = lines.filter(l => l.frame === 2)
+    const ease = textEase  // or easeInOutQuint, whichever you're using
 
+    // frame-1 lines
     if (p <= 0.30) {
       drawStaticText(ctx, 1)
       drawAnimatedLines(ctx, p / 0.30, f1, [], 'grow')
@@ -1219,28 +1221,25 @@ export default function InstagramPostCreator() {
       return
     }
 
+    // text forward: move → scale
     const moveStart = 0.60
     const moveDur   = 0.233
     const scaleDur  = 0.233
-    const moveEnd   = moveStart + moveDur   // 0.833
-    const pauseEnd  = moveEnd + pauseHold    // adjustable
-    const scaleEnd  = pauseEnd + scaleDur    // next
+    const moveEnd   = moveStart + moveDur    // ≈0.833
+    const scaleEnd  = moveEnd   + scaleDur    // ≈1.066
 
     if (p <= moveEnd) {
-      const t = textEase((p - moveStart) / moveDur)
+      const t = ease((p - moveStart) / moveDur)
       drawAnimatedText(ctx, t, 0, 1, 2)
       return
     }
-    if (p <= pauseEnd) {
-      drawAnimatedText(ctx, 1, 0, 1, 2)
-      return
-    }
     if (p <= scaleEnd) {
-      const s = textEase((p - pauseEnd) / scaleDur)
+      const s = ease((p - moveEnd) / scaleDur)
       drawAnimatedText(ctx, 1, s, 1, 2)
       return
     }
 
+    // frame-2 lines
     if (p <= scaleEnd + 0.35) {
       drawStaticText(ctx, 2)
       drawAnimatedLines(ctx, (p - scaleEnd) / 0.35, [], f2, 'grow')
@@ -1252,21 +1251,19 @@ export default function InstagramPostCreator() {
       return
     }
 
-    /* REVERSE TEXT: rewind (scale-back → move-back) */
+    // rewind: SCALE-BACK first, then MOVE-BACK
     const revScaleStart = scaleEnd + 0.65
-    const revScaleEnd   = revScaleStart + scaleDur   // first, un-scale
+    const revScaleEnd   = revScaleStart + scaleDur
     const revMoveStart  = revScaleEnd
-    const revMoveEnd    = revMoveStart  + moveDur    // then, un-move
+    const revMoveEnd    = revMoveStart  + moveDur
 
     if (p <= revScaleEnd) {
-      const s = textEase((p - revScaleStart) / scaleDur)
-      // keep position, reverse scale
+      const s = ease((p - revScaleStart) / scaleDur)
       drawAnimatedText(ctx, 1, 1 - s, 2, 1)
       return
     }
     if (p <= revMoveEnd) {
-      const t = textEase((p - revMoveStart) / moveDur)
-      // reverse position, no scale
+      const t = ease((p - revMoveStart) / moveDur)
       drawAnimatedText(ctx, 1 - t, 0, 2, 1)
       return
     }
