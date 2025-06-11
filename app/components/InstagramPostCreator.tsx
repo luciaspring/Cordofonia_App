@@ -1333,8 +1333,8 @@ export default function InstagramPostCreator() {
 
   // ─── JSX ────────────────────────────────────────────────────────────────────────
   return (
-    <div className="bg-gray-100 p-4 rounded-lg">
-      <div className="max-w-[848px] mx-auto">
+    <div className="bg-gray-800 min-h-screen p-4 flex justify-center">
+      <div className="bg-white rounded-lg p-4 max-w-[848px] w-full">
         <h1 className="text-2xl font-bold mb-2">Instagram Post Creator</h1>
         <div className="flex space-x-2">
           {/* ─── LEFT PANEL: Text Inputs & Color Picker */}
@@ -1385,7 +1385,7 @@ export default function InstagramPostCreator() {
           {/* ─── RIGHT PANEL: Canvas & Controls */}
           <div className="w-[540px] flex flex-col">
             <div
-              className="w-[540px] h-[675px] bg-white rounded-none mb-2 relative overflow-hidden"
+              className="w-[540px] h-[675px] bg-white rounded-none my-4 relative overflow-hidden"
               style={{ backgroundColor }}
             >
               <canvas
@@ -1648,4 +1648,3 @@ export default function InstagramPostCreator() {
     </div>
   )
 }
-
