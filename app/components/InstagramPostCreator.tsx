@@ -1398,45 +1398,42 @@ export default function InstagramPostCreator() {
               onMouseLeave={handleMouseUp}
             />
           </div>
-          <div className="flex gap-2 w-[540px]">
-            {/* Frame 1 */}
+          <div className="flex w-[540px] gap-2">
+            {/* 540px total minus 2×48px squares leaves 444px,
+                divided by 3 = 148px each for the first three */}
             <Button
               onClick={() => handleFrameChange(1)}
-              className="flex-1 h-12 bg-gray-200 rounded-none hover:bg-gray-300"
+              className="w-[148px] h-12 bg-gray-200 rounded-none hover:bg-gray-300"
             >
               Frame 1
             </Button>
 
-            {/* Frame 2 */}
             <Button
               onClick={() => handleFrameChange(2)}
-              className="flex-1 h-12 bg-gray-200 rounded-none hover:bg-gray-300"
+              className="w-[148px] h-12 bg-gray-200 rounded-none hover:bg-gray-300"
             >
               Frame 2
             </Button>
 
-            {/* Play */}
             <Button
               onClick={togglePlay}
-              className="flex-1 h-12 bg-gray-200 rounded-full hover:bg-gray-300 flex items-center justify-center"
+              className="w-[148px] h-12 bg-gray-200 rounded-full hover:bg-gray-300 flex items-center justify-center"
             >
               {isPlaying
                 ? <PauseIcon className="h-5 w-5 text-black" />
                 : <PlayIcon  className="h-5 w-5 text-black" />}
             </Button>
 
-            {/* Settings */}
+            {/* two 48×48 squares */}
             <Button
               onClick={() => setSettingsOpen(true)}
-              className="flex-1 h-12 bg-gray-200 rounded-none hover:bg-gray-300 flex items-center justify-center"
+              className="w-12 h-12 bg-gray-200 rounded-none hover:bg-gray-300 flex items-center justify-center"
             >
               <Settings className="h-5 w-5 text-black" />
             </Button>
-
-            {/* Export */}
             <Button
               onClick={() => console.log("Export not implemented")}
-              className="flex-1 h-12 bg-gray-200 rounded-none hover:bg-gray-300 flex items-center justify-center"
+              className="w-12 h-12 bg-gray-200 rounded-none hover:bg-gray-300 flex items-center justify-center"
             >
               <ShareIcon className="h-5 w-5 text-black" />
             </Button>
