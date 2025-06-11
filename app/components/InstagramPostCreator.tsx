@@ -1438,12 +1438,12 @@ export default function InstagramPostCreator() {
               >
                 <ShareIcon className="h-5 w-5 text-black" />
               </Button>
-            </div>
+            </div>  {/* end of controls */}
           </div>
         </div>
-      </div>
+      </div>    {/* end of w-[848px] wrapper */}
 
-      {/* ─── POSITION MODAL ───────────────────────────────────────────────────────────── */}
+      {/* ─── MODALS ─────────────────────────────────────────────────────────────── */}
       <Dialog open={positionModalOpen} onOpenChange={setPositionModalOpen}>
         <DialogContent>
           <DialogHeader>
@@ -1499,7 +1499,6 @@ export default function InstagramPostCreator() {
         </DialogContent>
       </Dialog>
 
-      {/* ─── SETTINGS MODAL ───────────────────────────────────────────────────────────── */}
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
         <DialogContent>
           <DialogHeader>
@@ -1630,6 +1629,6 @@ export default function InstagramPostCreator() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </div>      {/* end of bg-gray-100 flex container */}
   )
 }
