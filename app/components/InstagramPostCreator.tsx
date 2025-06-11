@@ -1398,7 +1398,7 @@ export default function InstagramPostCreator() {
               onMouseLeave={handleMouseUp}
             />
           </div>
-          <div className="flex space-x-2 w-[540px]">
+          <div className="flex items-center space-x-2">
             <Button
               onClick={() => handleFrameChange(1)}
               className="w-36 h-12 bg-gray-200 rounded-none text-black hover:bg-gray-300"
@@ -1422,18 +1422,19 @@ export default function InstagramPostCreator() {
                 : <PlayIcon  className="h-5 w-5 text-black" />}
             </Button>
 
+            {/* square buttons for Settings & Export */}
             <Button
               onClick={() => setSettingsOpen(true)}
-              className="w-36 h-12 bg-gray-200 rounded-none text-black hover:bg-gray-300 flex items-center justify-center"
+              className="w-12 h-12 bg-gray-200 rounded-none text-black hover:bg-gray-300 flex items-center justify-center"
             >
-              <Settings className="h-5 w-5 text-black" />
+              <Settings className="h-5 w-5" />
             </Button>
 
             <Button
               onClick={() => console.log("Export functionality not implemented")}
-              className="w-36 h-12 bg-gray-200 rounded-none text-black hover:bg-gray-300 flex items-center justify-center"
+              className="w-12 h-12 bg-gray-200 rounded-none text-black hover:bg-gray-300 flex items-center justify-center"
             >
-              <ShareIcon className="h-5 w-5 text-black" />
+              <ShareIcon className="h-5 w-5" />
             </Button>
           </div>
         </div>
