@@ -99,22 +99,24 @@ export default function InstagramPostCreator() {
   const [editingEnd, setEditingEnd] = useState<'start' | 'end' | null>(null)
   const [initialPosition, setInitialPosition] = useState<TextPosition | null>(null)
 
+  // ─── FRAME 1 defaults ───────────────────────────────────────────────
   const [titlePositionsFrame1, setTitlePositionsFrame1] = useState<TextPosition[]>([
-    { x: 40, y: 158,       width: 1000, height: 240, rotation: 0, fontSize: 180 },
-    { x: 40, y: 158 + 240, width: 1000, height: 240, rotation: 0, fontSize: 180 }
+    { x: 40, y: 270,       width: 1000, height: 240, rotation: 0, fontSize: 180 }, // top of John ≈ 158 px below canvas
+    { x: 40, y: 270 + 240, width: 1000, height: 240, rotation: 0, fontSize: 180 }  // Doe directly under
   ])
 
   const [subtitlePositionFrame1, setSubtitlePositionFrame1] = 
-    useState<TextPosition>({ x: 40, y: 722, width: 1000, height: 30, rotation: 0, fontSize: 36 })
+    useState<TextPosition>({ x: 40, y: 270 + 240*2 + 84, width: 1000, height: 30, rotation: 0, fontSize: 36 })
+                                /*  ↑  headline-block bottom + 84 px gap */
 
   // ─── FRAME 2 defaults (identical) ───────────────────────────────────
   const [titlePositionsFrame2, setTitlePositionsFrame2] = useState<TextPosition[]>([
-    { x: 40, y: 158,       width: 1000, height: 240, rotation: 0, fontSize: 180 },
-    { x: 40, y: 158 + 240, width: 1000, height: 240, rotation: 0, fontSize: 180 }
+    { x: 40, y: 270,       width: 1000, height: 240, rotation: 0, fontSize: 180 },
+    { x: 40, y: 270 + 240, width: 1000, height: 240, rotation: 0, fontSize: 180 }
   ])
 
   const [subtitlePositionFrame2, setSubtitlePositionFrame2] = 
-    useState<TextPosition>({ x: 40, y: 722, width: 1000, height: 30, rotation: 0, fontSize: 36 })
+    useState<TextPosition>({ x: 40, y: 270 + 240*2 + 84, width: 1000, height: 30, rotation: 0, fontSize: 36 })
 
   const [selectedTexts, setSelectedTexts] = useState<('title1' | 'title2' | 'subtitle')[]>([])
   const [resizeHandle, setResizeHandle] = useState<string | null>(null)
@@ -257,16 +259,14 @@ export default function InstagramPostCreator() {
 
     setTitlePositionsFrame1(prev =>
       prev.map((pos, i) => {
-        const { width, height } = measureText(titles[i], pos.fontSize)
-        const aspectRatio = width / height
-        return { ...pos, width, aspectRatio }
+        const { width } = measureText(titles[i], pos.fontSize)
+        return { ...pos, width }                // keep the 240 px height we set
       })
     )
     setTitlePositionsFrame2(prev =>
       prev.map((pos, i) => {
-        const { width, height } = measureText(titles[i], pos.fontSize)
-        const aspectRatio = width / height
-        return { ...pos, width, aspectRatio }
+        const { width } = measureText(titles[i], pos.fontSize)
+        return { ...pos, width }                // keep the 240 px height we set
       })
     )
     const { width: sw, height: sh } = measureText(subtitle, subtitlePositionFrame2.fontSize)
