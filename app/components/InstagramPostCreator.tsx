@@ -100,17 +100,22 @@ export default function InstagramPostCreator() {
   const [initialPosition, setInitialPosition] = useState<TextPosition | null>(null)
 
   const [titlePositionsFrame1, setTitlePositionsFrame1] = useState<TextPosition[]>([
-    { x: 40, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 },
-    { x: 40, y: 550, width: 1000, height: 200, rotation: 0, fontSize: 180 }
+    { x: 40, y: 158, width: 1000, height: 200, rotation: 0, fontSize: 180 },      // top margin 158 px
+    { x: 40, y: 158 + 200, width: 1000, height: 200, rotation: 0, fontSize: 180 } // second line sits right under first
   ])
 
+  const [subtitlePositionFrame1, setSubtitlePositionFrame1] = 
+    useState<TextPosition>({ x: 40, y: 158 + 200*2 + 84, width: 1000, height: 30, rotation: 0, fontSize: 36 })
+                                                    // ↑ second line bottom + 84 px gap
+
+  // —— FRAME 2  (identical defaults) ───────────────────
   const [titlePositionsFrame2, setTitlePositionsFrame2] = useState<TextPosition[]>([
-    { x: 40, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 },
-    { x: 40, y: 550, width: 1000, height: 200, rotation: 0, fontSize: 180 }
+    { x: 40, y: 158, width: 1000, height: 200, rotation: 0, fontSize: 180 },
+    { x: 40, y: 158 + 200, width: 1000, height: 200, rotation: 0, fontSize: 180 }
   ])
 
-  const [subtitlePositionFrame1, setSubtitlePositionFrame1] = useState<TextPosition>({ x: 40, y: 1000, width: 1000, height: 30, rotation: 0, fontSize: 36 })
-  const [subtitlePositionFrame2, setSubtitlePositionFrame2] = useState<TextPosition>({ x: 40, y: 1000, width: 1000, height: 30, rotation: 0, fontSize: 36 })
+  const [subtitlePositionFrame2, setSubtitlePositionFrame2] = 
+    useState<TextPosition>({ x: 40, y: 158 + 200*2 + 84, width: 1000, height: 30, rotation: 0, fontSize: 36 })
 
   const [selectedTexts, setSelectedTexts] = useState<('title1' | 'title2' | 'subtitle')[]>([])
   const [resizeHandle, setResizeHandle] = useState<string | null>(null)
