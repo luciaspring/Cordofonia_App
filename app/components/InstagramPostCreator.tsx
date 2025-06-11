@@ -259,14 +259,14 @@ export default function InstagramPostCreator() {
       prev.map((pos, i) => {
         const { width, height } = measureText(titles[i], pos.fontSize)
         const aspectRatio = width / height
-        return { ...pos, width, height, aspectRatio }
+        return { ...pos, width, aspectRatio }
       })
     )
     setTitlePositionsFrame2(prev =>
       prev.map((pos, i) => {
         const { width, height } = measureText(titles[i], pos.fontSize)
         const aspectRatio = width / height
-        return { ...pos, width, height, aspectRatio }
+        return { ...pos, width, aspectRatio }
       })
     )
     const { width: sw, height: sh } = measureText(subtitle, subtitlePositionFrame2.fontSize)
