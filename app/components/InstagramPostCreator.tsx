@@ -9,6 +9,7 @@ import { Slider } from "@/components/ui/slider"
 import { PlayIcon, PauseIcon, RotateCcwIcon, ShareIcon, Settings } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import BezierEasing from 'bezier-easing'
 
 const SUL_SANS = 'SulSans-Bold'
 const AFFAIRS = 'Affairs-Regular'
@@ -76,13 +77,7 @@ const MIN_FRAME_RATE = 10
 const BASE_FPS = 60
 
 // Ease In-Out Quint easing function (piecewise)
-const easeInOutQuint = (t: number): number => {
-  if (t < 0.5) {
-    return 16 * Math.pow(t, 5)
-  } else {
-    return 1 - Math.pow(-2 * t + 2, 5) / 2
-  }
-}
+const ease = BezierEasing(0.83, 0, 0.17, 1)
 
 // ─── COMPONENT ───────────────────────────────────────────────────────────────────
 
@@ -375,7 +370,7 @@ export default function InstagramPostCreator() {
       const adjustedStagger = linesArr.length > 1 ? maxStaggerDelay / (linesArr.length - 1) : 0
       linesArr.forEach((ln, idx) => {
         let t = Math.max(0, Math.min(1, (fgProgress - idx * adjustedStagger) / animationDuration))
-        t = easeInOutQuint(t)
+        t = ease(t)
         const { start, end } = ln
         let currentStart, currentEnd
 
@@ -1187,16 +1182,15 @@ export default function InstagramPostCreator() {
   const drawAnimatedContent = (ctx: CanvasRenderingContext2D, p: number) => {
     const f1 = lines.filter(l => l.frame === 1)
     const f2 = lines.filter(l => l.frame === 2)
-    const ease = easeDynamic
 
     if (p <= 0.30) {
       drawStaticText(ctx, 1)
-      drawAnimatedLines(ctx, p / 0.30, f1, [], 'grow')
+      drawAnimatedLines(ctx, ease(p / 0.30), f1, [], 'grow')
       return
     }
     if (p <= 0.60) {
       drawStaticText(ctx, 1)
-      drawAnimatedLines(ctx, (p - 0.30) / 0.30, f1, [], 'shrink')
+      drawAnimatedLines(ctx, ease((p - 0.30) / 0.30), f1, [], 'shrink')
       return
     }
 
@@ -1224,12 +1218,12 @@ export default function InstagramPostCreator() {
 
     if (p <= scaleEnd + 0.35) {
       drawStaticText(ctx, 2)
-      drawAnimatedLines(ctx, (p - scaleEnd) / 0.35, [], f2, 'grow')
+      drawAnimatedLines(ctx, ease((p - scaleEnd) / 0.35), [], f2, 'grow')
       return
     }
     if (p <= scaleEnd + 0.65) {
       drawStaticText(ctx, 2)
-      drawAnimatedLines(ctx, (p - (scaleEnd + 0.35)) / 0.30, [], f2, 'shrink')
+      drawAnimatedLines(ctx, ease((p - (scaleEnd + 0.35)) / 0.30), [], f2, 'shrink')
       return
     }
 
@@ -1305,11 +1299,6 @@ export default function InstagramPostCreator() {
     const b = parseInt(bgColor.slice(5, 7), 16)
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
     return luminance > 0.5 ? '#000000' : '#FFFFFF'
-  }
-
-  const easeDynamic = (t: number) => {
-    if (t < 0.5) return 0.5 * Math.pow(2 * t, easingPower)
-    return 1 - 0.5 * Math.pow(2 * (1 - t), easingPower)
   }
 
   // ─── JSX ────────────────────────────────────────────────────────────────────────
