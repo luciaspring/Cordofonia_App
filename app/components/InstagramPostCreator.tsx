@@ -89,7 +89,7 @@ export default function InstagramPostCreator() {
   const [backgroundColor, setBackgroundColor] = useState('#E0B0FF')
   const [currentFrame, setCurrentFrame] = useState(1)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [isLooping, setIsLooping] = useState(false)
+  const [isLooping, setIsLooping] = useState(true)
   const [lines, setLines] = useState<Line[]>([])
   const [currentLine, setCurrentLine] = useState<Line | null>(null)
   const [editingLineIndex, setEditingLineIndex] = useState<number | null>(null)
@@ -1501,6 +1501,19 @@ export default function InstagramPostCreator() {
             <DialogTitle>Settings</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <input
+                id="loopToggle"
+                type="checkbox"
+                checked={isLooping}
+                onChange={e => setIsLooping(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 focus:ring-2 focus:ring-blue-500"
+              />
+              <Label htmlFor="loopToggle" className="text-sm text-gray-600">
+                Loop animation
+              </Label>
+            </div>
+
             <div>
               <Label htmlFor="thicknessSlider">Line Thickness (max 10)</Label>
               <Slider
