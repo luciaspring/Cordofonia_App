@@ -1333,110 +1333,112 @@ export default function InstagramPostCreator() {
 
   // ─── JSX ────────────────────────────────────────────────────────────────────────
   return (
-    <div className="bg-gray-100 p-2">
-      <h1 className="text-2xl font-bold mb-2">Instagram Post Creator</h1>
-      <div className="flex space-x-2">
-        {/* ─── LEFT PANEL: Text Inputs & Color Picker */}
-        <div className="w-[300px] space-y-2">
-          <div>
-            <Label htmlFor="title1" className="text-sm text-gray-600">Title 1</Label>
-            <Input
-              id="title1"
-              value={titles[0]}
-              onChange={e => setTitles([e.target.value, titles[1]])}
-              className="mt-1 bg-white rounded text-lg h-10"
-            />
-          </div>
-          <div>
-            <Label htmlFor="title2" className="text-sm text-gray-600">Title 2</Label>
-            <Input
-              id="title2"
-              value={titles[1]}
-              onChange={e => setTitles([titles[0], e.target.value])}
-              className="mt-1 bg-white rounded text-lg h-10"
-            />
-          </div>
-          <div>
-            <Label htmlFor="subtitle" className="text-sm text-gray-600">Subtitle</Label>
-            <Input
-              id="subtitle"
-              value={subtitle}
-              onChange={e => setSubtitle(e.target.value)}
-              className="mt-1 bg-white rounded text-lg h-10"
-            />
-          </div>
-          <div>
-            <Label className="text-sm text-gray-600">Background Color</Label>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {colorOptions.map(c => (
-                <button
-                  key={c.value}
-                  onClick={() => setBackgroundColor(c.value)}
-                  className="w-8 h-8 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  style={{ backgroundColor: c.value }}
-                  aria-label={c.name}
-                />
-              ))}
+    <div className="bg-gray-100 p-2 flex justify-center">
+      <div className="w-[848px]">
+        <h1 className="text-2xl font-bold mb-2">Instagram Post Creator</h1>
+        <div className="flex space-x-2">
+          {/* ─── LEFT PANEL: Text Inputs & Color Picker */}
+          <div className="w-[300px] space-y-2">
+            <div>
+              <Label htmlFor="title1" className="text-sm text-gray-600">Title 1</Label>
+              <Input
+                id="title1"
+                value={titles[0]}
+                onChange={e => setTitles([e.target.value, titles[1]])}
+                className="mt-1 bg-white rounded text-lg h-10"
+              />
+            </div>
+            <div>
+              <Label htmlFor="title2" className="text-sm text-gray-600">Title 2</Label>
+              <Input
+                id="title2"
+                value={titles[1]}
+                onChange={e => setTitles([titles[0], e.target.value])}
+                className="mt-1 bg-white rounded text-lg h-10"
+              />
+            </div>
+            <div>
+              <Label htmlFor="subtitle" className="text-sm text-gray-600">Subtitle</Label>
+              <Input
+                id="subtitle"
+                value={subtitle}
+                onChange={e => setSubtitle(e.target.value)}
+                className="mt-1 bg-white rounded text-lg h-10"
+              />
+            </div>
+            <div>
+              <Label className="text-sm text-gray-600">Background Color</Label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {colorOptions.map(c => (
+                  <button
+                    key={c.value}
+                    onClick={() => setBackgroundColor(c.value)}
+                    className="w-8 h-8 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    style={{ backgroundColor: c.value }}
+                    aria-label={c.name}
+                  />
+                ))}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* ─── RIGHT PANEL: Canvas & Controls */}
-        <div className="w-[600px] flex flex-col">
-          <div
-            className="w-[540px] h-[675px] bg-white rounded-lg mb-2 relative overflow-hidden"
-            style={{ backgroundColor }}
-          >
-            <canvas
-              ref={canvasRef}
-              width={1080}
-              height={1350}
-              className="absolute inset-0 w-full h-full"
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
-            />
-          </div>
-          <div className="flex gap-2 w-[540px]">
-            {/* 540px total minus 2×48px squares leaves 444px,
-                divided by 3 = 148px each for the first three */}
-            <Button
-              onClick={() => handleFrameChange(1)}
-              className="w-[148px] h-12 bg-gray-200 rounded-none hover:bg-gray-300"
+          {/* ─── RIGHT PANEL: Canvas & Controls */}
+          <div className="w-[600px] flex flex-col">
+            <div
+              className="w-[540px] h-[675px] bg-white rounded-lg mb-2 relative overflow-hidden"
+              style={{ backgroundColor }}
             >
-              Frame 1
-            </Button>
+              <canvas
+                ref={canvasRef}
+                width={1080}
+                height={1350}
+                className="absolute inset-0 w-full h-full"
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+              />
+            </div>
+            <div className="flex gap-2 w-[540px]">
+              {/* 540px total minus 2×48px squares leaves 444px,
+                  divided by 3 = 148px each for the first three */}
+              <Button
+                onClick={() => handleFrameChange(1)}
+                className="w-[148px] h-12 bg-gray-200 rounded-none hover:bg-gray-300"
+              >
+                Frame 1
+              </Button>
 
-            <Button
-              onClick={() => handleFrameChange(2)}
-              className="w-[148px] h-12 bg-gray-200 rounded-none hover:bg-gray-300"
-            >
-              Frame 2
-            </Button>
+              <Button
+                onClick={() => handleFrameChange(2)}
+                className="w-[148px] h-12 bg-gray-200 rounded-none hover:bg-gray-300"
+              >
+                Frame 2
+              </Button>
 
-            <Button
-              onClick={togglePlay}
-              className="w-[148px] h-12 bg-gray-200 rounded-full hover:bg-gray-300 flex items-center justify-center"
-            >
-              {isPlaying
-                ? <PauseIcon className="h-5 w-5 text-black" />
-                : <PlayIcon  className="h-5 w-5 text-black" />}
-            </Button>
+              <Button
+                onClick={togglePlay}
+                className="w-[148px] h-12 bg-gray-200 rounded-full hover:bg-gray-300 flex items-center justify-center"
+              >
+                {isPlaying
+                  ? <PauseIcon className="h-5 w-5 text-black" />
+                  : <PlayIcon  className="h-5 w-5 text-black" />}
+              </Button>
 
-            {/* two 48×48 squares */}
-            <Button
-              onClick={() => setSettingsOpen(true)}
-              className="w-12 h-12 bg-gray-200 rounded-none hover:bg-gray-300 flex items-center justify-center"
-            >
-              <Settings className="h-5 w-5 text-black" />
-            </Button>
-            <Button
-              onClick={() => console.log("Export not implemented")}
-              className="w-12 h-12 bg-gray-200 rounded-none hover:bg-gray-300 flex items-center justify-center"
-            >
-              <ShareIcon className="h-5 w-5 text-black" />
-            </Button>
+              {/* two 48×48 squares */}
+              <Button
+                onClick={() => setSettingsOpen(true)}
+                className="w-12 h-12 bg-gray-200 rounded-none hover:bg-gray-300 flex items-center justify-center"
+              >
+                <Settings className="h-5 w-5 text-black" />
+              </Button>
+              <Button
+                onClick={() => console.log("Export not implemented")}
+                className="w-12 h-12 bg-gray-200 rounded-none hover:bg-gray-300 flex items-center justify-center"
+              >
+                <ShareIcon className="h-5 w-5 text-black" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
