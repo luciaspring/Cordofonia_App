@@ -1415,7 +1415,7 @@ export default function InstagramPostCreator() {
           {/* ─── LEFT PANEL ───────────────────────────────────────── */}
           <div className="w-[260px] pt-6 pl-6 pr-6 space-y-4">
 
-            <h1 className="text-lg font-bold mb-4">
+            <h1 className="text-[11px] font-semibold uppercase tracking-wide text-black mb-4">
               Cordofonia Instagram<br />Posts Creator Tool
             </h1>
 
