@@ -1385,7 +1385,7 @@ export default function InstagramPostCreator() {
           {/* ─── RIGHT PANEL: Canvas & Controls */}
           <div className="w-[540px] flex flex-col">
             <div
-              className="w-[540px] h-[675px] bg-white rounded-lg mb-2 relative overflow-hidden"
+              className="w-[540px] h-[675px] bg-white rounded-none mb-2 relative overflow-hidden"
               style={{ backgroundColor }}
             >
               <canvas
@@ -1430,7 +1430,7 @@ export default function InstagramPostCreator() {
               <Button
                 onClick={togglePlay}
                 className={`
-                  flex-1 h-12 rounded-full flex items-center justify-center
+                  flex-1 h-12 rounded-none flex items-center justify-center
                   ${isPlaying ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
                   active:bg-black active:text-white
                   transition-colors
