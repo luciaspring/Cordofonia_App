@@ -1256,8 +1256,8 @@ export default function InstagramPostCreator() {
       }
     }
 
-    /* update merged-bar progress (0-1) */
-    setBarProgress(Math.min(progress, 2.416) / 2.416)
+    const cycleMs = msPerBaseFrame * 150 * 2.416   // exact full-cycle duration
+    setBarProgress(Math.min(elapsed / cycleMs, 1))
 
     // Throttle visible updates to mimic stop-motion
     if (timestamp - lastDisplayTimeRef.current >= 1000 / frameRate) {
