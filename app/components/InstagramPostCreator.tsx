@@ -1338,10 +1338,6 @@ export default function InstagramPostCreator() {
     return luminance > 0.5 ? '#000000' : '#FFFFFF'
   }
 
-  /* ——— MediaRecorder support ——— */
-  const recordingRef = useRef<MediaRecorder | null>(null)
-  const recordedChunks = useRef<Blob[]>([])
-
   const exportVideo = async () => {
     const canvas = canvasRef.current
     if (!canvas || isPlaying) return      // avoid double-start while playing
