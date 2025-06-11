@@ -1399,7 +1399,6 @@ export default function InstagramPostCreator() {
             />
           </div>
           <div className="flex space-x-2 w-[540px]">
-            {/* Frame 1 */}
             <Button
               onClick={() => handleFrameChange(1)}
               className="w-36 h-12 bg-gray-200 rounded-none text-black hover:bg-gray-300"
@@ -1407,7 +1406,6 @@ export default function InstagramPostCreator() {
               Frame 1
             </Button>
 
-            {/* Frame 2 */}
             <Button
               onClick={() => handleFrameChange(2)}
               className="w-36 h-12 bg-gray-200 rounded-none text-black hover:bg-gray-300"
@@ -1415,7 +1413,6 @@ export default function InstagramPostCreator() {
               Frame 2
             </Button>
 
-            {/* Play */}
             <Button
               onClick={togglePlay}
               className="w-36 h-12 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300"
@@ -1425,14 +1422,11 @@ export default function InstagramPostCreator() {
                 : <PlayIcon  className="h-5 w-5 text-black" />}
             </Button>
 
-            <Button onClick={toggleLoop} className={`w-[40px] h-[40px] p-0 rounded bg-black ${isLooping ? 'ring-2 ring-blue-500' : ''}`}>
-              <RotateCcwIcon className="h-5 w-5 text-white" />
-            </Button>
-            <Button onClick={() => setSettingsOpen(true)} className="w-[40px] h-[40px] p-0 rounded bg-black">
-              <Settings className="h-5 w-5 text-white" />
-            </Button>
-            <Button onClick={() => console.log("Export functionality not implemented")} className="w-[40px] h-[40px] p-0 rounded bg-black">
-              <ShareIcon className="h-5 w-5 text-white" />
+            <Button
+              onClick={() => console.log("Export functionality not implemented")}
+              className="w-36 h-12 bg-gray-200 rounded-none text-black hover:bg-gray-300"
+            >
+              <ShareIcon className="h-5 w-5" />
             </Button>
           </div>
         </div>
