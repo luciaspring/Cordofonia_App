@@ -1335,7 +1335,7 @@ export default function InstagramPostCreator() {
   return (
     <div className="bg-gray-100 p-2">
       <h1 className="text-2xl font-bold mb-6">Instagram Post Creator</h1>
-      <div className="flex space-x-6">
+      <div className="flex space-x-2">
         {/* ─── LEFT PANEL: Text Inputs & Color Picker */}
         <div className="w-[300px] space-y-5">
           <div>
