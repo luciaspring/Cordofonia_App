@@ -60,6 +60,8 @@ interface RigidBoundingBox {
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────────
 
+const M = 16      // inner margin (px)
+
 const colorOptions = [
   { name: 'Light Pink', value: '#F6A69B' },
   { name: 'Light Blue', value: '#5894D0' },
@@ -81,21 +83,20 @@ const lineEase = BezierEasing(0.83, 0, 0.17, 1)
 const textEase = BezierEasing(0.95, 0, 0.05, 1)
 
 // 16 px inner margin → text block must be centred on (16 + blockWidth / 2)
-const M  = 16          // inner margin
 const Wt = 600         // title block width (keeps both lines flush-left)
 const Ws = 720         // subtitle block width
 
 // Default positions for 1080 x 1350 layout
 export const defaultTitlePositions: TextPosition[] = [
-  { x: M + Wt/2, y: 550, width: Wt, height: 286, rotation: 0, fontSize: 180 },
-  { x: M + Wt/2, y: 550+140, width: Wt, height: 286, rotation: 0, fontSize: 180 }
+  { x: M, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 },
+  { x: M, y: 610, width: 1000, height: 200, rotation: 0, fontSize: 180 }  // 400 + 200 + 10 gap
 ]
 
 export const defaultSubtitlePosition: TextPosition = {
-  x: M + Ws/2,
-  y: 550+286+60,
-  width: Ws,
-  height: 80,
+  x: M,
+  y: 840,
+  width: 1000,
+  height: 60,
   rotation: 0,
   fontSize: 48
 }
