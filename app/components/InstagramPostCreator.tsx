@@ -1385,7 +1385,7 @@ export default function InstagramPostCreator() {
           {/* ─── RIGHT PANEL: Canvas & Controls */}
           <div className="w-[540px] flex flex-col">
             <div
-              className="w-[540px] h-[675px] bg-white rounded-none mb-2 relative overflow-hidden"
+              className="w-[540px] h-[675px] bg-white rounded-none my-4 relative overflow-hidden"
               style={{ backgroundColor }}
             >
               <canvas
