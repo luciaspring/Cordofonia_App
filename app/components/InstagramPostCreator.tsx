@@ -1404,7 +1404,7 @@ export default function InstagramPostCreator() {
               <Button
                 onClick={() => handleFrameChange(1)}
                 className={`
-                  flex-1 h-12
+                  flex-1 h-12 rounded-none
                   ${currentFrame === 1 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
                   active:bg-black active:text-white
                   transition-colors
@@ -1417,7 +1417,7 @@ export default function InstagramPostCreator() {
               <Button
                 onClick={() => handleFrameChange(2)}
                 className={`
-                  flex-1 h-12
+                  flex-1 h-12 rounded-none
                   ${currentFrame === 2 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
                   active:bg-black active:text-white
                   transition-colors
@@ -1430,7 +1430,7 @@ export default function InstagramPostCreator() {
               <Button
                 onClick={togglePlay}
                 className={`
-                  flex-1 h-12 rounded-none flex items-center justify-center
+                  flex-1 h-12 rounded-full flex items-center justify-center
                   ${isPlaying ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
                   active:bg-black active:text-white
                   transition-colors
@@ -1441,16 +1441,16 @@ export default function InstagramPostCreator() {
                   : <PlayIcon className="h-5 w-5" />}
               </Button>
 
-              {/* Settings & Export remain squares */}
+              {/* Settings & Export */}
               <Button
                 onClick={() => setSettingsOpen(true)}
-                className="w-12 h-12 bg-gray-200 hover:bg-gray-300 transition-colors flex items-center justify-center"
+                className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 transition-colors flex items-center justify-center"
               >
                 <Settings className="h-5 w-5 text-black" />
               </Button>
               <Button
                 onClick={() => console.log('Export')}
-                className="w-12 h-12 bg-gray-200 hover:bg-gray-300 transition-colors flex items-center justify-center"
+                className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 transition-colors flex items-center justify-center"
               >
                 <ShareIcon className="h-5 w-5 text-black" />
               </Button>
