@@ -1184,7 +1184,7 @@ export default function InstagramPostCreator() {
     const f2 = lines.filter(l => l.frame === 2)
     const ease = easeInOutQuint
 
-    // frame-1 lines
+    // frame-1 lines: grow then shrink
     if (p <= 0.30) {
       drawStaticText(ctx, 1)
       drawAnimatedLines(ctx, p / 0.30, f1, [], 'grow')
@@ -1196,35 +1196,30 @@ export default function InstagramPostCreator() {
       return
     }
 
-    // TEXT transition with dynamic pause
-    const cycle = 2.416
+    /* TEXT: two eased segments back-to-back (no pause)
+       – MOVE: 0.60→0.833 (≈1s)
+       – SCALE: 0.833→1.066 (≈1s)
+    */
     const moveStart = 0.60
     const moveDur   = 0.233
     const scaleDur  = 0.233
-    const pauseDur  = pauseHold / cycle        // normalized
-    const moveEnd   = moveStart + moveDur
-    const pauseEnd  = moveEnd + pauseDur
-    const scaleEnd  = pauseEnd + scaleDur
+    const moveEnd   = moveStart + moveDur    // 0.833
+    const scaleEnd  = moveEnd   + scaleDur    // 1.066
 
-    // move phase
+    // MOVE phase
     if (p <= moveEnd) {
       const t = ease((p - moveStart) / moveDur)
       drawAnimatedText(ctx, t, 0, 1, 2)
       return
     }
-    // pause phase
-    if (p <= pauseEnd) {
-      drawAnimatedText(ctx, 1, 0, 1, 2)
-      return
-    }
-    // scale phase
+    // SCALE phase
     if (p <= scaleEnd) {
-      const s = ease((p - pauseEnd) / scaleDur)
+      const s = ease((p - moveEnd) / scaleDur)
       drawAnimatedText(ctx, 1, s, 1, 2)
       return
     }
 
-    // frame-2 lines
+    // frame-2 lines: grow then shrink (unchanged)
     if (p <= scaleEnd + 0.35) {
       drawStaticText(ctx, 2)
       drawAnimatedLines(ctx, (p - scaleEnd) / 0.35, [], f2, 'grow')
@@ -1236,27 +1231,20 @@ export default function InstagramPostCreator() {
       return
     }
 
-    // reverse transition (mirror, using same pauseDur)
+    /* REVERSE TEXT (mirror): move-back then scale-back */
     const revStart   = scaleEnd + 0.65
     const revMoveDur = moveDur
-    const revPauseDur= pauseDur
     const revScaleDur= scaleDur
-    const m1 = revStart
-    const m2 = m1 + revMoveDur
-    const p2 = m2 + revPauseDur
-    const s2 = p2 + revScaleDur
+    const revMoveEnd = revStart + revMoveDur      // move-back end
+    const revScaleEnd= revMoveEnd + revScaleDur   // scale-back end
 
-    if (p <= m2) {
-      const t = ease((p - m1) / revMoveDur)
+    if (p <= revMoveEnd) {
+      const t = ease((p - revStart) / revMoveDur)
       drawAnimatedText(ctx, 1 - t, 1, 2, 1)
       return
     }
-    if (p <= p2) {
-      drawAnimatedText(ctx, 0, 1, 2, 1)
-      return
-    }
-    if (p <= s2) {
-      const s = ease((p - p2) / revScaleDur)
+    if (p <= revScaleEnd) {
+      const s = ease((p - revMoveEnd) / revScaleDur)
       drawAnimatedText(ctx, 0, 1 - s, 2, 1)
       return
     }
