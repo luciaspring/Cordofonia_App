@@ -1409,324 +1409,326 @@ export default function InstagramPostCreator() {
 
   // ─── JSX ────────────────────────────────────────────────────────────────────────
   return (
-    <div className="bg-gray-100 p-4 rounded-lg font-ui">
-      <div className="max-w-[848px] mx-auto">
-        <div className="flex space-x-2">
-          {/* ─── LEFT PANEL ───────────────────────────────────────── */}
-          <div className="w-[260px] pt-6 pl-6 pr-6 space-y-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#E5E5E5]">
+      <div className="bg-white p-4 rounded-lg font-ui">
+        <div className="max-w-[848px] mx-auto">
+          <div className="flex space-x-2">
+            {/* ─── LEFT PANEL ───────────────────────────────────────── */}
+            <div className="w-[260px] pt-6 pl-6 pr-6 space-y-4">
 
-            <h1 className="text-[11px] font-semibold uppercase tracking-wide text-black mb-4">
-              Cordofonia Instagram<br />Posts Creator Tool
-            </h1>
+              <h1 className="text-[11px] font-semibold uppercase tracking-wide text-black mb-4">
+                Cordofonia Instagram<br />Posts Creator Tool
+              </h1>
 
-            {/* Title fields */}
-            <FieldGroup step={1} label="Write a title">
-              <Input
-                value={titles[0]}
-                onChange={e => setTitles([e.target.value, titles[1]])}
-                className="h-9 text-[15px]"
-              />
-              <Input
-                value={titles[1]}
-                onChange={e => setTitles([titles[0], e.target.value])}
-                className="h-9 text-[15px]"
-              />
-            </FieldGroup>
+              {/* Title fields */}
+              <FieldGroup step={1} label="Write a title">
+                <Input
+                  value={titles[0]}
+                  onChange={e => setTitles([e.target.value, titles[1]])}
+                  className="h-9 text-[15px]"
+                />
+                <Input
+                  value={titles[1]}
+                  onChange={e => setTitles([titles[0], e.target.value])}
+                  className="h-9 text-[15px]"
+                />
+              </FieldGroup>
 
-            {/* Instrument */}
-            <FieldGroup step={2} label="Write the instrument">
-              <Input
-                value={subtitle}
-                onChange={e => setSubtitle(e.target.value)}
-                className="h-9 text-[15px]"
-              />
-            </FieldGroup>
+              {/* Instrument */}
+              <FieldGroup step={2} label="Write the instrument">
+                <Input
+                  value={subtitle}
+                  onChange={e => setSubtitle(e.target.value)}
+                  className="h-9 text-[15px]"
+                />
+              </FieldGroup>
 
-            {/* Colors */}
-            <FieldGroup step={3} label="Pick a color">
-              <div className="flex flex-wrap gap-2 mt-2">
-                {colorOptions.map(c => (
-                  <button
-                    key={c.value}
-                    onClick={() => setBackgroundColor(c.value)}
-                    aria-label={c.name}
-                    style={{ backgroundColor: c.value }}
-                    className={`
-                      w-8 h-8 rounded-none
-                      ${backgroundColor === c.value
-                        ? 'ring-2 ring-black'
-                        : 'ring-0'}
-                    `}
-                  />
-                ))}
-              </div>
-            </FieldGroup>
+              {/* Colors */}
+              <FieldGroup step={3} label="Pick a color">
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {colorOptions.map(c => (
+                    <button
+                      key={c.value}
+                      onClick={() => setBackgroundColor(c.value)}
+                      aria-label={c.name}
+                      style={{ backgroundColor: c.value }}
+                      className={`
+                        w-8 h-8 rounded-none
+                        ${backgroundColor === c.value
+                          ? 'ring-2 ring-black'
+                          : 'ring-0'}
+                      `}
+                    />
+                  ))}
+                </div>
+              </FieldGroup>
 
-          </div>
-
-          {/* ─── RIGHT PANEL: Canvas & Controls */}
-          <div className="w-[540px] flex flex-col">
-            <div
-              className="w-[540px] h-[675px] bg-white rounded-none mb-2 relative overflow-hidden"
-              style={{ backgroundColor }}
-            >
-              <canvas
-                ref={canvasRef}
-                width={1080}
-                height={1350}
-                className="absolute inset-0 w-full h-full"
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
-              />
             </div>
-            <div className="flex w-[540px] gap-2 mx-auto">
-              {/* Frame 1 */}
-              <Button
-                onClick={() => handleFrameChange(1)}
-                className={`
-                  flex-1 h-12 rounded-none
-                  ${currentFrame === 1 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
-                  active:bg-black active:text-white
-                  transition-colors
-                `}
-              >
-                Frame 1
-              </Button>
 
-              {/* Frame 2 */}
-              <Button
-                onClick={() => handleFrameChange(2)}
-                className={`
-                  flex-1 h-12 rounded-none
-                  ${currentFrame === 2 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
-                  active:bg-black active:text-white
-                  transition-colors
-                `}
+            {/* ─── RIGHT PANEL: Canvas & Controls */}
+            <div className="w-[540px] flex flex-col">
+              <div
+                className="w-[540px] h-[675px] bg-white rounded-none mb-2 relative overflow-hidden"
+                style={{ backgroundColor }}
               >
-                Frame 2
-              </Button>
+                <canvas
+                  ref={canvasRef}
+                  width={1080}
+                  height={1350}
+                  className="absolute inset-0 w-full h-full"
+                  onMouseDown={handleMouseDown}
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={handleMouseUp}
+                  onMouseLeave={handleMouseUp}
+                />
+              </div>
+              <div className="flex w-[540px] gap-2 mx-auto">
+                {/* Frame 1 */}
+                <Button
+                  onClick={() => handleFrameChange(1)}
+                  className={`
+                    flex-1 h-12 rounded-none
+                    ${currentFrame === 1 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
+                    active:bg-black active:text-white
+                    transition-colors
+                  `}
+                >
+                  Frame 1
+                </Button>
 
-              {/* Play / Pause */}
-              <Button
-                onClick={togglePlay}
-                className={`
-                  flex-1 h-12 rounded-full flex items-center justify-center
-                  ${isPlaying ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
-                  active:bg-black active:text-white
-                  transition-colors
-                `}
-              >
-                {isPlaying
-                  ? <PauseIcon className="h-5 w-5" />
-                  : <PlayIcon className="h-5 w-5" />}
-              </Button>
+                {/* Frame 2 */}
+                <Button
+                  onClick={() => handleFrameChange(2)}
+                  className={`
+                    flex-1 h-12 rounded-none
+                    ${currentFrame === 2 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
+                    active:bg-black active:text-white
+                    transition-colors
+                  `}
+                >
+                  Frame 2
+                </Button>
 
-              {/* Settings & Export */}
-              <Button
-                onClick={() => setSettingsOpen(true)}
-                className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 transition-colors flex items-center justify-center"
-              >
-                <Settings className="h-5 w-5 text-black" />
-              </Button>
-              <Button
-                onClick={exportVideo}
-                className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 transition-colors flex items-center justify-center"
-              >
-                <ShareIcon className="h-5 w-5 text-black" />
-              </Button>
+                {/* Play / Pause */}
+                <Button
+                  onClick={togglePlay}
+                  className={`
+                    flex-1 h-12 rounded-full flex items-center justify-center
+                    ${isPlaying ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
+                    active:bg-black active:text-white
+                    transition-colors
+                  `}
+                >
+                  {isPlaying
+                    ? <PauseIcon className="h-5 w-5" />
+                    : <PlayIcon className="h-5 w-5" />}
+                </Button>
+
+                {/* Settings & Export */}
+                <Button
+                  onClick={() => setSettingsOpen(true)}
+                  className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 transition-colors flex items-center justify-center"
+                >
+                  <Settings className="h-5 w-5 text-black" />
+                </Button>
+                <Button
+                  onClick={exportVideo}
+                  className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 transition-colors flex items-center justify-center"
+                >
+                  <ShareIcon className="h-5 w-5 text-black" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* ─── MODALS ─────────────────────────────────────────────────────────────── */}
-      <Dialog open={positionModalOpen} onOpenChange={setPositionModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Position</DialogTitle>
-          </DialogHeader>
-          {editingPosition && editingBaseFontSize !== null && (
+        {/* ─── MODALS ─────────────────────────────────────────────────────────────── */}
+        <Dialog open={positionModalOpen} onOpenChange={setPositionModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Position</DialogTitle>
+            </DialogHeader>
+            {editingPosition && editingBaseFontSize !== null && (
+              <div className="space-y-2">
+                <div>
+                  <Label htmlFor="xPos">X Position</Label>
+                  <Input
+                    id="xPos"
+                    type="number"
+                    value={editingPosition.x}
+                    onChange={e => setEditingPosition({ ...editingPosition, x: Number(e.target.value) })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="yPos">Y Position</Label>
+                  <Input
+                    id="yPos"
+                    type="number"
+                    value={editingPosition.y}
+                    onChange={e => setEditingPosition({ ...editingPosition, y: Number(e.target.value) })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="rotation">Rotation (degrees)</Label>
+                  <Input
+                    id="rotation"
+                    type="number"
+                    value={editingPosition.rotation * (180 / Math.PI)}
+                    onChange={e => setEditingPosition({ ...editingPosition, rotation: Number(e.target.value) * (Math.PI / 180) })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="scale">Scale (%)</Label>
+                  <Input
+                    id="scale"
+                    type="number"
+                    value={Math.round((editingPosition.fontSize / editingBaseFontSize) * 100)}
+                    onChange={e => {
+                      const scale = Number(e.target.value) / 100
+                      setEditingPosition({
+                        ...editingPosition,
+                        fontSize: editingBaseFontSize * scale
+                      })
+                    }}
+                  />
+                </div>
+                <Button onClick={() => updatePosition(editingPosition)}>Update</Button>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Settings</DialogTitle>
+            </DialogHeader>
             <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <input
+                  id="loopToggle"
+                  type="checkbox"
+                  checked={isLooping}
+                  onChange={e => setIsLooping(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 focus:ring-2 focus:ring-blue-500"
+                />
+                <Label htmlFor="loopToggle" className="text-sm text-gray-600">
+                  Loop animation
+                </Label>
+              </div>
+
               <div>
-                <Label htmlFor="xPos">X Position</Label>
-                <Input
-                  id="xPos"
-                  type="number"
-                  value={editingPosition.x}
-                  onChange={e => setEditingPosition({ ...editingPosition, x: Number(e.target.value) })}
+                <Label htmlFor="thicknessSlider">Line Thickness (max 10)</Label>
+                <Slider
+                  id="thicknessSlider"
+                  min={1}
+                  max={10}
+                  step={1}
+                  value={[lineThickness]}
+                  onValueChange={value => handleSettingsChange('lineThickness', value[0])}
                 />
               </div>
               <div>
-                <Label htmlFor="yPos">Y Position</Label>
-                <Input
-                  id="yPos"
-                  type="number"
-                  value={editingPosition.y}
-                  onChange={e => setEditingPosition({ ...editingPosition, y: Number(e.target.value) })}
+                <Label htmlFor="trembleSlider">Trembling Intensity</Label>
+                <Slider
+                  id="trembleSlider"
+                  min={0}
+                  max={10}
+                  step={1}
+                  value={[tremblingIntensity]}
+                  onValueChange={value => handleSettingsChange('tremblingIntensity', value[0])}
                 />
               </div>
               <div>
-                <Label htmlFor="rotation">Rotation (degrees)</Label>
-                <Input
-                  id="rotation"
-                  type="number"
-                  value={editingPosition.rotation * (180 / Math.PI)}
-                  onChange={e => setEditingPosition({ ...editingPosition, rotation: Number(e.target.value) * (Math.PI / 180) })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="scale">Scale (%)</Label>
-                <Input
-                  id="scale"
-                  type="number"
-                  value={Math.round((editingPosition.fontSize / editingBaseFontSize) * 100)}
-                  onChange={e => {
-                    const scale = Number(e.target.value) / 100
-                    setEditingPosition({
-                      ...editingPosition,
-                      fontSize: editingBaseFontSize * scale
-                    })
+                <Label htmlFor="baseFpsSlider">Animation Speed (Base FPS: {baseFps})</Label>
+                <Slider
+                  id="baseFpsSlider"
+                  min={10}
+                  max={120}
+                  step={1}
+                  value={[baseFps]}
+                  onValueChange={([v]) => {
+                    const num = Number(v)
+                    if (!isNaN(num)) setBaseFps(num)
                   }}
                 />
               </div>
-              <Button onClick={() => updatePosition(editingPosition)}>Update</Button>
+              <div>
+                <Label htmlFor="frameRateSlider">Frame Rate ({MIN_FRAME_RATE}–120)</Label>
+                <Slider
+                  id="frameRateSlider"
+                  min={MIN_FRAME_RATE}
+                  max={120}
+                  step={1}
+                  value={[frameRate]}
+                  onValueChange={([v]) => {
+                    const num = Number(v)
+                    if (!isNaN(num)) {
+                      handleSettingsChange('frameRate', num)
+                    }
+                  }}
+                />
+              </div>
+              <div>
+                <Label htmlFor="pauseSlider">Pause Hold (norm)</Label>
+                <Slider
+                  id="pauseSlider"
+                  min={0}
+                  max={0.5}
+                  step={0.01}
+                  value={[pauseHold]}
+                  onValueChange={([v]) => setPauseHold(v)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="easingSlider">Easing Power</Label>
+                <Slider
+                  id="easingSlider"
+                  min={2}
+                  max={10}
+                  step={1}
+                  value={[easingPower]}
+                  onValueChange={([v]) => setEasingPower(v)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="lineEaseSlider">Line Easing Power</Label>
+                <Slider
+                  id="lineEaseSlider"
+                  min={2}
+                  max={10}
+                  step={1}
+                  value={[lineEasePower]}
+                  onValueChange={([v]) => setLineEasePower(v)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="textEaseSlider">Text Easing Power</Label>
+                <Slider
+                  id="textEaseSlider"
+                  min={2}
+                  max={10}
+                  step={1}
+                  value={[textEasePower]}
+                  onValueChange={([v]) => setTextEasePower(v)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="scaleAnchor">Scale Anchor</Label>
+                <Select value={scaleAnchor} onValueChange={setScaleAnchor}>
+                  <SelectTrigger id="scaleAnchor" className="w-full">
+                    <SelectValue placeholder="corner/center" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="corner">Corner</SelectItem>
+                    <SelectItem value="center">Center</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Settings</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <input
-                id="loopToggle"
-                type="checkbox"
-                checked={isLooping}
-                onChange={e => setIsLooping(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 focus:ring-2 focus:ring-blue-500"
-              />
-              <Label htmlFor="loopToggle" className="text-sm text-gray-600">
-                Loop animation
-              </Label>
-            </div>
-
-            <div>
-              <Label htmlFor="thicknessSlider">Line Thickness (max 10)</Label>
-              <Slider
-                id="thicknessSlider"
-                min={1}
-                max={10}
-                step={1}
-                value={[lineThickness]}
-                onValueChange={value => handleSettingsChange('lineThickness', value[0])}
-              />
-            </div>
-            <div>
-              <Label htmlFor="trembleSlider">Trembling Intensity</Label>
-              <Slider
-                id="trembleSlider"
-                min={0}
-                max={10}
-                step={1}
-                value={[tremblingIntensity]}
-                onValueChange={value => handleSettingsChange('tremblingIntensity', value[0])}
-              />
-            </div>
-            <div>
-              <Label htmlFor="baseFpsSlider">Animation Speed (Base FPS: {baseFps})</Label>
-              <Slider
-                id="baseFpsSlider"
-                min={10}
-                max={120}
-                step={1}
-                value={[baseFps]}
-                onValueChange={([v]) => {
-                  const num = Number(v)
-                  if (!isNaN(num)) setBaseFps(num)
-                }}
-              />
-            </div>
-            <div>
-              <Label htmlFor="frameRateSlider">Frame Rate ({MIN_FRAME_RATE}–120)</Label>
-              <Slider
-                id="frameRateSlider"
-                min={MIN_FRAME_RATE}
-                max={120}
-                step={1}
-                value={[frameRate]}
-                onValueChange={([v]) => {
-                  const num = Number(v)
-                  if (!isNaN(num)) {
-                    handleSettingsChange('frameRate', num)
-                  }
-                }}
-              />
-            </div>
-            <div>
-              <Label htmlFor="pauseSlider">Pause Hold (norm)</Label>
-              <Slider
-                id="pauseSlider"
-                min={0}
-                max={0.5}
-                step={0.01}
-                value={[pauseHold]}
-                onValueChange={([v]) => setPauseHold(v)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="easingSlider">Easing Power</Label>
-              <Slider
-                id="easingSlider"
-                min={2}
-                max={10}
-                step={1}
-                value={[easingPower]}
-                onValueChange={([v]) => setEasingPower(v)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="lineEaseSlider">Line Easing Power</Label>
-              <Slider
-                id="lineEaseSlider"
-                min={2}
-                max={10}
-                step={1}
-                value={[lineEasePower]}
-                onValueChange={([v]) => setLineEasePower(v)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="textEaseSlider">Text Easing Power</Label>
-              <Slider
-                id="textEaseSlider"
-                min={2}
-                max={10}
-                step={1}
-                value={[textEasePower]}
-                onValueChange={([v]) => setTextEasePower(v)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="scaleAnchor">Scale Anchor</Label>
-              <Select value={scaleAnchor} onValueChange={setScaleAnchor}>
-                <SelectTrigger id="scaleAnchor" className="w-full">
-                  <SelectValue placeholder="corner/center" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="corner">Corner</SelectItem>
-                  <SelectItem value="center">Center</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   )
 }
