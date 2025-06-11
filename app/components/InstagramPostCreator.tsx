@@ -154,6 +154,10 @@ export default function InstagramPostCreator() {
   const isShiftPressed = useRef(false)
   const lastClickTime = useRef<number>(0)
 
+  /* ——— MediaRecorder support ——— */
+  const recordingRef = useRef<MediaRecorder | null>(null)
+  const recordedChunks = useRef<Blob[]>([])
+
   // Add this with other state declarations at the top
   const [pauseHold, setPauseHold] = useState(0)    // normalized pause (0–0.5)
   const [easingPower, setEasingPower] = useState(5)       // 2–10 range
@@ -1334,6 +1338,46 @@ export default function InstagramPostCreator() {
     return luminance > 0.5 ? '#000000' : '#FFFFFF'
   }
 
+  /* ——— MediaRecorder support ——— */
+  const recordingRef = useRef<MediaRecorder | null>(null)
+  const recordedChunks = useRef<Blob[]>([])
+
+  const exportVideo = async () => {
+    const canvas = canvasRef.current
+    if (!canvas || isPlaying) return      // avoid double-start while playing
+
+    /* 1. capture the canvas stream */
+    const stream = canvas.captureStream(frameRate)   // use current FPS slider
+    recordingRef.current = new MediaRecorder(stream, {
+      mimeType: 'video/webm;codecs=vp9'
+    })
+    recordedChunks.current = []
+    recordingRef.current.ondataavailable = e => {
+      if (e.data.size) recordedChunks.current.push(e.data)
+    }
+    recordingRef.current.onstop = () => {
+      const blob   = new Blob(recordedChunks.current, { type: 'video/webm' })
+      const url    = URL.createObjectURL(blob)
+      const a      = document.createElement('a')
+      a.href       = url
+      a.download   = 'instagram_post.webm'
+      a.click()
+      URL.revokeObjectURL(url)
+    }
+
+    /* 2. start animation & recording */
+    const fullCycleMs = (2.416 * 150 * 1000) / baseFps    // ≈10.4 s with FPS 35
+    recordingRef.current.start()
+    setIsLooping(false)        // play one cycle only
+    setIsPlaying(true)
+
+    /* 3. stop everything after one cycle */
+    setTimeout(() => {
+      setIsPlaying(false)
+      recordingRef.current?.stop()
+    }, fullCycleMs + 200)      // +200 ms safety margin
+  }
+
   // ─── JSX ────────────────────────────────────────────────────────────────────────
   return (
     <div className="bg-gray-100 p-4 rounded-lg">
@@ -1452,7 +1496,7 @@ export default function InstagramPostCreator() {
                 <Settings className="h-5 w-5 text-black" />
               </Button>
               <Button
-                onClick={() => console.log('Export')}
+                onClick={exportVideo}
                 className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 transition-colors flex items-center justify-center"
               >
                 <ShareIcon className="h-5 w-5 text-black" />
