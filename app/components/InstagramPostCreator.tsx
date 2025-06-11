@@ -152,7 +152,7 @@ export default function InstagramPostCreator() {
   const lastClickTime = useRef<number>(0)
 
   // Add this with other state declarations at the top
-  const [pauseHold, setPauseHold] = useState(0.5)    // seconds of pause between move & scale
+  const [pauseHold, setPauseHold] = useState(0)    // normalized pause (0–0.5)
 
   // ─── EFFECT HOOKS ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -1188,7 +1188,6 @@ export default function InstagramPostCreator() {
     const f2 = lines.filter(l => l.frame === 2)
     const ease = easeInOutQuint
 
-    // frame-1 lines: grow then shrink
     if (p <= 0.30) {
       drawStaticText(ctx, 1)
       drawAnimatedLines(ctx, p / 0.30, f1, [], 'grow')
@@ -1200,30 +1199,28 @@ export default function InstagramPostCreator() {
       return
     }
 
-    /* TEXT: two eased segments back-to-back (no pause)
-       – MOVE: 0.60→0.833 (≈1s)
-       – SCALE: 0.833→1.066 (≈1s)
-    */
     const moveStart = 0.60
     const moveDur   = 0.233
     const scaleDur  = 0.233
-    const moveEnd   = moveStart + moveDur    // 0.833
-    const scaleEnd  = moveEnd   + scaleDur    // 1.066
+    const moveEnd   = moveStart + moveDur   // 0.833
+    const pauseEnd  = moveEnd + pauseHold    // adjustable
+    const scaleEnd  = pauseEnd + scaleDur    // next
 
-    // MOVE phase
     if (p <= moveEnd) {
       const t = ease((p - moveStart) / moveDur)
       drawAnimatedText(ctx, t, 0, 1, 2)
       return
     }
-    // SCALE phase
+    if (p <= pauseEnd) {
+      drawAnimatedText(ctx, 1, 0, 1, 2)
+      return
+    }
     if (p <= scaleEnd) {
-      const s = ease((p - moveEnd) / scaleDur)
+      const s = ease((p - pauseEnd) / scaleDur)
       drawAnimatedText(ctx, 1, s, 1, 2)
       return
     }
 
-    // frame-2 lines: grow then shrink (unchanged)
     if (p <= scaleEnd + 0.35) {
       drawStaticText(ctx, 2)
       drawAnimatedLines(ctx, (p - scaleEnd) / 0.35, [], f2, 'grow')
@@ -1235,12 +1232,11 @@ export default function InstagramPostCreator() {
       return
     }
 
-    /* REVERSE TEXT (mirror): move-back then scale-back */
     const revStart   = scaleEnd + 0.65
     const revMoveDur = moveDur
     const revScaleDur= scaleDur
-    const revMoveEnd = revStart + revMoveDur      // move-back end
-    const revScaleEnd= revMoveEnd + revScaleDur   // scale-back end
+    const revMoveEnd = revStart + revMoveDur
+    const revScaleEnd= revMoveEnd + revScaleDur
 
     if (p <= revMoveEnd) {
       const t = ease((p - revStart) / revMoveDur)
@@ -1524,12 +1520,12 @@ export default function InstagramPostCreator() {
               />
             </div>
             <div>
-              <Label htmlFor="pauseSlider">Text pause (s)</Label>
+              <Label htmlFor="pauseSlider">Pause Hold (norm)</Label>
               <Slider
                 id="pauseSlider"
                 min={0}
-                max={2}
-                step={0.1}
+                max={0.5}
+                step={0.01}
                 value={[pauseHold]}
                 onValueChange={([v]) => setPauseHold(v)}
               />
