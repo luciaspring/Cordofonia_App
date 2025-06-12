@@ -83,7 +83,7 @@ const lineEase = BezierEasing(0.83, 0, 0.17, 1)
 const textEase = BezierEasing(0.95, 0, 0.05, 1)
 
 // Progress value when the on-screen action is really done
-const PROGRESS_END = 2.416    //  full cycle length – keep in sync with drawAnimatedContent()
+const PROGRESS_END = 2.182             // = revMoveEnd in drawAnimatedContent
 
 // 16 px inner margin → text block must be centred on (16 + blockWidth / 2)
 const Wt = 600         // title block width (keeps both lines flush-left)
@@ -213,8 +213,6 @@ export default function InstagramPostCreator() {
 
   /* progress (0 → 1) for the merged bar */
   const [progressRatio, setProgressRatio] = useState(0)
-
-  const merged = isPlaying;   // true ⇢ fuse buttons & show bar
 
   // Add these easing functions near the top, after state declarations
   const easeLines = (t: number) =>
@@ -1274,7 +1272,7 @@ export default function InstagramPostCreator() {
       lastDisplayTimeRef.current = timestamp
     }
 
-    setProgressRatio(progress / PROGRESS_END);   // 0 → 1 over the whole cycle
+    setProgressRatio(Math.min(progress / 2.416, 1));   // 2.416 = full cycle
 
     if (isPlaying) animationRef.current = requestAnimationFrame(animate)
   }
@@ -1447,22 +1445,6 @@ export default function InstagramPostCreator() {
   // ─── JSX ────────────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-white">
-      {/* SVG filter definitions */}
-      <svg id="goo-defs">
-        <defs>
-          <filter id="caps-goo">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
-            <feColorMatrix in="blur" mode="matrix"
-              values="
-                1 0 0 0 0
-                0 1 0 0 0
-                0 0 1 0 0
-                0 0 0 18 -7" result="goo"/>
-            <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
-          </filter>
-        </defs>
-      </svg>
-
       <div className="bg-gray-100 p-4 rounded-lg font-ui">
         {/* widen gap so the new, wider left column sits clear of the frame */}
         <div className="flex space-x-8">
@@ -1538,82 +1520,95 @@ export default function InstagramPostCreator() {
                 onMouseLeave={handleMouseUp}
               />
             </div>
-            {/* ─── BUTTON ROW ───────────────────────────────────────────── */}
             <div className="flex w-full gap-2 mx-auto">
-              {/* --- bottom controls row ----------------------------------------- */}
-              <div className="flex w-[540px] gap-2 mx-auto">
+              <div
+                className={`relative flex gap-2 flex-1 ${isPlaying ? 'merge gooey' : ''}`}
+              >
+                {/* Frame 1 */}
+                <Button
+                  onClick={() => handleFrameChange(1)}
+                  className={`
+                    flex-1 h-12 rounded-none
+                    ${currentFrame === 1 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
+                  `}
+                >
+                  {!isPlaying && 'Frame 1'}
+                </Button>
 
-                {/* ─── Frame buttons · progress · controls ───────────────── */}
-                <div className="flex w-full items-stretch gap-2">
-                  {/* —— Goo wrapper —— */}
-                  <div
-                    className={`relative flex flex-1 items-stretch ${
-                      isPlaying ? 'gap-0 gooey' : 'gap-2'
-                    }`}
-                  >
-                    {/* caps that melt together */}
-                    <Button
-                      ref={frame1Ref}
-                      onClick={() => handleFrameChange(1)}
-                      className="flex-1 h-12 rounded-[6px] bg-gray-200 text-black"
-                    >
-                      {!isPlaying && 'Frame 1'}
-                    </Button>
-                    <Button
-                      ref={frame2Ref}
-                      onClick={() => handleFrameChange(2)}
-                      className="flex-1 h-12 rounded-[6px] bg-gray-200 text-black"
-                    >
-                      {!isPlaying && 'Frame 2'}
-                    </Button>
+                {/* Frame 2 */}
+                <Button
+                  onClick={() => handleFrameChange(2)}
+                  className={`
+                    flex-1 h-12 rounded-none
+                    ${currentFrame === 2 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
+                  `}
+                >
+                  {!isPlaying && 'Frame 2'}
+                </Button>
 
-                    {/* bar overlay sits ON TOP so it stays sharp */}
-                    {isPlaying && (
-                      <div className="absolute inset-0 pointer-events-none">
-                        <div className="w-full h-full bg-gray-200 rounded-[6px]" />
-                        <div
-                          className="absolute top-0 left-0 h-full bg-black rounded-[6px]"
-                          style={{ width: `${progressRatio * 100}%` }}
-                        />
-                      </div>
-                    )}
+                {/* black progress fill */}
+                {isPlaying && (
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                    {/* grey base (same colour as buttons) */}
+                    <div className="w-full h-full bg-gray-200" />
+                    {/* growing fill */}
+                    <div
+                      className="absolute top-0 left-0 h-full bg-black"
+                      style={{ width: `${progressRatio * 100}%` }}
+                    />
                   </div>
-
-                  {/* play / pause */}
-                  <Button
-                    onClick={togglePlay}
-                    className={`ml-2 w-12 h-12 rounded-full flex items-center justify-center
-                      ${isPlaying ? 'bg-black text-white' : 'bg-gray-200 text-black'}`}
-                  >
-                    {isPlaying ? <PauseIcon className="h-5 w-5" /> : <PlayIcon className="h-5 w-5" />}
-                  </Button>
-
-                  {/* settings */}
-                  <Button onClick={() => setSettingsOpen(true)}
-                          className="w-12 h-12 ml-2 bg-gray-200"><Settings className="h-5 w-5"/></Button>
-
-                  {/* export */}
-                  <Button onClick={exportVideo}
-                          className="w-12 h-12 ml-2 bg-gray-200"><ShareIcon className="h-5 w-5"/></Button>
-                </div>
+                )}
               </div>
+
+              {/* ── Play / Pause – fixed 56 px (h & w) ── */}
+              <Button
+                onClick={togglePlay}
+                className={`
+                  flex-1 h-12 rounded-full flex items-center justify-center
+                  ${isPlaying ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
+                  active:bg-black active:text-white
+                  transition-colors
+                `}
+              >
+                {isPlaying ? <PauseIcon className="h-5 w-5" /> : <PlayIcon className="h-5 w-5" />}
+              </Button>
+
+              {/* Settings – 48 px */}
+              <Button
+                onClick={() => setSettingsOpen(true)}
+                className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
+              >
+                <Settings className="h-5 w-5 text-black" />
+              </Button>
+
+              {/* Export – 48 px */}
+              <Button
+                onClick={exportVideo}
+                className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
+              >
+                <ShareIcon className="h-5 w-5 text-black" />
+              </Button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Global gooey filter */}
-      <svg className="absolute w-0 h-0 pointer-events-none" aria-hidden>
+      {/* ─── Gooey filter, once per app ─── */}
+      <svg className="absolute w-0 h-0 pointer-events-none">
         <defs>
-          <filter id="goo" colorInterpolationFilters="sRGB">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="blur"/>
-            <feColorMatrix in="blur" mode="matrix"
+          <filter id="gooey">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur" />
+            <feColorMatrix
+              in="blur"
+              mode="matrix"
               values="
                 1 0 0 0 0
                 0 1 0 0 0
                 0 0 1 0 0
-                0 0 0 20 -10" result="goo"/>
-            <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
+                0 0 0 20 -10"
+              result="goo"
+            />
+            <feBlend in="SourceGraphic" in2="goo" />
           </filter>
         </defs>
       </svg>
@@ -1807,4 +1802,5 @@ export default function InstagramPostCreator() {
     </div>
   )
 }
+
 
