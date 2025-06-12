@@ -1566,13 +1566,13 @@ export default function InstagramPostCreator() {
             </div>
 
             {/* ─── CONTROL BAR ───────────────────────────────────────── */}
-            <div className="grid grid-cols-4 gap-2 w-[540px]">
-              {/* column-1 ··· Frame 1 */}
+            <div className="grid grid-cols-4 gap-2 w-[540px] mx-auto">
+              {/* col-1 ··· Frame 1 */}
               <Button
                 ref={frame1Ref}
                 onClick={() => handleFrameChange(1)}
                 className={`
-                  h-20 w-full rounded-none
+                  w-full h-[112px] rounded-none
                   ${currentFrame === 1
                     ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
                     : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
@@ -1581,12 +1581,12 @@ export default function InstagramPostCreator() {
                 {!isPlaying && 'Frame 1'}
               </Button>
 
-              {/* column-2 ··· Frame 2 */}
+              {/* col-2 ··· Frame 2 */}
               <Button
                 ref={frame2Ref}
                 onClick={() => handleFrameChange(2)}
                 className={`
-                  h-20 w-full rounded-none
+                  w-full h-[112px] rounded-none
                   ${currentFrame === 2
                     ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
                     : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
@@ -1595,11 +1595,11 @@ export default function InstagramPostCreator() {
                 {!isPlaying && 'Frame 2'}
               </Button>
 
-              {/* column-3 ··· Play / Pause */}
+              {/* col-3 ··· Play / Pause */}
               <Button
                 onClick={togglePlay}
                 className={`
-                  h-20 w-full rounded-full flex items-center justify-center
+                  w-full h-[112px] rounded-full flex items-center justify-center
                   ${isPlaying
                     ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
                     : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
@@ -1607,34 +1607,34 @@ export default function InstagramPostCreator() {
                 `}
               >
                 {isPlaying
-                  ? <span className="sf-icon text-2xl">􀊅</span>
-                  : <span className="sf-icon text-2xl">􀊄</span>}
+                  ? <span className="sf-icon text-xl">􀊅</span>
+                  : <span className="sf-icon text-xl">􀊄</span>}
               </Button>
 
-              {/* column-4 ··· Settings & Export (two squares) */}
-              <div className="flex gap-2 h-20 w-full">
+              {/* col-4 ··· Settings & Export (nested 2×½ squares) */}
+              <div className="grid grid-cols-2 gap-2 w-full h-[112px]">
                 <Button
                   onClick={() => setSettingsOpen(true)}
                   className="
-                    flex-1 aspect-square rounded-none
+                    w-full h-full rounded-none
                     bg-gray-200 text-black
                     hover:bg-[#9E9E9E] hover:text-black
                     flex items-center justify-center
                   "
                 >
-                  <span className="sf-icon text-2xl">􀌆</span>
+                  <span className="sf-icon text-xl">􀌆</span>
                 </Button>
 
                 <Button
                   onClick={exportVideo}
                   className="
-                    flex-1 aspect-square rounded-none
+                    w-full h-full rounded-none
                     bg-gray-200 text-black
                     hover:bg-[#9E9E9E] hover:text-black
                     flex items-center justify-center
                   "
                 >
-                  <span className="sf-icon text-2xl">􀈂</span>
+                  <span className="sf-icon text-xl">􀈂</span>
                 </Button>
               </div>
             </div>
