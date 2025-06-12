@@ -1528,7 +1528,10 @@ export default function InstagramPostCreator() {
                 >
                   {!isPlaying && 'Frame 1'}
                   {isPlaying && (
-                    <div className="h-full bg-black" style={{ width: `${barProgress * 100}%` }} />
+                    <div 
+                      className="progress-inner"
+                      style={{ width: `${barProgress * 100}%` }}
+                    />
                   )}
                 </Button>
 
