@@ -6,13 +6,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
-import { RotateCcwIcon, ShareIcon } from 'lucide-react'        // keep the others you still like
+import { RotateCcwIcon } from 'lucide-react'          // we don't need ShareIcon any more
 
 // solid (filled) versions
 import {
-  PlayIcon    as PlaySolid,
-  PauseIcon   as PauseSolid,
-  Cog6ToothIcon as SettingsSolid,
+  PlayIcon       as PlaySolid,
+  PauseIcon      as PauseSolid,
+  Cog6ToothIcon  as SettingsSolid,
+  ArrowUpTrayIcon as ExportSolid,      //  ← this is the "export/share" glyph
 } from '@heroicons/react/24/solid'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -1593,7 +1594,7 @@ export default function InstagramPostCreator() {
                 onClick={exportVideo}
                 className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
               >
-                <ShareIcon className="h-5 w-5 text-black" />
+                <ExportSolid className="h-5 w-5 text-black" />
               </Button>
             </div>
           </div>
