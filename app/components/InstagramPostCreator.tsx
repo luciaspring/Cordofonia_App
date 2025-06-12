@@ -338,6 +338,21 @@ export default function InstagramPostCreator() {
       }
     }
 
+    /* ── TITLES ─────────────────────────────────────────────── */
+    setTitlePositionsFrame1(prev =>
+      prev.map((pos, i) => {
+        const { width, height } = measureText(titles[i], pos.fontSize)
+        return { ...pos, width, height }
+      })
+    )
+
+    setTitlePositionsFrame2(prev =>
+      prev.map((pos, i) => {
+        const { width, height } = measureText(titles[i], pos.fontSize)
+        return { ...pos, width, height }
+      })
+    )
+
     // Remove title width updates to keep fixed widths
     const instrText = 'Instrumento:'
     const instrMetrics = measureText(instrText, subtitlePositionFrame2.fontSize)
