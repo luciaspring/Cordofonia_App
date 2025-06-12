@@ -336,19 +336,35 @@ export default function InstagramPostCreator() {
     setTitlePositionsFrame1(prev =>
       prev.map((pos, i) => {
         const { width } = measureText(titles[i], pos.fontSize)
-        return { ...pos, width }                // keep the 240 px height we set
+        return { ...pos, width }
       })
     )
     setTitlePositionsFrame2(prev =>
       prev.map((pos, i) => {
         const { width } = measureText(titles[i], pos.fontSize)
-        return { ...pos, width }                // keep the 240 px height we set
+        return { ...pos, width }
       })
     )
-    const { width: sw, height: sh } = measureText(subtitle, subtitlePositionFrame2.fontSize)
-    const subAR = sw / sh
-    setSubtitlePositionFrame1(prev => ({ ...prev, width: sw, height: sh, aspectRatio: subAR }))
-    setSubtitlePositionFrame2(prev => ({ ...prev, width: sw, height: sh, aspectRatio: subAR }))
+
+    const instrText = 'Instrumento:'
+    const instrMetrics = measureText(instrText, subtitlePositionFrame2.fontSize)
+    const subMetrics = measureText(subtitle, subtitlePositionFrame2.fontSize)
+
+    const subW = Math.max(instrMetrics.width, subMetrics.width)
+    const subH = instrMetrics.height + 8 + subMetrics.height
+
+    setSubtitlePositionFrame1(prev => ({
+      ...prev,
+      width: subW,
+      height: subH,
+      aspectRatio: subW / subH
+    }))
+    setSubtitlePositionFrame2(prev => ({
+      ...prev,
+      width: subW,
+      height: subH,
+      aspectRatio: subW / subH
+    }))
   }
 
   // ─── DRAWING ROUTINES ────────────────────────────────────────────────────────────
@@ -406,30 +422,29 @@ export default function InstagramPostCreator() {
       ctx.restore()
     })
 
-    // ─── STATIC "Instrumento:" + instrument ───────────────────────────
     const tremXsub = (Math.random() - 0.5) * tremblingIntensity
     const tremYsub = (Math.random() - 0.5) * tremblingIntensity
 
     ctx.save()
-    // use AFFAIRS font, same size
+    // move to center of the subtitle box, then rotate
+    ctx.translate(
+      subPos.x + subPos.width/2 + tremXsub,
+      subPos.y + subPos.height/2 + tremYsub
+    )
+    ctx.rotate(subPos.rotation)
+
     ctx.font = `${subPos.fontSize}px "${AFFAIRS}", sans-serif`
     ctx.fillStyle = getContrastColor(backgroundColor)
     ctx.textBaseline = 'top'
     ctx.textAlign = 'left'
 
-    // draw "Instrumento:" at its top-left corner
-    ctx.fillText(
-      'Instrumento:',
-      subPos.x + tremXsub,
-      subPos.y + tremYsub
-    )
+    // draw two lines, offset by half-box
+    const left = -subPos.width/2
+    const top = -subPos.height/2
 
-    // draw the actual instrument name below, with an 8px gap
-    ctx.fillText(
-      subtitle,
-      subPos.x + tremXsub,
-      subPos.y + subPos.fontSize + 8 + tremYsub
-    )
+    ctx.fillText('Instrumento:', left, top)
+    ctx.fillText(subtitle, left, top + subPos.fontSize + 8)
+
     ctx.restore()
   }
 
@@ -515,10 +530,10 @@ export default function InstagramPostCreator() {
 
   const drawAnimatedText = (
     ctx: CanvasRenderingContext2D,
-    moveT: number,        // 0→1 for position/rotation
-    scaleT: number,       // 0→1 for size
-    fromFrame: number,    // 1 or 2
-    toFrame: number       // 1 or 2
+    moveT: number,
+    scaleT: number,
+    fromFrame: number,
+    toFrame: number
   ) => {
     const titlesArr = titles
     const fromPositions = fromFrame === 1 ? titlePositionsFrame1 : titlePositionsFrame2
@@ -554,26 +569,32 @@ export default function InstagramPostCreator() {
       ctx.restore()
     })
 
-    // ——— Subtitle (same logic) ———
-    const sub1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
-    const sub2 = toFrame   === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
-
-    const sx        = sub1.x        + (sub2.x        - sub1.x)        * moveT
-    const sy        = sub1.y        + (sub2.y        - sub1.y)        * moveT
-    const sFontSize = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT
-    const streX     = (Math.random() - 0.5) * tremblingIntensity
-    const streY     = (Math.random() - 0.5) * tremblingIntensity
+    // ——— Subtitle with rotation ———
+    const s1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
+    const s2 = toFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
+    const sx = s1.x + (s2.x - s1.x) * moveT
+    const sy = s1.y + (s2.y - s1.y) * moveT
+    const srot = s1.rotation + (s2.rotation - s1.rotation) * moveT
+    const sFont = s1.fontSize + (s2.fontSize - s1.fontSize) * scaleT
+    const gap = 8 // line gap
 
     ctx.save()
-    // position at the top-left of the animating box
-    ctx.font         = `${sFontSize}px "${AFFAIRS}", sans-serif`
-    ctx.fillStyle    = getContrastColor(backgroundColor)
-    ctx.textBaseline = 'top'
-    ctx.textAlign    = 'left'
+    // center & rotate
+    ctx.translate(sx + s1.width/2, sy + s1.height/2)
+    ctx.rotate(srot)
 
-    // two lines, same as static
-    ctx.fillText('Instrumento:', sx + streX, sy + streY)
-    ctx.fillText(subtitle,      sx + streX, sy + sFontSize + 8 + streY)
+    ctx.font = `${sFont}px "${AFFAIRS}", sans-serif`
+    ctx.fillStyle = getContrastColor(backgroundColor)
+    ctx.textBaseline = 'top'
+    ctx.textAlign = 'left'
+
+    // draw at top-left of the animating box
+    const lx = -s1.width/2
+    const ty = -s1.height/2
+
+    ctx.fillText('Instrumento:', lx, ty)
+    ctx.fillText(subtitle, lx, ty + sFont + gap)
+
     ctx.restore()
   }
 
