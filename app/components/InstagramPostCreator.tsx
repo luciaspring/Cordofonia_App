@@ -6,14 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
-import { RotateCcwIcon } from 'lucide-react'          // we don't need ShareIcon any more
-
-// solid (filled) versions
-import {
-  PlayIcon       as PlaySolid,
-  PauseIcon      as PauseSolid,
-  Cog6ToothIcon  as SettingsSolid,
-} from '@heroicons/react/24/solid'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import BezierEasing from 'bezier-easing'
@@ -1583,12 +1575,17 @@ export default function InstagramPostCreator() {
                 onClick={togglePlay}
                 className={`
                   flex-1 h-12 rounded-full flex items-center justify-center
-                  ${isPlaying ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
-                  active:bg-black active:text-white
-                  transition-colors
+                  ${isPlaying
+                    ? 'bg-black text-white'
+                    : 'bg-gray-200 text-black hover:bg-gray-400'}
+                  active:bg-black active:text-white transition-colors
                 `}
               >
-                {isPlaying ? <PauseSolid className="h-5 w-5" /> : <PlaySolid className="h-5 w-5" />}
+                {isPlaying ? (
+                  <span className="sf-icon text-xl">􀰾</span>   {/* pause.fill */}
+                ) : (
+                  <span className="sf-icon text-xl">􀊄</span>   {/* play.fill */}
+                )}
               </Button>
 
               {/* Settings – 48 px */}
@@ -1596,7 +1593,7 @@ export default function InstagramPostCreator() {
                 onClick={() => setSettingsOpen(true)}
                 className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
               >
-                <SettingsSolid className="h-5 w-5 text-black" />
+                <span className="sf-icon text-xl text-black">􀣌</span>  {/* gearshape.fill */}
               </Button>
 
               {/* Export – 48 px */}
@@ -1604,7 +1601,7 @@ export default function InstagramPostCreator() {
                 onClick={exportVideo}
                 className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
               >
-                <ExportIcon className="h-5 w-5 text-black" />
+                <span className="sf-icon text-xl text-black">􀈂</span>  {/* square.and.arrow.up */}
               </Button>
             </div>
           </div>
