@@ -1521,7 +1521,7 @@ export default function InstagramPostCreator() {
                 /* merged bar takes the place of both buttons */
                 <div className="flex-1 h-12 rounded-none bg-gray-200 overflow-hidden">
                   <div
-                    className="h-full bg-black transition-[width] duration-75"
+                    className="h-full bg-black"
                     style={{ width: `${barProgress * 100}%` }}
                   />
                 </div>
