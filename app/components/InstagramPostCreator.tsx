@@ -1494,7 +1494,7 @@ export default function InstagramPostCreator() {
   // ─── JSX ────────────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-white">
-      <div className="bg-gray-100 p-4 rounded-lg font-ui">
+      <div className="bg-white border border-gray-200 p-4 rounded-lg font-ui">
         {/* widen gap so the new, wider left column sits clear of the frame */}
         <div className="flex space-x-8">
           {/* ─── LEFT PANEL ───────────────────────────────────────── */}
