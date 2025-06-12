@@ -1272,7 +1272,7 @@ export default function InstagramPostCreator() {
       lastDisplayTimeRef.current = timestamp
     }
 
-    setProgressRatio(Math.min(progress / 2.416, 1));   // 2.416 = full-cycle marker
+    setProgressRatio(Math.min(progress / 2.416, 1));   // 2.416 = full cycle
 
     if (isPlaying) animationRef.current = requestAnimationFrame(animate)
   }
@@ -1546,39 +1546,12 @@ export default function InstagramPostCreator() {
                   {!isPlaying && 'Frame 2'}
                 </Button>
 
-                {/* Play / Pause */}
-                <Button
-                  onClick={togglePlay}
-                  className={`
-                    flex-1 h-12 rounded-full flex items-center justify-center
-                    ${isPlaying ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
-                  `}
-                >
-                  {isPlaying ? <PauseIcon className="h-5 w-5" /> : <PlayIcon className="h-5 w-5" />}
-                </Button>
-
-                {/* Settings */}
-                <Button
-                  onClick={() => setSettingsOpen(true)}
-                  className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
-                >
-                  <Settings className="h-5 w-5 text-black" />
-                </Button>
-
-                {/* Export */}
-                <Button
-                  onClick={exportVideo}
-                  className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
-                >
-                  <ShareIcon className="h-5 w-5 text-black" />
-                </Button>
-
-                {/* ─── PROGRESS OVERLAY (only while playing) ─── */}
+                {/* black progress fill */}
                 {isPlaying && (
                   <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                    {/* grey base bar (same colour as buttons) */}
+                    {/* grey base (same colour as buttons) */}
                     <div className="w-full h-full bg-gray-200" />
-                    {/* black growing fill */}
+                    {/* growing fill */}
                     <div
                       className="absolute top-0 left-0 h-full bg-black"
                       style={{ width: `${progressRatio * 100}%` }}
@@ -1586,6 +1559,33 @@ export default function InstagramPostCreator() {
                   </div>
                 )}
               </div>
+
+              {/* ── Play / Pause – fixed 56 px (h & w) ── */}
+              <Button
+                onClick={togglePlay}
+                className={`
+                  w-14 h-12 rounded-full flex items-center justify-center
+                  ${isPlaying ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
+                `}
+              >
+                {isPlaying ? <PauseIcon className="h-5 w-5" /> : <PlayIcon className="h-5 w-5" />}
+              </Button>
+
+              {/* Settings – 48 px */}
+              <Button
+                onClick={() => setSettingsOpen(true)}
+                className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
+              >
+                <Settings className="h-5 w-5 text-black" />
+              </Button>
+
+              {/* Export – 48 px */}
+              <Button
+                onClick={exportVideo}
+                className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
+              >
+                <ShareIcon className="h-5 w-5 text-black" />
+              </Button>
             </div>
           </div>
         </div>
