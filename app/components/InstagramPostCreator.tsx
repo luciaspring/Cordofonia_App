@@ -1528,53 +1528,35 @@ export default function InstagramPostCreator() {
               <div className="flex w-[540px] gap-2 mx-auto">
 
                 {/* ─── Frame buttons + progress track ────────────────────────── */}
-                <div
-                  className={`relative flex flex-1 ${
-                    isPlaying ? 'merge gooey gap-0' : 'gap-2'
-                  }`}
-                >
-                  {/* grey track (shows only while playing) */}
-                  {isPlaying && <div className="absolute inset-0 bg-gray-200" />}
-
-                  {/* black progress fill */}
-                  {isPlaying && (
-                    <div
-                      className="absolute left-0 top-0 h-full bg-black"
-                      style={{ width: `${progressRatio * 100}%`, transition: 'width 60ms linear' }}
-                    />
-                  )}
-
+                <div className={`relative flex flex-1 ${isPlaying ? 'gap-0 goo-parent' : 'gap-2'}`}>
                   {/* Frame 1 */}
                   <Button
-                    ref={frame1Ref}
                     onClick={() => handleFrameChange(1)}
-                    className={`
-                      flex-1 h-12 rounded-none
-                      ${isPlaying
-                        ? 'bg-gray-200 text-transparent cursor-default'
-                        : currentFrame === 1
-                            ? 'bg-black text-white'
-                            : 'bg-gray-200 text-black hover:bg-gray-400'}
-                    `}
+                    className="flex-1 h-12 rounded-none bg-gray-200 text-black"
                   >
                     {!isPlaying && 'Frame 1'}
                   </Button>
 
                   {/* Frame 2 */}
                   <Button
-                    ref={frame2Ref}
                     onClick={() => handleFrameChange(2)}
-                    className={`
-                      flex-1 h-12 rounded-none
-                      ${isPlaying
-                        ? 'bg-gray-200 text-transparent cursor-default'
-                        : currentFrame === 2
-                            ? 'bg-black text-white'
-                            : 'bg-gray-200 text-black hover:bg-gray-400'}
-                    `}
+                    className="flex-1 h-12 rounded-none bg-gray-200 text-black"
                   >
                     {!isPlaying && 'Frame 2'}
                   </Button>
+
+                  {/* ░░ progress fill ░░*/}
+                  {isPlaying && (
+                    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                      {/* base track (grey) – already square because buttons are square */}
+                      <div className="w-full h-full bg-gray-200" />
+                      {/* growing black bar – MUST stay sharp → .no-goo */}
+                      <div
+                        className="absolute top-0 left-0 h-full bg-black no-goo"
+                        style={{ width: `${progressRatio * 100}%` }}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* ─── Play / Pause ───────────────────────────────────────────── */}
@@ -1610,23 +1592,18 @@ export default function InstagramPostCreator() {
         </div>
       </div>
 
-      {/* Gooey filter – one instance globally */}
+      {/* Global gooey filter */}
       <svg className="absolute w-0 h-0 pointer-events-none" aria-hidden>
         <defs>
           <filter id="gooey" colorInterpolationFilters="sRGB">
-            {/* blur the shapes so they bleed into each other */}
-            <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
-            {/* amplify contrast so blurred area turns into a blob */}
-            <feColorMatrix
-              in="blur" mode="matrix"
+            <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur"/>
+            <feColorMatrix in="blur" mode="matrix"
               values="
                 1 0 0 0 0
                 0 1 0 0 0
                 0 0 1 0 0
-                0 0 0 18 -7"
-              result="goo" />
-            {/* clip back to the original rectangles → sharp outer edge */}
-            <feComposite in="goo" in2="SourceGraphic" operator="in" />
+                0 0 0 20 -10" result="goo"/>
+            <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
           </filter>
         </defs>
       </svg>
