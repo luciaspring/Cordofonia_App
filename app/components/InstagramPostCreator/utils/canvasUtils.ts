@@ -76,6 +76,20 @@ export function getRotatedGroupBoundingBox(groupBox: GroupBoundingBox): Point[] 
   })
 }
 
+function drawMultilineText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  fontSize: number,
+  lineHeight: number = fontSize * 1.2
+) {
+  const lines = text.split('\n')
+  lines.forEach((line, index) => {
+    ctx.fillText(line, x, y + (index * lineHeight))
+  })
+}
+
 export function drawCanvas(
   ctx: CanvasRenderingContext2D,
   state: {
@@ -128,7 +142,7 @@ export function drawCanvas(
       ctx.restore()
     })
 
-    // Draw subtitle
+    // Draw subtitle with line breaks
     const subPos1 = state.subtitlePositionFrame1
     const subPos2 = state.subtitlePositionFrame2
     const subX = subPos1.x + (subPos2.x - subPos1.x) * progress
@@ -139,7 +153,16 @@ export function drawCanvas(
     ctx.translate(subX + subPos1.width / 2, subY + subPos1.height / 2)
     ctx.rotate(subRotation)
     ctx.font = `${subPos1.fontSize}px SulSans-Bold`
-    ctx.fillText(state.subtitle, -subPos1.width / 2, -subPos1.height / 2)
+    
+    // Draw multiline text for subtitle
+    drawMultilineText(
+      ctx,
+      state.subtitle,
+      -subPos1.width / 2,
+      -subPos1.height / 2,
+      subPos1.fontSize
+    )
+    
     ctx.restore()
   }
 
@@ -161,8 +184,8 @@ export function drawCanvas(
   state.lines.forEach(line => {
     if (line.frame === state.currentFrame) {
       ctx.beginPath()
-      ctx.moveTo(line.start.x, line.start.y)
-      ctx.lineTo(line.end.x, line.end.y)
+      ctx.moveTo(line.points[0].x, line.points[0].y)
+      ctx.lineTo(line.points[1].x, line.points[1].y)
       ctx.stroke()
     }
   })

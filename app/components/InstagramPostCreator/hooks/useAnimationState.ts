@@ -3,7 +3,7 @@ import { TextPosition, Line } from '../types'
 
 export function useAnimationState() {
   const [titles, setTitles] = useState<string[]>(['John', 'Doe'])
-  const [subtitle, setSubtitle] = useState('Instrumento: Kora')
+  const [subtitle, setSubtitle] = useState('Instrumento:\nKora')
   const [backgroundColor, setBackgroundColor] = useState('#E0B0FF')
   const [currentFrame, setCurrentFrame] = useState(1)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -17,8 +17,8 @@ export function useAnimationState() {
     { x: 40, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 },
     { x: 40, y: 550, width: 1000, height: 200, rotation: 0, fontSize: 180 }
   ])
-  const [subtitlePositionFrame1, setSubtitlePositionFrame1] = useState<TextPosition>({ x: 40, y: 1000, width: 1000, height: 30, rotation: 0, fontSize: 36 })
-  const [subtitlePositionFrame2, setSubtitlePositionFrame2] = useState<TextPosition>({ x: 40, y: 1000, width: 1000, height: 30, rotation: 0, fontSize: 36 })
+  const [subtitlePositionFrame1, setSubtitlePositionFrame1] = useState<TextPosition>({ x: 40, y: 1000, width: 1000, height: 60, rotation: 0, fontSize: 36 })
+  const [subtitlePositionFrame2, setSubtitlePositionFrame2] = useState<TextPosition>({ x: 40, y: 1000, width: 1000, height: 60, rotation: 0, fontSize: 36 })
   const [selectedTexts, setSelectedTexts] = useState<('title1' | 'title2' | 'subtitle')[]>([])
   const [groupRotation, setGroupRotation] = useState(0)
   const [lineThickness, setLineThickness] = useState(2)
