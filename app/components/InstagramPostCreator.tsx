@@ -1570,7 +1570,7 @@ export default function InstagramPostCreator() {
                 )}
               </div>
 
-              {/* ── Play / Pause – fixed 56 px (h & w) ── */}
+              {/* ── Play / Pause – fixed height but flex-1 width ─────────────────── */}
               <Button
                 onClick={togglePlay}
                 className={`
@@ -1582,26 +1582,30 @@ export default function InstagramPostCreator() {
                 `}
               >
                 {isPlaying ? (
-                  <span className="sf-icon text-xl">􀰾</span>   {/* pause.fill */}
+                  /* pause.fill  */
+                  <span className="sf-icon text-xl">􀰾</span>
                 ) : (
-                  <span className="sf-icon text-xl">􀊄</span>   {/* play.fill */}
+                  /* play.fill   */
+                  <span className="sf-icon text-xl">􀊄</span>
                 )}
               </Button>
 
-              {/* Settings – 48 px */}
+              {/* ── Settings – 48 px square ─────────────────────────────────────── */}
               <Button
                 onClick={() => setSettingsOpen(true)}
                 className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
               >
-                <span className="sf-icon text-xl text-black">􀣌</span>  {/* gearshape.fill */}
+                {/* gearshape.fill */}
+                <span className="sf-icon text-xl text-black">􀣌</span>
               </Button>
 
-              {/* Export – 48 px */}
+              {/* ── Export – 48 px square ───────────────────────────────────────── */}
               <Button
                 onClick={exportVideo}
                 className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
               >
-                <span className="sf-icon text-xl text-black">􀈂</span>  {/* square.and.arrow.up */}
+                {/* square.and.arrow.up */}
+                <span className="sf-icon text-xl text-black">􀈂</span>
               </Button>
             </div>
           </div>
