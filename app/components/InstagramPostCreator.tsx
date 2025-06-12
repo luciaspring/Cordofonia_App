@@ -1447,6 +1447,22 @@ export default function InstagramPostCreator() {
   // ─── JSX ────────────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-white">
+      {/* SVG filter definitions */}
+      <svg id="goo-defs">
+        <defs>
+          <filter id="caps-goo">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
+            <feColorMatrix in="blur" mode="matrix"
+              values="
+                1 0 0 0 0
+                0 1 0 0 0
+                0 0 1 0 0
+                0 0 0 18 -7" result="goo"/>
+            <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
+          </filter>
+        </defs>
+      </svg>
+
       <div className="bg-gray-100 p-4 rounded-lg font-ui">
         {/* widen gap so the new, wider left column sits clear of the frame */}
         <div className="flex space-x-8">
@@ -1527,71 +1543,59 @@ export default function InstagramPostCreator() {
               {/* --- bottom controls row ----------------------------------------- */}
               <div className="flex w-[540px] gap-2 mx-auto">
 
-                {/* ─── Frame buttons + progress track ────────────────────────── */}
-                <div
-                  className={`relative flex flex-1 ${
-                    isPlaying ? 'gap-0 goo-wrap' : 'gap-2'
-                  }`}
-                >
-                  {/* Frame 1 */}
-                  <Button
-                    ref={frame1Ref}
-                    onClick={() => handleFrameChange(1)}
-                    className="flex-1 h-12 rounded-none bg-gray-200 text-black"
+                {/* ─── Frame buttons · progress · controls ───────────────── */}
+                <div className="flex w-full items-stretch gap-2">
+                  {/* —— Goo wrapper —— */}
+                  <div
+                    className={`relative flex flex-1 items-stretch ${
+                      isPlaying ? 'gap-0 gooey' : 'gap-2'
+                    }`}
                   >
-                    {!isPlaying && 'Frame 1'}
+                    {/* caps that melt together */}
+                    <Button
+                      ref={frame1Ref}
+                      onClick={() => handleFrameChange(1)}
+                      className="flex-1 h-12 rounded-[6px] bg-gray-200 text-black"
+                    >
+                      {!isPlaying && 'Frame 1'}
+                    </Button>
+                    <Button
+                      ref={frame2Ref}
+                      onClick={() => handleFrameChange(2)}
+                      className="flex-1 h-12 rounded-[6px] bg-gray-200 text-black"
+                    >
+                      {!isPlaying && 'Frame 2'}
+                    </Button>
+
+                    {/* bar overlay sits ON TOP so it stays sharp */}
+                    {isPlaying && (
+                      <div className="absolute inset-0 pointer-events-none">
+                        <div className="w-full h-full bg-gray-200 rounded-[6px]" />
+                        <div
+                          className="absolute top-0 left-0 h-full bg-black rounded-[6px]"
+                          style={{ width: `${progressRatio * 100}%` }}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* play / pause */}
+                  <Button
+                    onClick={togglePlay}
+                    className={`ml-2 w-12 h-12 rounded-full flex items-center justify-center
+                      ${isPlaying ? 'bg-black text-white' : 'bg-gray-200 text-black'}`}
+                  >
+                    {isPlaying ? <PauseIcon className="h-5 w-5" /> : <PlayIcon className="h-5 w-5" />}
                   </Button>
 
-                  {/* Frame 2 */}
-                  <Button
-                    ref={frame2Ref}
-                    onClick={() => handleFrameChange(2)}
-                    className="flex-1 h-12 rounded-none bg-gray-200 text-black"
-                  >
-                    {!isPlaying && 'Frame 2'}
-                  </Button>
+                  {/* settings */}
+                  <Button onClick={() => setSettingsOpen(true)}
+                          className="w-12 h-12 ml-2 bg-gray-200"><Settings className="h-5 w-5"/></Button>
 
-                  {/* progress fill (visible only while playing) */}
-                  {isPlaying && (
-                    <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                      {/* grey base */}
-                      <div className="w-full h-full bg-gray-200" />
-                      {/* growing black bar */}
-                      <div
-                        className="absolute top-0 left-0 h-full bg-black goo-isolated"
-                        style={{ width: `${progressRatio * 100}%` }}
-                      />
-                    </div>
-                  )}
+                  {/* export */}
+                  <Button onClick={exportVideo}
+                          className="w-12 h-12 ml-2 bg-gray-200"><ShareIcon className="h-5 w-5"/></Button>
                 </div>
-
-                {/* ─── Play / Pause ───────────────────────────────────────────── */}
-                <Button
-                  onClick={togglePlay}
-                  className={`
-                    flex-1 h-12 rounded-full flex items-center justify-center
-                    ${isPlaying ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
-                    transition-colors
-                  `}
-                >
-                  {isPlaying ? <PauseIcon className="h-5 w-5" /> : <PlayIcon className="h-5 w-5" />}
-                </Button>
-
-                {/* Settings – 48 px */}
-                <Button
-                  onClick={() => setSettingsOpen(true)}
-                  className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
-                >
-                  <Settings className="h-5 w-5 text-black" />
-                </Button>
-
-                {/* Export – 48 px */}
-                <Button
-                  onClick={exportVideo}
-                  className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
-                >
-                  <ShareIcon className="h-5 w-5 text-black" />
-                </Button>
               </div>
             </div>
           </div>
