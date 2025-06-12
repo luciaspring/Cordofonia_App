@@ -1520,15 +1520,20 @@ export default function InstagramPostCreator() {
                 onMouseLeave={handleMouseUp}
               />
             </div>
+            {/* ─── BUTTON ROW ───────────────────────────────────────────── */}
             <div className="flex w-full gap-2 mx-auto">
+              {/* --- Frame buttons & progress bar ----------------------------------- */}
               <div
-                className={`relative flex gap-2 flex-1 ${isPlaying ? 'merge gooey' : ''}`}
+                /* when merged → no gap, overflow hidden, gooey filter */
+                className={`relative flex items-center ${
+                  isPlaying ? 'gap-0 overflow-hidden gooey' : 'gap-2'
+                } w-[540px]`}   /* width = full track */
               >
                 {/* Frame 1 */}
                 <Button
                   onClick={() => handleFrameChange(1)}
                   className={`
-                    flex-1 h-12 rounded-none
+                    frame-btn flex-1 h-12 rounded-none
                     ${currentFrame === 1 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
                   `}
                 >
@@ -1539,24 +1544,19 @@ export default function InstagramPostCreator() {
                 <Button
                   onClick={() => handleFrameChange(2)}
                   className={`
-                    flex-1 h-12 rounded-none
+                    frame-btn flex-1 h-12 rounded-none
                     ${currentFrame === 2 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
                   `}
                 >
                   {!isPlaying && 'Frame 2'}
                 </Button>
 
-                {/* black progress fill */}
+                {/* Progress fill (z-behind) */}
                 {isPlaying && (
-                  <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                    {/* grey base (same colour as buttons) */}
-                    <div className="w-full h-full bg-gray-200" />
-                    {/* growing fill */}
-                    <div
-                      className="absolute top-0 left-0 h-full bg-black"
-                      style={{ width: `${progressRatio * 100}%` }}
-                    />
-                  </div>
+                  <div
+                    className="absolute left-0 top-0 h-full bg-black transition-[width] duration-75"
+                    style={{ width: `${progressRatio * 100}%` }}
+                  />
                 )}
               </div>
 
