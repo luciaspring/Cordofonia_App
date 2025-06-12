@@ -1564,94 +1564,79 @@ export default function InstagramPostCreator() {
                 onMouseLeave={handleMouseUp}
               />
             </div>
-            <div className="flex w-full gap-2 mx-auto">
-              <div
-                className={`relative flex gap-2 flex-[2] ${isPlaying ? 'merge gooey' : ''}`}
+
+            {/* ─── CONTROL BAR ───────────────────────────────────────── */}
+            <div className="grid grid-cols-4 gap-2 w-full">
+              {/* column-1 ··· Frame 1 */}
+              <Button
+                ref={frame1Ref}
+                onClick={() => handleFrameChange(1)}
+                className={`
+                  h-20 w-full rounded-none
+                  ${currentFrame === 1
+                    ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                    : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
+                `}
               >
-                {/* Frame 1 */}
-                <Button
-                  onClick={() => handleFrameChange(1)}
-                  className={`
-                    flex-1 h-12 rounded-none
-                    ${currentFrame === 1
-                      ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                      : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
-                    }
-                  `}
-                >
-                  {!isPlaying && 'Frame 1'}
-                </Button>
+                {!isPlaying && 'Frame 1'}
+              </Button>
 
-                {/* Frame 2 */}
-                <Button
-                  onClick={() => handleFrameChange(2)}
-                  className={`
-                    flex-1 h-12 rounded-none
-                    ${currentFrame === 2
-                      ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                      : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
-                    }
-                  `}
-                >
-                  {!isPlaying && 'Frame 2'}
-                </Button>
+              {/* column-2 ··· Frame 2 */}
+              <Button
+                ref={frame2Ref}
+                onClick={() => handleFrameChange(2)}
+                className={`
+                  h-20 w-full rounded-none
+                  ${currentFrame === 2
+                    ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                    : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
+                `}
+              >
+                {!isPlaying && 'Frame 2'}
+              </Button>
 
-                {/* black progress fill */}
-                {isPlaying && (
-                  <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                    {/* grey base (same colour as buttons) */}
-                    <div className="w-full h-full bg-gray-200" />
-                    {/* growing fill */}
-                    <div
-                      className="absolute top-0 left-0 h-full bg-black"
-                      style={{ width: `${progressRatio * 100}%` }}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* ── Play / Pause – fixed height but flex-1 width ─────────────────── */}
+              {/* column-3 ··· Play / Pause */}
               <Button
                 onClick={togglePlay}
                 className={`
-                  flex-1 h-12 rounded-full flex items-center justify-center
+                  h-20 w-full rounded-full flex items-center justify-center
                   ${isPlaying
                     ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                    : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
-                  }
+                    : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
                   transition-colors
                 `}
               >
                 {isPlaying
-                  ? <span className="sf-icon text-xl">􀊅</span>
-                  : <span className="sf-icon text-xl">􀊄</span>}
+                  ? <span className="sf-icon text-2xl">􀊅</span>
+                  : <span className="sf-icon text-2xl">􀊄</span>}
               </Button>
 
-              {/* ── Settings – 48 px square ─────────────────────────────────────── */}
-              <Button
-                onClick={() => setSettingsOpen(true)}
-                className="
-                  w-12 h-12 rounded-none
-                  bg-gray-200 text-black
-                  hover:bg-[#9E9E9E] hover:text-black
-                  flex items-center justify-center
-                "
-              >
-                <span className="sf-icon text-xl">􀌆</span>
-              </Button>
+              {/* column-4 ··· Settings & Export (two squares) */}
+              <div className="flex gap-2 h-20 w-full">
+                <Button
+                  onClick={() => setSettingsOpen(true)}
+                  className="
+                    flex-1 aspect-square rounded-none
+                    bg-gray-200 text-black
+                    hover:bg-[#9E9E9E] hover:text-black
+                    flex items-center justify-center
+                  "
+                >
+                  <span className="sf-icon text-2xl">􀌆</span>
+                </Button>
 
-              {/* ── Export – 48 px square ───────────────────────────────────── */}
-              <Button
-                onClick={exportVideo}
-                className="
-                  w-12 h-12 rounded-none
-                  bg-gray-200 text-black
-                  hover:bg-[#9E9E9E] hover:text-black
-                  flex items-center justify-center
-                "
-              >
-                <span className="sf-icon text-xl">􀈂</span>
-              </Button>
+                <Button
+                  onClick={exportVideo}
+                  className="
+                    flex-1 aspect-square rounded-none
+                    bg-gray-200 text-black
+                    hover:bg-[#9E9E9E] hover:text-black
+                    flex items-center justify-center
+                  "
+                >
+                  <span className="sf-icon text-2xl">􀈂</span>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
