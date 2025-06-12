@@ -13,11 +13,21 @@ import {
   PlayIcon       as PlaySolid,
   PauseIcon      as PauseSolid,
   Cog6ToothIcon  as SettingsSolid,
-  ArrowUpTrayIcon as ExportSolid,      //  ← this is the "export/share" glyph
 } from '@heroicons/react/24/solid'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import BezierEasing from 'bezier-easing'
+
+const ExportIcon: React.FC<{ className?: string }> = ({ className = '' }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+  >
+    <path d="M11.47 1.72a.75.75 0 0 1 1.06 0l3 3a.75.75 0 0 1-1.06 1.06l-1.72-1.72V7.5h-1.5V4.06L9.53 5.78a.75.75 0 0 1-1.06-1.06l3-3ZM11.25 7.5V15a.75.75 0 0 0 1.5 0V7.5h3.75a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-9a3 3 0 0 1-3-3v-9a3 3 0 0 1 3-3h3.75Z" />
+  </svg>
+);
 
 const SUL_SANS = 'SulSans-Bold'
 const AFFAIRS = 'Affairs-Regular'
@@ -1594,7 +1604,7 @@ export default function InstagramPostCreator() {
                 onClick={exportVideo}
                 className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
               >
-                <ExportSolid className="h-5 w-5 text-black" />
+                <ExportIcon className="h-5 w-5 text-black" />
               </Button>
             </div>
           </div>
