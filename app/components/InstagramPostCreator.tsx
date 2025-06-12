@@ -1520,10 +1520,10 @@ export default function InstagramPostCreator() {
                 onMouseLeave={handleMouseUp}
               />
             </div>
-            <div className="relative flex w-[540px] gap-2 mx-auto">
-              {/* ───── Frame buttons OR merged progress bar ───── */}
-              <div className={`relative flex gap-2 ${isPlaying ? 'merge gooey' : ''}`}>
-
+            <div className="flex w-full gap-2 mx-auto">
+              <div
+                className={`relative flex gap-2 flex-1 ${isPlaying ? 'merge gooey' : ''}`}
+              >
                 {/* Frame 1 */}
                 <Button
                   onClick={() => handleFrameChange(1)}
