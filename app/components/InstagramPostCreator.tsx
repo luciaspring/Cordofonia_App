@@ -214,6 +214,8 @@ export default function InstagramPostCreator() {
   /* progress (0 → 1) for the merged bar */
   const [progressRatio, setProgressRatio] = useState(0)
 
+  const merged = isPlaying;   // true ⇢ fuse buttons & show bar
+
   // Add these easing functions near the top, after state declarations
   const easeLines = (t: number) =>
     t < 0.5
