@@ -1539,7 +1539,9 @@ export default function InstagramPostCreator() {
                   onClick={() => handleFrameChange(1)}
                   className={`
                     flex-1 h-12 rounded-none
-                    ${currentFrame === 1 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-[#9E9E9E]'}
+                    ${currentFrame === 1
+                      ? 'bg-black text-white'
+                      : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
                   `}
                 >
                   {!isPlaying && 'Frame 1'}
@@ -1550,7 +1552,9 @@ export default function InstagramPostCreator() {
                   onClick={() => handleFrameChange(2)}
                   className={`
                     flex-1 h-12 rounded-none
-                    ${currentFrame === 2 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-[#9E9E9E]'}
+                    ${currentFrame === 2
+                      ? 'bg-black text-white'
+                      : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
                   `}
                 >
                   {!isPlaying && 'Frame 2'}
@@ -1575,35 +1579,32 @@ export default function InstagramPostCreator() {
                 onClick={togglePlay}
                 className={`
                   flex-1 h-12 rounded-full flex items-center justify-center
-                  ${isPlaying ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-[#9E9E9E]'}
-                  active:bg-black active:text-white transition-colors
+                  ${isPlaying
+                    ? 'bg-black text-white'
+                    : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
+                  active:bg-black active:text-white
+                  transition-colors
                 `}
               >
-                {isPlaying ? (
-                  /* pause → 􀊅 */
-                  <span className="sf-icon text-xl">􀊅</span>
-                ) : (
-                  /* play → 􀊄 */
-                  <span className="sf-icon text-xl">􀊄</span>
-                )}
+                {isPlaying
+                  ? <span className="sf-icon text-xl">􀊅</span>
+                  : <span className="sf-icon text-xl">􀊄</span>}
               </Button>
 
               {/* ── Settings – 48 px square ─────────────────────────────────────── */}
               <Button
                 onClick={() => setSettingsOpen(true)}
-                className="w-12 h-12 rounded-none bg-gray-200 hover:bg-[#9E9E9E] flex items-center justify-center"
+                className="w-12 h-12 rounded-none bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black flex items-center justify-center"
               >
-                {/* gearshape → 􀌆 */}
-                <span className="sf-icon text-xl text-black">􀌆</span>
+                <span className="sf-icon text-xl">􀌆</span>
               </Button>
 
               {/* ── Export – 48 px square ───────────────────────────────────── */}
               <Button
                 onClick={exportVideo}
-                className="w-12 h-12 rounded-none bg-gray-200 hover:bg-[#9E9E9E] flex items-center justify-center"
+                className="w-12 h-12 rounded-none bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black flex items-center justify-center"
               >
-                {/* square.and.arrow.up → 􀈂 */}
-                <span className="sf-icon text-xl text-black">􀈂</span>
+                <span className="sf-icon text-xl">􀈂</span>
               </Button>
             </div>
           </div>
