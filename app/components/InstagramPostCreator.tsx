@@ -1565,37 +1565,53 @@ export default function InstagramPostCreator() {
               />
             </div>
 
-            {/* ─── CONTROL BAR ───────────────────────────────────────── */}
-            <div className="grid grid-cols-4 gap-2 w-[540px] mx-auto">
-              {/* ①  Frame 1  */}
-              <Button
-                ref={frame1Ref}
-                onClick={() => handleFrameChange(1)}
-                className={`
-                  w-full h-full rounded-none
-                  ${currentFrame === 1
-                    ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                    : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
-                `}
+            {/* ─── CONTROLS ───────────────────────────────────────────────────────────── */}
+            <div className="grid grid-cols-4 gap-2 w-[540px] mx-auto items-stretch">
+              {/* ──   ①  Frame 1 + Frame 2   (two columns, shows progress bar) ── */}
+              <div
+                className={`relative flex gap-2 col-span-2 ${isPlaying ? 'merge gooey' : ''}`}
               >
-                {!isPlaying && 'Frame 1'}
-              </Button>
+                {/* Frame 1 */}
+                <Button
+                  onClick={() => handleFrameChange(1)}
+                  className={`
+                    w-full h-full rounded-none
+                    ${currentFrame === 1
+                      ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                      : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
+                  `}
+                >
+                  {!isPlaying && 'Frame 1'}
+                </Button>
 
-              {/* ②  Frame 2  */}
-              <Button
-                ref={frame2Ref}
-                onClick={() => handleFrameChange(2)}
-                className={`
-                  w-full h-full rounded-none
-                  ${currentFrame === 2
-                    ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                    : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
-                `}
-              >
-                {!isPlaying && 'Frame 2'}
-              </Button>
+                {/* Frame 2 */}
+                <Button
+                  onClick={() => handleFrameChange(2)}
+                  className={`
+                    w-full h-full rounded-none
+                    ${currentFrame === 2
+                      ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                      : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
+                  `}
+                >
+                  {!isPlaying && 'Frame 2'}
+                </Button>
 
-              {/* ③  Play  */}
+                {/* ── black-fill loading bar ── */}
+                {isPlaying && (
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                    {/* grey base (masks the individual button colours) */}
+                    <div className="w-full h-full bg-gray-200" />
+                    {/* growing black fill */}
+                    <div
+                      className="absolute top-0 left-0 h-full bg-black"
+                      style={{ width: `${progressRatio * 100}%` }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* ──   ②  Play / Pause   ── */}
               <Button
                 onClick={togglePlay}
                 className={`
@@ -1607,12 +1623,13 @@ export default function InstagramPostCreator() {
                 `}
               >
                 {isPlaying
-                  ? <span className="sf-icon text-xl">􀊅</span>
-                  : <span className="sf-icon text-xl">􀊄</span>}
+                  ? <span className="sf-icon text-xl">􀊅</span>  {/* pause */}
+                  : <span className="sf-icon text-xl">􀊄</span>} {/* play  */}
               </Button>
 
-              {/* ④  Two square buttons  */}
+              {/* ──   ③  Settings + Export   (perfect squares)  ── */}
               <div className="grid grid-cols-2 gap-2 w-full">
+                {/* Settings */}
                 <Button
                   onClick={() => setSettingsOpen(true)}
                   className="
@@ -1625,6 +1642,7 @@ export default function InstagramPostCreator() {
                   <span className="sf-icon text-xl">􀌆</span>
                 </Button>
 
+                {/* Export */}
                 <Button
                   onClick={exportVideo}
                   className="
