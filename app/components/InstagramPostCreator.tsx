@@ -6,7 +6,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
-import { PlayIcon, PauseIcon, RotateCcwIcon, ShareIcon, Settings } from 'lucide-react'
+import { RotateCcwIcon, ShareIcon } from 'lucide-react'        // keep the others you still like
+
+// solid (filled) versions
+import {
+  PlayIcon    as PlaySolid,
+  PauseIcon   as PauseSolid,
+  Cog6ToothIcon as SettingsSolid,
+} from '@heroicons/react/24/solid'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import BezierEasing from 'bezier-easing'
@@ -1570,7 +1577,7 @@ export default function InstagramPostCreator() {
                   transition-colors
                 `}
               >
-                {isPlaying ? <PauseIcon className="h-5 w-5" /> : <PlayIcon className="h-5 w-5" />}
+                {isPlaying ? <PauseSolid className="h-5 w-5" /> : <PlaySolid className="h-5 w-5" />}
               </Button>
 
               {/* Settings – 48 px */}
@@ -1578,7 +1585,7 @@ export default function InstagramPostCreator() {
                 onClick={() => setSettingsOpen(true)}
                 className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
               >
-                <Settings className="h-5 w-5 text-black" />
+                <SettingsSolid className="h-5 w-5 text-black" />
               </Button>
 
               {/* Export – 48 px */}
