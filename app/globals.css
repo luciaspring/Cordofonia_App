@@ -1,6 +1,10 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* === Gooey effect ================================================ */
+.gooey       { filter: url(#gooey); }
+
  
 @layer base {
   :root {
