@@ -2,18 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
-/* === Gooey effect =============================================== */
-.gooey { filter: url(#gooey); }
-
-/* === Component tweaks =========================================== */
-@layer components {
-  /* When the two “Frame” buttons fuse into one bar */
-  .merge             { gap: 0 !important; }           /* <— kills the 8 px gap */
-  .merge > button:first-child { @apply rounded-none rounded-l-none; }
-  .merge > button:last-child  { @apply rounded-none rounded-r-none; }
+/* === Gooey helpers =============================================== */
+.gooey {
+  /* the magic filter – declared once in the SVG below          */
+  filter: url(#gooey);
+  -webkit-filter: url(#gooey);      /* Safari / iOS */
 }
 
-/* === Design-token palette & base rules ========================== */
+/* --------------------------------------------------------------- */
+/* everything below is exactly what you already had                */
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -59,7 +56,9 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
   }
+}
 
+@layer base {
   *   { @apply border-border; }
   body{ @apply bg-background text-foreground; }
 }
