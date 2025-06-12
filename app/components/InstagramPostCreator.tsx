@@ -338,19 +338,7 @@ export default function InstagramPostCreator() {
       }
     }
 
-    setTitlePositionsFrame1(prev =>
-      prev.map((pos, i) => {
-        const { width } = measureText(titles[i], pos.fontSize)
-        return { ...pos, width }
-      })
-    )
-    setTitlePositionsFrame2(prev =>
-      prev.map((pos, i) => {
-        const { width } = measureText(titles[i], pos.fontSize)
-        return { ...pos, width }
-      })
-    )
-
+    // Remove title width updates to keep fixed widths
     const instrText = 'Instrumento:'
     const instrMetrics = measureText(instrText, subtitlePositionFrame2.fontSize)
     const subMetrics = measureText(subtitle, subtitlePositionFrame2.fontSize)
@@ -417,12 +405,13 @@ export default function InstagramPostCreator() {
       const tremX = (Math.random() - 0.5) * tremblingIntensity
       const tremY = (Math.random() - 0.5) * tremblingIntensity
       ctx.save()
-      ctx.translate(pos.x + pos.width/2 + tremX, pos.y + pos.height/2 + tremY)
+      // draw flush-left at pos.x (plus any tremble)
+      ctx.translate(pos.x + tremX, pos.y + pos.height/2 + tremY)
       ctx.rotate(pos.rotation)
       ctx.font = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`
       ctx.fillStyle = getContrastColor(backgroundColor)
       ctx.textBaseline = 'middle'
-      ctx.textAlign = 'center'
+      ctx.textAlign = 'left'
       ctx.fillText(titles[idx], 0, 0)
       ctx.restore()
     })
@@ -431,25 +420,13 @@ export default function InstagramPostCreator() {
     const tremYsub = (Math.random() - 0.5) * tremblingIntensity
 
     ctx.save()
-    // move to center of the subtitle box, then rotate
-    ctx.translate(
-      subPos.x + subPos.width/2 + tremXsub,
-      subPos.y + subPos.height/2 + tremYsub
-    )
+    ctx.translate(subPos.x + tremXsub, subPos.y + subPos.height/2 + tremYsub)
     ctx.rotate(subPos.rotation)
-
     ctx.font = `${subPos.fontSize}px "${AFFAIRS}", sans-serif`
     ctx.fillStyle = getContrastColor(backgroundColor)
-    ctx.textBaseline = 'top'
+    ctx.textBaseline = 'middle'
     ctx.textAlign = 'left'
-
-    // draw two lines, offset by half-box
-    const left = -subPos.width/2
-    const top = -subPos.height/2
-
-    ctx.fillText('Instrumento:', left, top)
-    ctx.fillText(subtitle, left, top + subPos.fontSize + 8)
-
+    ctx.fillText(subtitle, 0, 0)
     ctx.restore()
   }
 
