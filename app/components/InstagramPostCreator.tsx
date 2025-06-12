@@ -1509,12 +1509,12 @@ export default function InstagramPostCreator() {
               <Input
                 value={titles[0]}
                 onChange={e => setTitles([e.target.value, titles[1]])}
-                className="h-9 text-[15px]"
+                className="w-full h-9 text-[15px] text-left"
               />
               <Input
                 value={titles[1]}
                 onChange={e => setTitles([titles[0], e.target.value])}
-                className="h-9 text-[15px]"
+                className="w-full h-9 text-[15px] text-left"
               />
             </FieldGroup>
 
