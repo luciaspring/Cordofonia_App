@@ -1522,72 +1522,75 @@ export default function InstagramPostCreator() {
             </div>
             {/* ─── BUTTON ROW ───────────────────────────────────────────── */}
             <div className="flex w-full gap-2 mx-auto">
-              {/* --- Frame buttons & progress bar ----------------------------------- */}
-              <div
-                /* when merged → no gap, overflow hidden, gooey filter */
-                className={`relative flex items-center ${
-                  isPlaying ? 'gap-0 overflow-hidden gooey' : 'gap-2'
-                } w-[540px]`}   /* width = full track */
-              >
-                {/* Frame 1 */}
+              {/* --- bottom controls row ----------------------------------------- */}
+              <div className="flex w-[540px] gap-2 mx-auto">
+
+                {/* ─── Frame buttons + progress track ────────────────────────── */}
+                <div
+                  className={`relative flex ${merged ? 'gap-0 gooey overflow-hidden flex-1' : 'gap-2 flex-1'}`}
+                >
+                  {/* grey track (shows only while playing) */}
+                  {merged && <div className="absolute inset-0 bg-gray-200" />}
+
+                  {/* black progress fill */}
+                  {merged && (
+                    <div
+                      className="absolute left-0 top-0 h-full bg-black"
+                      style={{ width: `${progressRatio * 100}%`, transition: 'width 60ms linear' }}
+                    />
+                  )}
+
+                  {/* Frame 1 button */}
+                  <Button
+                    onClick={() => handleFrameChange(1)}
+                    className={`
+                      flex-1 h-12 rounded-none relative
+                      ${currentFrame === 1 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
+                    `}
+                  >
+                    {!merged && 'Frame 1'}
+                  </Button>
+
+                  {/* Frame 2 button */}
+                  <Button
+                    onClick={() => handleFrameChange(2)}
+                    className={`
+                      flex-1 h-12 rounded-none relative
+                      ${currentFrame === 2 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
+                    `}
+                  >
+                    {!merged && 'Frame 2'}
+                  </Button>
+                </div>
+
+                {/* ─── Play / Pause ───────────────────────────────────────────── */}
                 <Button
-                  onClick={() => handleFrameChange(1)}
+                  onClick={togglePlay}
                   className={`
-                    frame-btn flex-1 h-12 rounded-none
-                    ${currentFrame === 1 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
+                    flex-1 h-12 rounded-full flex items-center justify-center
+                    ${isPlaying ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
+                    transition-colors
                   `}
                 >
-                  {!isPlaying && 'Frame 1'}
+                  {isPlaying ? <PauseIcon className="h-5 w-5" /> : <PlayIcon className="h-5 w-5" />}
                 </Button>
 
-                {/* Frame 2 */}
+                {/* Settings – 48 px */}
                 <Button
-                  onClick={() => handleFrameChange(2)}
-                  className={`
-                    frame-btn flex-1 h-12 rounded-none
-                    ${currentFrame === 2 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
-                  `}
+                  onClick={() => setSettingsOpen(true)}
+                  className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
                 >
-                  {!isPlaying && 'Frame 2'}
+                  <Settings className="h-5 w-5 text-black" />
                 </Button>
 
-                {/* Progress fill (z-behind) */}
-                {isPlaying && (
-                  <div
-                    className="absolute left-0 top-0 h-full bg-black transition-[width] duration-75"
-                    style={{ width: `${progressRatio * 100}%` }}
-                  />
-                )}
+                {/* Export – 48 px */}
+                <Button
+                  onClick={exportVideo}
+                  className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
+                >
+                  <ShareIcon className="h-5 w-5 text-black" />
+                </Button>
               </div>
-
-              {/* ── Play / Pause – fixed 56 px (h & w) ── */}
-              <Button
-                onClick={togglePlay}
-                className={`
-                  flex-1 h-12 rounded-full flex items-center justify-center
-                  ${isPlaying ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
-                  active:bg-black active:text-white
-                  transition-colors
-                `}
-              >
-                {isPlaying ? <PauseIcon className="h-5 w-5" /> : <PlayIcon className="h-5 w-5" />}
-              </Button>
-
-              {/* Settings – 48 px */}
-              <Button
-                onClick={() => setSettingsOpen(true)}
-                className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
-              >
-                <Settings className="h-5 w-5 text-black" />
-              </Button>
-
-              {/* Export – 48 px */}
-              <Button
-                onClick={exportVideo}
-                className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
-              >
-                <ShareIcon className="h-5 w-5 text-black" />
-              </Button>
             </div>
           </div>
         </div>
