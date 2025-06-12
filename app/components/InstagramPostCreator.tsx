@@ -1539,7 +1539,7 @@ export default function InstagramPostCreator() {
                   onClick={() => handleFrameChange(1)}
                   className={`
                     flex-1 h-12 rounded-none
-                    ${currentFrame === 1 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
+                    ${currentFrame === 1 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-[#9E9E9E]'}
                   `}
                 >
                   {!isPlaying && 'Frame 1'}
@@ -1550,7 +1550,7 @@ export default function InstagramPostCreator() {
                   onClick={() => handleFrameChange(2)}
                   className={`
                     flex-1 h-12 rounded-none
-                    ${currentFrame === 2 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
+                    ${currentFrame === 2 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-[#9E9E9E]'}
                   `}
                 >
                   {!isPlaying && 'Frame 2'}
@@ -1575,9 +1575,7 @@ export default function InstagramPostCreator() {
                 onClick={togglePlay}
                 className={`
                   flex-1 h-12 rounded-full flex items-center justify-center
-                  ${isPlaying
-                    ? 'bg-black text-white'
-                    : 'bg-gray-200 text-black hover:bg-gray-400'}
+                  ${isPlaying ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-[#9E9E9E]'}
                   active:bg-black active:text-white transition-colors
                 `}
               >
@@ -1593,7 +1591,7 @@ export default function InstagramPostCreator() {
               {/* ── Settings – 48 px square ─────────────────────────────────────── */}
               <Button
                 onClick={() => setSettingsOpen(true)}
-                className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
+                className="w-12 h-12 rounded-none bg-gray-200 hover:bg-[#9E9E9E] flex items-center justify-center"
               >
                 {/* gearshape → 􀌆 */}
                 <span className="sf-icon text-xl text-black">􀌆</span>
@@ -1602,7 +1600,7 @@ export default function InstagramPostCreator() {
               {/* ── Export – 48 px square ───────────────────────────────────── */}
               <Button
                 onClick={exportVideo}
-                className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
+                className="w-12 h-12 rounded-none bg-gray-200 hover:bg-[#9E9E9E] flex items-center justify-center"
               >
                 {/* square.and.arrow.up → 􀈂 */}
                 <span className="sf-icon text-xl text-black">􀈂</span>
