@@ -1582,10 +1582,10 @@ export default function InstagramPostCreator() {
                 `}
               >
                 {isPlaying ? (
-                  /* pause.fill  */
-                  <span className="sf-icon text-xl">􀰾</span>
+                  /* pause → 􀊅 */
+                  <span className="sf-icon text-xl">􀊅</span>
                 ) : (
-                  /* play.fill   */
+                  /* play → 􀊄 */
                   <span className="sf-icon text-xl">􀊄</span>
                 )}
               </Button>
@@ -1595,16 +1595,16 @@ export default function InstagramPostCreator() {
                 onClick={() => setSettingsOpen(true)}
                 className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
               >
-                {/* gearshape.fill */}
-                <span className="sf-icon text-xl text-black">􀣌</span>
+                {/* gearshape → 􀌆 */}
+                <span className="sf-icon text-xl text-black">􀌆</span>
               </Button>
 
-              {/* ── Export – 48 px square ───────────────────────────────────────── */}
+              {/* ── Export – 48 px square ───────────────────────────────────── */}
               <Button
                 onClick={exportVideo}
                 className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
               >
-                {/* square.and.arrow.up */}
+                {/* square.and.arrow.up → 􀈂 */}
                 <span className="sf-icon text-xl text-black">􀈂</span>
               </Button>
             </div>
