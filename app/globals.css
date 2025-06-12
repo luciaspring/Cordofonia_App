@@ -72,3 +72,35 @@
   * { @apply border-border; }
   body { @apply bg-background text-foreground; }
 }
+
+/* Custom hover colors for buttons */
+@layer components {
+  .btn-hover-grey:hover {
+    background-color: #9E9E9E !important;
+  }
+  
+  /* Override shadcn/ui button hover states */
+  .hover\:bg-secondary:hover {
+    background-color: #9E9E9E !important;
+  }
+  
+  .hover\:bg-primary\/90:hover {
+    background-color: #9E9E9E !important;
+  }
+  
+  .hover\:bg-accent:hover {
+    background-color: #9E9E9E !important;
+  }
+  
+  /* For buttons with black backgrounds */
+  .bg-black:hover,
+  .bg-primary:hover {
+    background-color: #9E9E9E !important;
+  }
+  
+  /* For buttons with grey/secondary backgrounds */
+  .bg-secondary:hover,
+  .bg-muted:hover {
+    background-color: #9E9E9E !important;
+  }
+}
