@@ -1610,27 +1610,23 @@ export default function InstagramPostCreator() {
         </div>
       </div>
 
-      {/* ─── Gooey filter, once per app ─── */}
+      {/* Gooey filter – one instance globally */}
       <svg className="absolute w-0 h-0 pointer-events-none" aria-hidden>
         <defs>
-          <filter id="gooey">
-            {/* ① more blur */}
+          <filter id="gooey" colorInterpolationFilters="sRGB">
+            {/* blur the shapes so they bleed into each other */}
             <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
-
-            {/* ② high-contrast colour-matrix */}
+            {/* amplify contrast so blurred area turns into a blob */}
             <feColorMatrix
-              in="blur"
-              mode="matrix"
+              in="blur" mode="matrix"
               values="
                 1 0 0 0 0
                 0 1 0 0 0
                 0 0 1 0 0
                 0 0 0 18 -7"
-              result="goo"
-            />
-
-            {/* ③ composite back the originals (keeps crisp edges) */}
-            <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+              result="goo" />
+            {/* clip back to the original rectangles → sharp outer edge */}
+            <feComposite in="goo" in2="SourceGraphic" operator="in" />
           </filter>
         </defs>
       </svg>
