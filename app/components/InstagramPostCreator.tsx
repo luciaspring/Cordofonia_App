@@ -1243,36 +1243,33 @@ export default function InstagramPostCreator() {
   const animate = (timestamp: number) => {
     if (!startTimeRef.current) startTimeRef.current = timestamp
     const elapsed = timestamp - startTimeRef.current
+    const msPerBase = 1000 / baseFps
+    let progress = (elapsed / (msPerBase * 150))
 
-    // Use baseFps for internal timing
-    const msPerBaseFrame = 1000 / baseFps
-    const normalized = elapsed / (msPerBaseFrame * 150)
-    let progress = normalized
-
-    if (progress > 2.416) {      // was 2.25 or 2.15
+    /* ── loop handling ─────────────────────────── */
+    if (progress >= PROGRESS_END) {
       if (isLooping) {
+        // restart immediately
         startTimeRef.current = timestamp
-        progress = 0
+        progress = 0                  // ← first frame of new cycle
+        setBarProgress(0)             // ① instantly hide the black bar
       } else {
         setIsPlaying(false)
+        setBarProgress(1)             // keep bar filled at the very end
         return
       }
+    } else {
+      /* normal progress update */
+      setBarProgress(progress / PROGRESS_END)   // ② animate bar
     }
 
-    // Throttle visible updates to mimic stop-motion
+    /* Throttled canvas draw (unchanged) */
     if (timestamp - lastDisplayTimeRef.current >= 1000 / frameRate) {
       drawCanvas(progress)
-      
-      /* new – drive bar directly from the same "progress" you pass to drawCanvas */
-      setBarProgress(Math.min(progress, PROGRESS_END) / PROGRESS_END)
-      
       lastDisplayTimeRef.current = timestamp
     }
 
-    // Only continue if still playing
-    if (isPlaying) {
-      animationRef.current = requestAnimationFrame(animate)
-    }
+    if (isPlaying) animationRef.current = requestAnimationFrame(animate)
   }
 
   const drawAnimatedContent = (ctx: CanvasRenderingContext2D, p: number) => {
@@ -1522,17 +1519,9 @@ export default function InstagramPostCreator() {
               {/* ───── Frame buttons OR merged progress bar ───── */}
               {isPlaying ? (
                 /* merged bar takes the place of both buttons */
-                <div
-                  className="
-                    flex-[2]              /* width of the two buttons together   */
-                    h-12 rounded-none
-                    bg-gray-200           /* same idle colour                   */
-                    relative overflow-hidden
-                  "
-                >
-                  {/* progress overlay */}
+                <div className="flex-1 h-12 rounded-none bg-gray-200 overflow-hidden">
                   <div
-                    className="absolute inset-y-0 left-0 bg-black transition-[width]"
+                    className="h-full bg-black transition-[width] duration-75"
                     style={{ width: `${barProgress * 100}%` }}
                   />
                 </div>
