@@ -338,19 +338,7 @@ export default function InstagramPostCreator() {
       }
     }
 
-    setTitlePositionsFrame1(prev =>
-      prev.map((pos, i) => {
-        const { width } = measureText(titles[i], pos.fontSize)
-        return { ...pos, width }
-      })
-    )
-    setTitlePositionsFrame2(prev =>
-      prev.map((pos, i) => {
-        const { width } = measureText(titles[i], pos.fontSize)
-        return { ...pos, width }
-      })
-    )
-
+    // Remove title width updates to keep fixed widths
     const instrText = 'Instrumento:'
     const instrMetrics = measureText(instrText, subtitlePositionFrame2.fontSize)
     const subMetrics = measureText(subtitle, subtitlePositionFrame2.fontSize)
@@ -417,12 +405,12 @@ export default function InstagramPostCreator() {
       const tremX = (Math.random() - 0.5) * tremblingIntensity
       const tremY = (Math.random() - 0.5) * tremblingIntensity
       ctx.save()
-      ctx.translate(pos.x + pos.width/2 + tremX, pos.y + pos.height/2 + tremY)
+      ctx.translate(pos.x + tremX, pos.y + pos.height / 2 + tremY) // left anchor
       ctx.rotate(pos.rotation)
-      ctx.font = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`
-      ctx.fillStyle = getContrastColor(backgroundColor)
+      ctx.font         = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`
+      ctx.fillStyle    = getContrastColor(backgroundColor)
       ctx.textBaseline = 'middle'
-      ctx.textAlign = 'center'
+      ctx.textAlign    = 'left'
       ctx.fillText(titles[idx], 0, 0)
       ctx.restore()
     })
@@ -431,25 +419,13 @@ export default function InstagramPostCreator() {
     const tremYsub = (Math.random() - 0.5) * tremblingIntensity
 
     ctx.save()
-    // move to center of the subtitle box, then rotate
-    ctx.translate(
-      subPos.x + subPos.width/2 + tremXsub,
-      subPos.y + subPos.height/2 + tremYsub
-    )
+    ctx.translate(subPos.x + tremXsub, subPos.y + subPos.height/2 + tremYsub)
     ctx.rotate(subPos.rotation)
-
     ctx.font = `${subPos.fontSize}px "${AFFAIRS}", sans-serif`
     ctx.fillStyle = getContrastColor(backgroundColor)
-    ctx.textBaseline = 'top'
+    ctx.textBaseline = 'middle'
     ctx.textAlign = 'left'
-
-    // draw two lines, offset by half-box
-    const left = -subPos.width/2
-    const top = -subPos.height/2
-
-    ctx.fillText('Instrumento:', left, top)
-    ctx.fillText(subtitle, left, top + subPos.fontSize + 8)
-
+    ctx.fillText(subtitle, 0, 0)
     ctx.restore()
   }
 
@@ -560,46 +536,39 @@ export default function InstagramPostCreator() {
       const tremX = (Math.random() - 0.5) * tremblingIntensity
       const tremY = (Math.random() - 0.5) * tremblingIntensity
 
-      // 4) DRAW with dynamic center based on scale
-      const dynW = p1.width  + (p2.width  - p1.width)  * scaleT
+      // 4) DRAW left-aligned at the same x-pivot as static text
       const dynH = p1.height + (p2.height - p1.height) * scaleT
       ctx.save()
-      ctx.translate(x + dynW/2 + tremX, y + dynH/2 + tremY)
+      ctx.translate(x + tremX, y + dynH/2 + tremY)
       ctx.rotate(rotation)
-      ctx.font = `bold ${fontSize}px "${SUL_SANS}", sans-serif`
+      ctx.font         = `bold ${fontSize}px "${SUL_SANS}", sans-serif`
       ctx.fillStyle    = getContrastColor(backgroundColor)
       ctx.textBaseline = 'middle'
-      ctx.textAlign    = 'center'
+      ctx.textAlign    = 'left'
       ctx.fillText(text, 0, 0)
       ctx.restore()
     })
 
-    // ——— Subtitle with rotation ———
-    const s1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
-    const s2 = toFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
-    const sx = s1.x + (s2.x - s1.x) * moveT
-    const sy = s1.y + (s2.y - s1.y) * moveT
-    const srot = s1.rotation + (s2.rotation - s1.rotation) * moveT
-    const sFont = s1.fontSize + (s2.fontSize - s1.fontSize) * scaleT
-    const gap = 8 // line gap
+    // ——— Subtitle (same logic) ———
+    const sub1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
+    const sub2 = toFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
 
+    const sx        = sub1.x + (sub2.x - sub1.x) * moveT
+    const sy        = sub1.y + (sub2.y - sub1.y) * moveT
+    const srot      = sub1.rotation + (sub2.rotation - sub1.rotation) * moveT
+    const sFontSize = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT
+    const streX     = (Math.random() - 0.5) * tremblingIntensity
+    const streY     = (Math.random() - 0.5) * tremblingIntensity
+
+    const dynSH = sub1.height + (sub2.height - sub1.height) * scaleT
     ctx.save()
-    // center & rotate
-    ctx.translate(sx + s1.width/2, sy + s1.height/2)
+    ctx.translate(sx + streX, sy + dynSH/2 + streY)
     ctx.rotate(srot)
-
-    ctx.font = `${sFont}px "${AFFAIRS}", sans-serif`
-    ctx.fillStyle = getContrastColor(backgroundColor)
-    ctx.textBaseline = 'top'
-    ctx.textAlign = 'left'
-
-    // draw at top-left of the animating box
-    const lx = -s1.width/2
-    const ty = -s1.height/2
-
-    ctx.fillText('Instrumento:', lx, ty)
-    ctx.fillText(subtitle, lx, ty + sFont + gap)
-
+    ctx.font         = `${sFontSize}px "${AFFAIRS}", sans-serif`
+    ctx.fillStyle    = getContrastColor(backgroundColor)
+    ctx.textBaseline = 'middle'
+    ctx.textAlign    = 'left'
+    ctx.fillText(subtitle, 0, 0)
     ctx.restore()
   }
 
@@ -1494,7 +1463,7 @@ export default function InstagramPostCreator() {
   // ─── JSX ────────────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-white">
-      <div className="bg-gray-100 p-4 rounded-lg font-ui">
+      <div className="bg-white border border-gray-200 p-4 rounded-lg font-ui">
         {/* widen gap so the new, wider left column sits clear of the frame */}
         <div className="flex space-x-8">
           {/* ─── LEFT PANEL ───────────────────────────────────────── */}
@@ -1509,12 +1478,12 @@ export default function InstagramPostCreator() {
               <Input
                 value={titles[0]}
                 onChange={e => setTitles([e.target.value, titles[1]])}
-                className="h-9 text-[15px]"
+                className="w-full h-9 text-[15px] text-left"
               />
               <Input
                 value={titles[1]}
                 onChange={e => setTitles([titles[0], e.target.value])}
-                className="h-9 text-[15px]"
+                className="w-full h-9 text-[15px] text-left"
               />
             </FieldGroup>
 
@@ -1870,6 +1839,5 @@ export default function InstagramPostCreator() {
     </div>
   )
 }
-
 
 
