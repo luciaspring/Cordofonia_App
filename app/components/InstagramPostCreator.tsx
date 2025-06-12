@@ -1565,12 +1565,12 @@ export default function InstagramPostCreator() {
               />
             </div>
 
-            {/* ─── CONTROLS ───────────────────────────────────────────────────────────── */}
+            {/* ─── CONTROLS ROW (exactly 540 px wide) ─────────────────────────────── */}
             <div className="grid grid-cols-4 gap-2 w-[540px] mx-auto items-stretch">
-              {/* ──   ①  Frame 1 + Frame 2   (two columns, shows progress bar) ── */}
-              <div
-                className={`relative flex gap-2 col-span-2 ${isPlaying ? 'merge gooey' : ''}`}
-              >
+
+              {/* ───────────────────  ①  Frame buttons  (2 columns)  ─────────────────── */}
+              <div className={`relative flex gap-2 col-span-2 ${isPlaying ? 'merge gooey' : ''}`}>
+
                 {/* Frame 1 */}
                 <Button
                   onClick={() => handleFrameChange(1)}
@@ -1597,12 +1597,10 @@ export default function InstagramPostCreator() {
                   {!isPlaying && 'Frame 2'}
                 </Button>
 
-                {/* ── black-fill loading bar ── */}
+                {/* progress fill (unchanged) */}
                 {isPlaying && (
                   <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                    {/* grey base (masks the individual button colours) */}
                     <div className="w-full h-full bg-gray-200" />
-                    {/* growing black fill */}
                     <div
                       className="absolute top-0 left-0 h-full bg-black"
                       style={{ width: `${progressRatio * 100}%` }}
@@ -1611,7 +1609,7 @@ export default function InstagramPostCreator() {
                 )}
               </div>
 
-              {/* ──   ②  Play / Pause   ── */}
+              {/* ───────────────────  ②  Play / Pause  (1 column)  ─────────────────── */}
               <Button
                 onClick={togglePlay}
                 className={`
@@ -1622,12 +1620,14 @@ export default function InstagramPostCreator() {
                   transition-colors
                 `}
               >
-                {isPlaying
-                  ? <span className="sf-icon text-xl">􀊅</span>  {/* pause */}
-                  : <span className="sf-icon text-xl">􀊄</span>} {/* play  */}
+                {isPlaying ? (
+                  <span className="sf-icon text-xl">􀊅</span>  // pause
+                ) : (
+                  <span className="sf-icon text-xl">􀊄</span>  // play
+                )}
               </Button>
 
-              {/* ──   ③  Settings + Export   (perfect squares)  ── */}
+              {/* ───────────────────  ③  Settings + Export  (1 column, 2 squares)  ─────────────────── */}
               <div className="grid grid-cols-2 gap-2 w-full">
                 {/* Settings */}
                 <Button
