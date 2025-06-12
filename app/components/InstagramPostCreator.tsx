@@ -83,7 +83,7 @@ const lineEase = BezierEasing(0.83, 0, 0.17, 1)
 const textEase = BezierEasing(0.95, 0, 0.05, 1)
 
 // Progress value when the on-screen action is really done
-const PROGRESS_END = 2.182             // = revMoveEnd in drawAnimatedContent
+const PROGRESS_END = 2.416    //  full cycle length – keep in sync with drawAnimatedContent()
 
 // 16 px inner margin → text block must be centred on (16 + blockWidth / 2)
 const Wt = 600         // title block width (keeps both lines flush-left)
@@ -1274,7 +1274,7 @@ export default function InstagramPostCreator() {
       lastDisplayTimeRef.current = timestamp
     }
 
-    setProgressRatio(Math.min(progress / 2.416, 1));   // 2.416 = full cycle
+    setProgressRatio(progress / PROGRESS_END);   // 0 → 1 over the whole cycle
 
     if (isPlaying) animationRef.current = requestAnimationFrame(animate)
   }
@@ -1544,23 +1544,33 @@ export default function InstagramPostCreator() {
                     />
                   )}
 
-                  {/* Frame 1 button */}
+                  {/* Frame 1 */}
                   <Button
+                    ref={frame1Ref}
                     onClick={() => handleFrameChange(1)}
                     className={`
-                      flex-1 h-12 rounded-none relative
-                      ${currentFrame === 1 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
+                      flex-1 h-12 rounded-none
+                      ${isPlaying
+                        ? 'bg-gray-200 text-transparent cursor-default'
+                        : currentFrame === 1
+                            ? 'bg-black text-white'
+                            : 'bg-gray-200 text-black hover:bg-gray-400'}
                     `}
                   >
                     {!isPlaying && 'Frame 1'}
                   </Button>
 
-                  {/* Frame 2 button */}
+                  {/* Frame 2 */}
                   <Button
+                    ref={frame2Ref}
                     onClick={() => handleFrameChange(2)}
                     className={`
-                      flex-1 h-12 rounded-none relative
-                      ${currentFrame === 2 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
+                      flex-1 h-12 rounded-none
+                      ${isPlaying
+                        ? 'bg-gray-200 text-transparent cursor-default'
+                        : currentFrame === 2
+                            ? 'bg-black text-white'
+                            : 'bg-gray-200 text-black hover:bg-gray-400'}
                     `}
                   >
                     {!isPlaying && 'Frame 2'}
