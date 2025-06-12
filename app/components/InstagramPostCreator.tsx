@@ -1517,68 +1517,43 @@ export default function InstagramPostCreator() {
             </div>
             <div className="relative flex w-[540px] gap-2 mx-auto">
               {/* ───── Frame buttons OR merged progress bar ───── */}
-              {isPlaying ? (
-                /* merged bar takes the place of both buttons */
-                <div className="flex-1 h-12 rounded-none bg-gray-200 overflow-hidden">
-                  <div
-                    className="h-full bg-black"
-                    style={{ width: `${barProgress * 100}%` }}
-                  />
-                </div>
-              ) : (
-                <>
-                  {/* Frame 1 button */}
-                  <Button
-                    onClick={() => handleFrameChange(1)}
-                    className={`
-                      flex-1 h-12 rounded-none
-                      ${currentFrame === 1
-                        ? 'bg-black text-white'
-                        : 'bg-gray-200 text-black hover:bg-gray-400'}
-                    `}
-                  >
-                    Frame 1
-                  </Button>
+              <div className={`flex gap-2 gooey ${isPlaying ? 'merge' : ''}`}>
+                {/* Frame 1 */}
+                <Button
+                  onClick={() => handleFrameChange(1)}
+                  className={`
+                    frame-btn flex-1 h-12 rounded-none
+                    ${currentFrame === 1 ? 'bg-gray-300 text-black' : 'bg-gray-200 text-black'}
+                  `}
+                >
+                  {!isPlaying && 'Frame 1'}
+                  {isPlaying && (
+                    <div className="h-full bg-black" style={{ width: `${barProgress * 100}%` }} />
+                  )}
+                </Button>
 
-                  {/* Frame 2 button */}
-                  <Button
-                    onClick={() => handleFrameChange(2)}
-                    className={`
-                      flex-1 h-12 rounded-none
-                      ${currentFrame === 2
-                        ? 'bg-black text-white'
-                        : 'bg-gray-200 text-black hover:bg-gray-400'}
-                    `}
-                  >
-                    Frame 2
-                  </Button>
-                </>
-              )}
+                {/* Frame 2 */}
+                <Button
+                  onClick={() => handleFrameChange(2)}
+                  className={`
+                    frame-btn flex-1 h-12 rounded-none
+                    ${currentFrame === 2 ? 'bg-gray-300 text-black' : 'bg-gray-200 text-black'}
+                  `}
+                >
+                  {!isPlaying && 'Frame 2'}
+                </Button>
+              </div>
 
               {/* Play / Pause */}
-              {isPlaying ? (
-                <Button
-                  onClick={togglePlay}
-                  className={`
-                    flex-1 h-12 rounded-full flex items-center justify-center
-                    ${isPlaying ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
-                    transition-colors
-                  `}
-                >
-                  <PauseIcon className="h-5 w-5" />
-                </Button>
-              ) : (
-                <Button
-                  onClick={togglePlay}
-                  className={`
-                    flex-1 h-12 rounded-full flex items-center justify-center
-                    ${isPlaying ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
-                    transition-colors
-                  `}
-                >
-                  <PlayIcon className="h-5 w-5" />
-                </Button>
-              )}
+              <Button
+                onClick={togglePlay}
+                className={`
+                  flex-1 h-12 rounded-full flex items-center justify-center
+                  ${isPlaying ? 'bg-black text-white' : 'bg-gray-200 text-black'}
+                `}
+              >
+                {isPlaying ? <PauseIcon className="h-5 w-5" /> : <PlayIcon className="h-5 w-5" />}
+              </Button>
 
               {/* Settings */}
               <Button
