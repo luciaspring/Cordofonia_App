@@ -1528,9 +1528,14 @@ export default function InstagramPostCreator() {
               <div className="flex w-[540px] gap-2 mx-auto">
 
                 {/* ─── Frame buttons + progress track ────────────────────────── */}
-                <div className={`relative flex flex-1 ${isPlaying ? 'gap-0 goo-parent' : 'gap-2'}`}>
+                <div
+                  className={`relative flex flex-1 ${
+                    isPlaying ? 'gap-0 goo-wrap' : 'gap-2'
+                  }`}
+                >
                   {/* Frame 1 */}
                   <Button
+                    ref={frame1Ref}
                     onClick={() => handleFrameChange(1)}
                     className="flex-1 h-12 rounded-none bg-gray-200 text-black"
                   >
@@ -1539,20 +1544,21 @@ export default function InstagramPostCreator() {
 
                   {/* Frame 2 */}
                   <Button
+                    ref={frame2Ref}
                     onClick={() => handleFrameChange(2)}
                     className="flex-1 h-12 rounded-none bg-gray-200 text-black"
                   >
                     {!isPlaying && 'Frame 2'}
                   </Button>
 
-                  {/* ░░ progress fill ░░*/}
+                  {/* progress fill (visible only while playing) */}
                   {isPlaying && (
-                    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                      {/* base track (grey) – already square because buttons are square */}
+                    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                      {/* grey base */}
                       <div className="w-full h-full bg-gray-200" />
-                      {/* growing black bar – MUST stay sharp → .no-goo */}
+                      {/* growing black bar */}
                       <div
-                        className="absolute top-0 left-0 h-full bg-black no-goo"
+                        className="absolute top-0 left-0 h-full bg-black goo-isolated"
                         style={{ width: `${progressRatio * 100}%` }}
                       />
                     </div>
@@ -1595,8 +1601,8 @@ export default function InstagramPostCreator() {
       {/* Global gooey filter */}
       <svg className="absolute w-0 h-0 pointer-events-none" aria-hidden>
         <defs>
-          <filter id="gooey" colorInterpolationFilters="sRGB">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur"/>
+          <filter id="goo" colorInterpolationFilters="sRGB">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="blur"/>
             <feColorMatrix in="blur" mode="matrix"
               values="
                 1 0 0 0 0
