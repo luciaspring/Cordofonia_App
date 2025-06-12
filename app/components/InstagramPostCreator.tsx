@@ -1564,8 +1564,10 @@ export default function InstagramPostCreator() {
               <Button
                 onClick={togglePlay}
                 className={`
-                  w-14 h-12 rounded-full flex items-center justify-center
+                  flex-1 h-12 rounded-full flex items-center justify-center
                   ${isPlaying ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
+                  active:bg-black active:text-white
+                  transition-colors
                 `}
               >
                 {isPlaying ? <PauseIcon className="h-5 w-5" /> : <PlayIcon className="h-5 w-5" />}
