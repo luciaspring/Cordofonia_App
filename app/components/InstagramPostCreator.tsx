@@ -6,10 +6,20 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
-import { PlayIcon, PauseIcon, RotateCcwIcon, ShareIcon, Settings } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import BezierEasing from 'bezier-easing'
+
+const ExportIcon: React.FC<{ className?: string }> = ({ className = '' }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+  >
+    <path d="M11.47 1.72a.75.75 0 0 1 1.06 0l3 3a.75.75 0 0 1-1.06 1.06l-1.72-1.72V7.5h-1.5V4.06L9.53 5.78a.75.75 0 0 1-1.06-1.06l3-3ZM11.25 7.5V15a.75.75 0 0 0 1.5 0V7.5h3.75a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-9a3 3 0 0 1-3-3v-9a3 3 0 0 1 3-3h3.75Z" />
+  </svg>
+);
 
 const SUL_SANS = 'SulSans-Bold'
 const AFFAIRS = 'Affairs-Regular'
@@ -123,7 +133,7 @@ const FieldGroup: React.FC<{ step: number; label: string; children: React.ReactN
 export default function InstagramPostCreator() {
   // ─── STATE HOOKS ────────────────────────────────────────────────────────────────
   const [titles, setTitles] = useState<string[]>(['John', 'Doe'])
-  const [subtitle, setSubtitle] = useState('Instrumento: Kora')
+  const [subtitle, setSubtitle] = useState('Kora')
   const [backgroundColor, setBackgroundColor] = useState('#E0B0FF')
   const [currentFrame, setCurrentFrame] = useState(1)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -398,14 +408,23 @@ export default function InstagramPostCreator() {
 
     const tremXsub = (Math.random() - 0.5) * tremblingIntensity
     const tremYsub = (Math.random() - 0.5) * tremblingIntensity
+
     ctx.save()
-    ctx.translate(subPos.x + subPos.width/2 + tremXsub, subPos.y + subPos.height/2 + tremYsub)
+    ctx.translate(
+      subPos.x + subPos.width/2 + tremXsub,
+      subPos.y + subPos.height/2 + tremYsub
+    )
     ctx.rotate(subPos.rotation)
     ctx.font = `${subPos.fontSize}px "${AFFAIRS}", sans-serif`
     ctx.fillStyle = getContrastColor(backgroundColor)
     ctx.textBaseline = 'middle'
     ctx.textAlign = 'center'
-    ctx.fillText(subtitle, 0, 0)
+
+    // draw "Instrument:" on the first line
+    ctx.fillText('Instrument:', 0, -subPos.fontSize / 2)
+    // draw the actual instrument name underneath
+    ctx.fillText(subtitle, 0, subPos.fontSize / 2)
+
     ctx.restore()
   }
 
@@ -550,7 +569,11 @@ export default function InstagramPostCreator() {
     ctx.fillStyle    = getContrastColor(backgroundColor)
     ctx.textBaseline = 'middle'
     ctx.textAlign    = 'center'
-    ctx.fillText(subtitle, 0, 0)
+    
+    // draw two lines for subtitle
+    ctx.fillText('Instrument:', 0, -sub2.fontSize / 2)
+    ctx.fillText(subtitle, 0, sub2.fontSize / 2)
+    
     ctx.restore()
   }
 
@@ -1522,14 +1545,17 @@ export default function InstagramPostCreator() {
             </div>
             <div className="flex w-full gap-2 mx-auto">
               <div
-                className={`relative flex gap-2 flex-1 ${isPlaying ? 'merge gooey' : ''}`}
+                className={`relative flex gap-2 flex-[2] ${isPlaying ? 'merge gooey' : ''}`}
               >
                 {/* Frame 1 */}
                 <Button
                   onClick={() => handleFrameChange(1)}
                   className={`
                     flex-1 h-12 rounded-none
-                    ${currentFrame === 1 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
+                    ${currentFrame === 1
+                      ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                      : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
+                    }
                   `}
                 >
                   {!isPlaying && 'Frame 1'}
@@ -1540,7 +1566,10 @@ export default function InstagramPostCreator() {
                   onClick={() => handleFrameChange(2)}
                   className={`
                     flex-1 h-12 rounded-none
-                    ${currentFrame === 2 ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
+                    ${currentFrame === 2
+                      ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                      : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
+                    }
                   `}
                 >
                   {!isPlaying && 'Frame 2'}
@@ -1560,33 +1589,47 @@ export default function InstagramPostCreator() {
                 )}
               </div>
 
-              {/* ── Play / Pause – fixed 56 px (h & w) ── */}
+              {/* ── Play / Pause – fixed height but flex-1 width ─────────────────── */}
               <Button
                 onClick={togglePlay}
                 className={`
                   flex-1 h-12 rounded-full flex items-center justify-center
-                  ${isPlaying ? 'bg-black text-white' : 'bg-gray-200 text-black hover:bg-gray-400'}
-                  active:bg-black active:text-white
+                  ${isPlaying
+                    ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                    : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
+                  }
                   transition-colors
                 `}
               >
-                {isPlaying ? <PauseIcon className="h-5 w-5" /> : <PlayIcon className="h-5 w-5" />}
+                {isPlaying
+                  ? <span className="sf-icon text-xl">􀊅</span>
+                  : <span className="sf-icon text-xl">􀊄</span>}
               </Button>
 
-              {/* Settings – 48 px */}
+              {/* ── Settings – 48 px square ─────────────────────────────────────── */}
               <Button
                 onClick={() => setSettingsOpen(true)}
-                className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
+                className="
+                  w-12 h-12 rounded-none
+                  bg-gray-200 text-black
+                  hover:bg-[#9E9E9E] hover:text-black
+                  flex items-center justify-center
+                "
               >
-                <Settings className="h-5 w-5 text-black" />
+                <span className="sf-icon text-xl">􀌆</span>
               </Button>
 
-              {/* Export – 48 px */}
+              {/* ── Export – 48 px square ───────────────────────────────────── */}
               <Button
                 onClick={exportVideo}
-                className="w-12 h-12 rounded-none bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
+                className="
+                  w-12 h-12 rounded-none
+                  bg-gray-200 text-black
+                  hover:bg-[#9E9E9E] hover:text-black
+                  flex items-center justify-center
+                "
               >
-                <ShareIcon className="h-5 w-5 text-black" />
+                <span className="sf-icon text-xl">􀈂</span>
               </Button>
             </div>
           </div>
