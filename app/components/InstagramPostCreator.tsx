@@ -406,25 +406,30 @@ export default function InstagramPostCreator() {
       ctx.restore()
     })
 
+    // ─── STATIC "Instrumento:" + instrument ───────────────────────────
     const tremXsub = (Math.random() - 0.5) * tremblingIntensity
     const tremYsub = (Math.random() - 0.5) * tremblingIntensity
 
     ctx.save()
-    ctx.translate(
-      subPos.x + subPos.width/2 + tremXsub,
-      subPos.y + subPos.height/2 + tremYsub
-    )
-    ctx.rotate(subPos.rotation)
+    // use AFFAIRS font, same size
     ctx.font = `${subPos.fontSize}px "${AFFAIRS}", sans-serif`
     ctx.fillStyle = getContrastColor(backgroundColor)
-    ctx.textBaseline = 'middle'
-    ctx.textAlign = 'center'
+    ctx.textBaseline = 'top'
+    ctx.textAlign = 'left'
 
-    // draw "Instrument:" on the first line
-    ctx.fillText('Instrument:', 0, -subPos.fontSize / 2)
-    // draw the actual instrument name underneath
-    ctx.fillText(subtitle, 0, subPos.fontSize / 2)
+    // draw "Instrumento:" at its top-left corner
+    ctx.fillText(
+      'Instrumento:',
+      subPos.x + tremXsub,
+      subPos.y + tremYsub
+    )
 
+    // draw the actual instrument name below, with an 8px gap
+    ctx.fillText(
+      subtitle,
+      subPos.x + tremXsub,
+      subPos.y + subPos.fontSize + 8 + tremYsub
+    )
     ctx.restore()
   }
 
@@ -555,25 +560,20 @@ export default function InstagramPostCreator() {
 
     const sx        = sub1.x        + (sub2.x        - sub1.x)        * moveT
     const sy        = sub1.y        + (sub2.y        - sub1.y)        * moveT
-    const srot      = sub1.rotation + (sub2.rotation - sub1.rotation) * moveT
     const sFontSize = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT
     const streX     = (Math.random() - 0.5) * tremblingIntensity
     const streY     = (Math.random() - 0.5) * tremblingIntensity
 
-    const dynSW = sub1.width  + (sub2.width  - sub1.width)  * scaleT
-    const dynSH = sub1.height + (sub2.height - sub1.height) * scaleT
     ctx.save()
-    ctx.translate(sx + dynSW/2 + streX, sy + dynSH/2 + streY)
-    ctx.rotate(srot)
-    ctx.font = `${sFontSize}px "${AFFAIRS}", sans-serif`
+    // position at the top-left of the animating box
+    ctx.font         = `${sFontSize}px "${AFFAIRS}", sans-serif`
     ctx.fillStyle    = getContrastColor(backgroundColor)
-    ctx.textBaseline = 'middle'
-    ctx.textAlign    = 'center'
-    
-    // draw two lines for subtitle
-    ctx.fillText('Instrument:', 0, -sub2.fontSize / 2)
-    ctx.fillText(subtitle, 0, sub2.fontSize / 2)
-    
+    ctx.textBaseline = 'top'
+    ctx.textAlign    = 'left'
+
+    // two lines, same as static
+    ctx.fillText('Instrumento:', sx + streX, sy + streY)
+    ctx.fillText(subtitle,      sx + streX, sy + sFontSize + 8 + streY)
     ctx.restore()
   }
 
