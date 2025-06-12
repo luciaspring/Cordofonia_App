@@ -1566,7 +1566,7 @@ export default function InstagramPostCreator() {
             </div>
 
             {/* ─── CONTROL BAR ───────────────────────────────────────── */}
-            <div className="grid grid-cols-4 gap-2 w-full">
+            <div className="grid grid-cols-4 gap-2 w-[540px]">
               {/* column-1 ··· Frame 1 */}
               <Button
                 ref={frame1Ref}
