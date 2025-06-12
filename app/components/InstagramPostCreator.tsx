@@ -1522,7 +1522,7 @@ export default function InstagramPostCreator() {
             </div>
             <div className="flex w-full gap-2 mx-auto">
               <div
-                className={`relative flex gap-2 flex-1 ${isPlaying ? 'merge gooey' : ''}`}
+                className={`relative flex gap-2 flex-[2] ${isPlaying ? 'merge gooey' : ''}`}
               >
                 {/* Frame 1 */}
                 <Button
