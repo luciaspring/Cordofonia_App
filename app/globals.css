@@ -1,26 +1,45 @@
-/* ─────────────────────────  SF-Pro font (icons live here)  ───────────────────── */
+/*  ───────────────────────────────────────────────────────────── *
+    GLOBAL STYLES  (Tailwind + custom)
+    * 2025-06-12 *
+ *  ───────────────────────────────────────────────────────────── */
+
+/* ---------- 1.  FONT-FACE : SF Compact Text (regular) --------- */
 @font-face {
-  font-family: 'SF Pro Symbols';
-  src: url('/fonts/SF-Pro-Display-Regular.otf') format('opentype');
-  font-style: normal;
+  font-family: 'SF Compact';
+  src: url('/fonts/SF-Compact-Text-Regular.otf') format('opentype');
   font-weight: 400;
-  font-display: block;      /* wait for the font before drawing icons */
+  font-style: normal;
+  font-display: swap;
 }
 
-/* helper for any SF-Symbol */
-.sf-icon {
-  font-family: 'SF Pro Symbols', 'SF Pro Display', sans-serif;
-  @apply leading-none select-none;
-}
-
-/* === Gooey effect (unchanged) ================================================ */
-.gooey { filter: url('#gooey'); }
-
+/* ---------- Tailwind layers & utilities ---------------------- */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Tailwind CSS variables (unchanged from your last working copy) -------------- */
+/* === Gooey effect ============================================ */
+.gooey { filter: url('#gooey'); }
+
+/* ---------- 2.  UI font helper ------------------------------- */
+@layer utilities {
+  .font-ui {
+    font-family: 'SF Compact', -apple-system, BlinkMacSystemFont,
+      'Helvetica Neue', Arial, sans-serif;
+  }
+}
+
+/* ---------- 3.  Ensure form controls inherit .font-ui -------- */
+@layer base {
+  input,
+  button,
+  select,
+  textarea,
+  label {
+    font-family: inherit;   /* inherit from .font-ui wrapper */
+  }
+}
+
+/* ---------- CSS variables (unchanged) ------------------------ */
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -68,39 +87,14 @@
   }
 }
 
+/* ---------- Base border & body font -------------------------- */
 @layer base {
-  * { @apply border-border; }
-  body { @apply bg-background text-foreground; }
-}
-
-/* Custom hover colors for buttons */
-@layer components {
-  .btn-hover-grey:hover {
-    background-color: #9E9E9E !important;
+  * {
+    @apply border-border;
   }
-  
-  /* Override shadcn/ui button hover states */
-  .hover\:bg-secondary:hover {
-    background-color: #9E9E9E !important;
-  }
-  
-  .hover\:bg-primary\/90:hover {
-    background-color: #9E9E9E !important;
-  }
-  
-  .hover\:bg-accent:hover {
-    background-color: #9E9E9E !important;
-  }
-  
-  /* For buttons with black backgrounds */
-  .bg-black:hover,
-  .bg-primary:hover {
-    background-color: #9E9E9E !important;
-  }
-  
-  /* For buttons with grey/secondary backgrounds */
-  .bg-secondary:hover,
-  .bg-muted:hover {
-    background-color: #9E9E9E !important;
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'SF Compact', -apple-system, BlinkMacSystemFont,
+      'Helvetica Neue', Arial, sans-serif;
   }
 }
