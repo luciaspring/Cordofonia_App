@@ -1259,9 +1259,15 @@ export default function InstagramPostCreator() {
       }
     }
 
-    // new – based directly on the current progress value
-    const visualP = Math.min(progress, PROGRESS_END)
-    setBarProgress(visualP / PROGRESS_END)
+    // Throttle visible updates to mimic stop-motion
+    if (timestamp - lastDisplayTimeRef.current >= 1000 / frameRate) {
+      drawCanvas(progress)
+      
+      /* new – drive bar directly from the same "progress" you pass to drawCanvas */
+      setBarProgress(Math.min(progress, PROGRESS_END) / PROGRESS_END)
+      
+      lastDisplayTimeRef.current = timestamp
+    }
 
     // Only continue if still playing
     if (isPlaying) {
