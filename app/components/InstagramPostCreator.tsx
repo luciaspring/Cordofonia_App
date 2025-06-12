@@ -405,13 +405,15 @@ export default function InstagramPostCreator() {
       const tremX = (Math.random() - 0.5) * tremblingIntensity
       const tremY = (Math.random() - 0.5) * tremblingIntensity
       ctx.save()
-      ctx.translate(pos.x + tremX, pos.y + pos.height / 2 + tremY) // left anchor
+      const cx = pos.x + pos.width / 2
+      const cy = pos.y + pos.height / 2
+      ctx.translate(cx + tremX, cy + tremY)                         // centre pivot
       ctx.rotate(pos.rotation)
       ctx.font         = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`
       ctx.fillStyle    = getContrastColor(backgroundColor)
       ctx.textBaseline = 'middle'
       ctx.textAlign    = 'left'
-      ctx.fillText(titles[idx], 0, 0)
+      ctx.fillText(titles[idx], -pos.width / 2, 0)                  // shift left by ½ W
       ctx.restore()
     })
 
@@ -419,13 +421,18 @@ export default function InstagramPostCreator() {
     const tremYsub = (Math.random() - 0.5) * tremblingIntensity
 
     ctx.save()
-    ctx.translate(subPos.x + tremXsub, subPos.y + subPos.height/2 + tremYsub)
+    const scx = subPos.x + subPos.width / 2
+    const scy = subPos.y + subPos.height / 2
+    ctx.translate(scx + tremXsub, scy + tremYsub)
     ctx.rotate(subPos.rotation)
-    ctx.font = `${subPos.fontSize}px "${AFFAIRS}", sans-serif`
-    ctx.fillStyle = getContrastColor(backgroundColor)
+    ctx.font         = `${subPos.fontSize}px "${AFFAIRS}", sans-serif`
+    ctx.fillStyle    = getContrastColor(backgroundColor)
     ctx.textBaseline = 'middle'
-    ctx.textAlign = 'left'
-    ctx.fillText(subtitle, 0, 0)
+    ctx.textAlign    = 'left'
+    const lx = -subPos.width / 2
+    const ty = -subPos.height / 2
+    ctx.fillText('Instrumento:', lx, ty)
+    ctx.fillText(subtitle, lx, ty + subPos.fontSize + 8)
     ctx.restore()
   }
 
@@ -531,21 +538,22 @@ export default function InstagramPostCreator() {
 
       // 2) SIZE INTERPOLATION
       const fontSize = p1.fontSize + (p2.fontSize - p1.fontSize) * scaleT
+      const dynW = p1.width + (p2.width - p1.width) * scaleT
+      const dynH = p1.height + (p2.height - p1.height) * scaleT
 
       // 3) RANDOM TREMBLE
       const tremX = (Math.random() - 0.5) * tremblingIntensity
       const tremY = (Math.random() - 0.5) * tremblingIntensity
 
-      // 4) DRAW left-aligned at the same x-pivot as static text
-      const dynH = p1.height + (p2.height - p1.height) * scaleT
+      // 4) DRAW from left edge
       ctx.save()
-      ctx.translate(x + tremX, y + dynH/2 + tremY)
+      ctx.translate(x + dynW / 2 + tremX, y + dynH / 2 + tremY)    // centre pivot
       ctx.rotate(rotation)
       ctx.font         = `bold ${fontSize}px "${SUL_SANS}", sans-serif`
       ctx.fillStyle    = getContrastColor(backgroundColor)
       ctx.textBaseline = 'middle'
       ctx.textAlign    = 'left'
-      ctx.fillText(text, 0, 0)
+      ctx.fillText(text, -dynW / 2, 0)                             // draw from left edge
       ctx.restore()
     })
 
@@ -559,16 +567,20 @@ export default function InstagramPostCreator() {
     const sFontSize = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT
     const streX     = (Math.random() - 0.5) * tremblingIntensity
     const streY     = (Math.random() - 0.5) * tremblingIntensity
+    const dynSW     = sub1.width + (sub2.width - sub1.width) * scaleT
+    const dynSH     = sub1.height + (sub2.height - sub1.height) * scaleT
 
-    const dynSH = sub1.height + (sub2.height - sub1.height) * scaleT
     ctx.save()
-    ctx.translate(sx + streX, sy + dynSH/2 + streY)
+    ctx.translate(sx + dynSW / 2 + streX, sy + dynSH / 2 + streY)
     ctx.rotate(srot)
     ctx.font         = `${sFontSize}px "${AFFAIRS}", sans-serif`
     ctx.fillStyle    = getContrastColor(backgroundColor)
     ctx.textBaseline = 'middle'
     ctx.textAlign    = 'left'
-    ctx.fillText(subtitle, 0, 0)
+    const lx = -dynSW / 2
+    const ty = -dynSH / 2
+    ctx.fillText('Instrumento:', lx, ty)
+    ctx.fillText(subtitle, lx, ty + sFontSize + 8)
     ctx.restore()
   }
 
