@@ -205,6 +205,49 @@ export default function InstagramPostCreator() {
     centerY: number
   } | null>(null)
 
+  // Ref to hold all state needed for animation, to avoid stale closures
+  const animationState = useRef({
+    backgroundColor,
+    lines,
+    currentFrame,
+    selectedTexts,
+    titlePositionsFrame1,
+    titlePositionsFrame2,
+    subtitlePositionFrame1,
+    subtitlePositionFrame2,
+    tremblingIntensity,
+    lineThickness,
+    groupRotation,
+    titles,
+    subtitle,
+    isLooping,
+    baseFps,
+    frameRate,
+    textEase,
+  })
+
+  useEffect(() => {
+    animationState.current = {
+      backgroundColor,
+      lines,
+      currentFrame,
+      selectedTexts,
+      titlePositionsFrame1,
+      titlePositionsFrame2,
+      subtitlePositionFrame1,
+      subtitlePositionFrame2,
+      tremblingIntensity,
+      lineThickness,
+      groupRotation,
+      titles,
+      subtitle,
+      isLooping,
+      baseFps,
+      frameRate,
+      textEase,
+    }
+  })
+
   // Ref's for animation and mouse tracking
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<number | null>(null)
@@ -365,7 +408,7 @@ export default function InstagramPostCreator() {
   }
 
   // ─── DRAWING ROUTINES ────────────────────────────────────────────────────────────
-  const drawCanvas = useCallback((progress: number = 0) => {
+  const drawCanvas = (progress: number = 0) => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
@@ -398,97 +441,64 @@ export default function InstagramPostCreator() {
         }
       }
     }
-  }, [
-    backgroundColor,
-    currentFrame,
-    lines,
-    lineThickness,
-    tremblingIntensity,
-    titlePositionsFrame1,
-    titlePositionsFrame2,
-    subtitlePositionFrame1,
-    subtitlePositionFrame2,
-    selectedTexts,
-    groupRotation,
-    isPlaying,
-    titles,
-    subtitle
-  ])
+  }
 
-  // Redraw the static canvas whenever its contents change (but only when not playing).
+  // Effect to handle the animation loop
   useEffect(() => {
     if (!isPlaying) {
-      drawCanvas();
-    }
-    // The animation loop handles drawing when isPlaying=true
-  }, [
-    backgroundColor,
-    currentFrame,
-    lines,
-    lineThickness,
-    tremblingIntensity,
-    titlePositionsFrame1,
-    titlePositionsFrame2,
-    subtitlePositionFrame1,
-    subtitlePositionFrame2,
-    selectedTexts,
-    groupRotation,
-    drawCanvas // Add drawCanvas as a dependency
-  ]);
-
-  // THIS NEW EFFECT HANDLES THE ENTIRE ANIMATION LIFECYCLE
-  useEffect(() => {
-    if (!isPlaying) {
-      return;
+      drawCanvas()
+      return
     }
 
-    let frameId: number | null = null;
-    startTimeRef.current = null;
-    lastDisplayTimeRef.current = 0;
+    let frameId: number | null = null
+    startTimeRef.current = null
+    lastDisplayTimeRef.current = 0
 
     const animate = (timestamp: number) => {
       if (!startTimeRef.current) {
-        startTimeRef.current = timestamp;
+        startTimeRef.current = timestamp
       }
-      const elapsed = timestamp - startTimeRef.current;
-      const msPerBase = 1000 / baseFps;
-      let progress = elapsed / (msPerBase * 150);
+      const elapsed = timestamp - startTimeRef.current
+      const msPerBase = 1000 / baseFps
+      let progress = elapsed / (msPerBase * 150)
 
       if (progress >= PROGRESS_END) {
         if (isLooping) {
-          startTimeRef.current = timestamp; // Reset for loop
-          progress = 0;
-          setBarProgress(0);
+          startTimeRef.current = timestamp
+          progress = 0
+          setBarProgress(0)
         } else {
-          setIsPlaying(false);
-          setBarProgress(1);
-          drawCanvas(PROGRESS_END); // Draw final frame
-          return;
+          setIsPlaying(false)
+          setBarProgress(1)
+          drawCanvas(PROGRESS_END)
+          return
         }
       } else {
-        setBarProgress(progress / PROGRESS_END);
+        setBarProgress(progress / PROGRESS_END)
       }
 
       if (timestamp - lastDisplayTimeRef.current >= 1000 / frameRate) {
-        drawCanvas(progress);
-        lastDisplayTimeRef.current = timestamp;
+        drawCanvas(progress)
+        lastDisplayTimeRef.current = timestamp
       }
       
       setProgressRatio(Math.min(progress / PROGRESS_END, 1));
 
-      if (isPlaying) { // Check isPlaying inside the loop
-         frameId = requestAnimationFrame(animate);
+      // Continue animation if still playing
+      if (isPlaying) {
+         frameId = requestAnimationFrame(animate)
       }
-    };
+    }
 
-    frameId = requestAnimationFrame(animate);
+    frameId = requestAnimationFrame(animate)
 
     return () => {
       if (frameId) {
-        cancelAnimationFrame(frameId);
+        cancelAnimationFrame(frameId)
       }
-    };
-  }, [isPlaying, isLooping, baseFps, frameRate, drawCanvas, setBarProgress, setProgressRatio, setIsPlaying]);
+    }
+  // All state and props that animate() depends on must be in the dependency array
+  }, [isPlaying, isLooping, baseFps, frameRate, titles, subtitle, lines, backgroundColor, titlePositionsFrame1, titlePositionsFrame2, subtitlePositionFrame1, subtitlePositionFrame2, tremblingIntensity, lineThickness, textEase, setBarProgress, setIsPlaying, setProgressRatio])
 
   const drawLines = (ctx: CanvasRenderingContext2D, framelines: Line[]) => {
     ctx.lineWidth = lineThickness
@@ -507,6 +517,7 @@ export default function InstagramPostCreator() {
       ctx.lineTo(currentLine.end.x, currentLine.end.y)
       ctx.stroke()
     }
+    canvas.style.cursor = 'default'
   }
 
   const drawAnimatedLines = (
@@ -516,6 +527,7 @@ export default function InstagramPostCreator() {
     frame2Lines: Line[],
     animationType: 'grow' | 'shrink'
   ) => {
+    const { lineThickness, tremblingIntensity } = animationState.current
     ctx.lineWidth = lineThickness
     ctx.lineCap = 'butt'
     ctx.lineJoin = 'round'
@@ -565,6 +577,11 @@ export default function InstagramPostCreator() {
     fromFrame: number,
     toFrame: number
   ) => {
+    const {
+      titles, titlePositionsFrame1, titlePositionsFrame2, subtitlePositionFrame1, subtitlePositionFrame2,
+      tremblingIntensity, backgroundColor, subtitle
+    } = animationState.current
+
     const titlesArr = titles
     const fromPositions = fromFrame === 1 ? titlePositionsFrame1 : titlePositionsFrame2
     const toPositions   = toFrame  === 1 ? titlePositionsFrame1 : titlePositionsFrame2
@@ -688,11 +705,11 @@ export default function InstagramPostCreator() {
 
   // ─── BOUNDING BOX CALCULATORS ───────────────────────────────────────────────────
   const calculateGroupBoundingBox = (): GroupBoundingBox | null => {
-    if (selectedTexts.length === 0) return null
-    const selectedPositions: TextPosition[] = titlePositionsFrame2
-      .filter((_, idx) => selectedTexts.includes(`title${idx + 1}` as 'title1' | 'title2'))
-    if (selectedTexts.includes('subtitle')) {
-      selectedPositions.push(subtitlePositionFrame2)
+    if (animationState.current.selectedTexts.length === 0) return null
+    const selectedPositions: TextPosition[] = animationState.current.titlePositionsFrame2
+      .filter((_, idx) => animationState.current.selectedTexts.includes(`title${idx + 1}` as 'title1' | 'title2'))
+    if (animationState.current.selectedTexts.includes('subtitle')) {
+      selectedPositions.push(animationState.current.subtitlePositionFrame2)
     }
     if (!selectedPositions.length) return null
 
@@ -706,7 +723,7 @@ export default function InstagramPostCreator() {
       y: minY,
       width: maxX - minX,
       height: maxY - minY,
-      rotation: groupRotation
+      rotation: animationState.current.groupRotation
     }
   }
 
@@ -885,12 +902,12 @@ export default function InstagramPostCreator() {
     const dx = x - lastMousePosition.current.x
     const dy = y - lastMousePosition.current.y
     setTitlePositionsFrame2(prev =>
-      prev.map((pos, idx) => selectedTexts.includes(`title${idx + 1}` as 'title1' | 'title2')
+      prev.map((pos, idx) => animationState.current.selectedTexts.includes(`title${idx + 1}` as 'title1' | 'title2')
         ? { ...pos, x: pos.x + dx, y: pos.y + dy }
         : pos
       )
     )
-    if (selectedTexts.includes('subtitle')) {
+    if (animationState.current.selectedTexts.includes('subtitle')) {
       setSubtitlePositionFrame2(prev => ({ ...prev, x: prev.x + dx, y: prev.y + dy }))
     }
     lastMousePosition.current = { x, y }
@@ -988,10 +1005,10 @@ export default function InstagramPostCreator() {
 
     setTitlePositionsFrame2(p =>
       p.map((pos, i) =>
-        selectedTexts.includes(`title${i + 1}` as 'title1' | 'title2') ? apply(pos) : pos
+        animationState.current.selectedTexts.includes(`title${i + 1}` as 'title1' | 'title2') ? apply(pos) : pos
       )
     )
-    if (selectedTexts.includes('subtitle')) {
+    if (animationState.current.selectedTexts.includes('subtitle')) {
       setSubtitlePositionFrame2(apply)
     }
   }
@@ -1035,12 +1052,12 @@ export default function InstagramPostCreator() {
 
     setTitlePositionsFrame2(prev =>
       prev.map((pos, idx) =>
-        selectedTexts.includes(`title${idx + 1}` as 'title1' | 'title2')
+        animationState.current.selectedTexts.includes(`title${idx + 1}` as 'title1' | 'title2')
           ? rotateAroundPoint(pos, cx, cy, delta)
           : pos
       )
     )
-    if (selectedTexts.includes('subtitle')) {
+    if (animationState.current.selectedTexts.includes('subtitle')) {
       setSubtitlePositionFrame2(prev => rotateAroundPoint(prev, cx, cy, delta))
     }
     setGroupRotation(prev => prev + delta)
@@ -1074,8 +1091,8 @@ export default function InstagramPostCreator() {
 
     lastMousePosition.current = { x, y }
 
-    const positions = currentFrame === 1 ? titlePositionsFrame1 : titlePositionsFrame2
-    const subPos = currentFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
+    const positions = animationState.current.currentFrame === 1 ? animationState.current.titlePositionsFrame1 : animationState.current.titlePositionsFrame2
+    const subPos = animationState.current.currentFrame === 1 ? animationState.current.subtitlePositionFrame1 : animationState.current.subtitlePositionFrame2
 
     for (let i = 0; i < positions.length; i++) {
       const rotatedBox = getRotatedBoundingBox(positions[i])
@@ -1095,8 +1112,8 @@ export default function InstagramPostCreator() {
       setGroupRotation(0)
     }
 
-    const clickedIdx = lines.findIndex(line =>
-      line.frame === currentFrame &&
+    const clickedIdx = animationState.current.lines.findIndex(line =>
+      line.frame === animationState.current.currentFrame &&
       (isPointNear({ x, y }, line) ||
         isPointNear({ x, y }, line.start) ||
         isPointNear({ x, y }, line.end))
@@ -1104,7 +1121,7 @@ export default function InstagramPostCreator() {
 
     if (clickedIdx !== -1) {
       setSelectedLineIndex(clickedIdx)
-      const ln = lines[clickedIdx]
+      const ln = animationState.current.lines[clickedIdx]
       const nearStart = isPointNear({ x, y }, ln.start)
       const nearEnd = isPointNear({ x, y }, ln.end)
 
@@ -1117,7 +1134,7 @@ export default function InstagramPostCreator() {
       return
     }
 
-    setCurrentLine({ start: { x, y }, end: { x, y }, frame: currentFrame })
+    setCurrentLine({ start: { x, y }, end: { x, y }, frame: animationState.current.currentFrame })
     drawCanvas()
   }
 
@@ -1129,12 +1146,12 @@ export default function InstagramPostCreator() {
     const x = (e.clientX - rect.left) * (canvas.width / rect.width)
     const y = (e.clientY - rect.top) * (canvas.height / rect.height)
 
-    if (isDraggingLine && selectedLineIndex !== null && lastMousePosition.current) {
+    if (isDraggingLine && animationState.current.selectedLineIndex !== null && lastMousePosition.current) {
       const dx = x - lastMousePosition.current.x
       const dy = y - lastMousePosition.current.y
       setLines(prev =>
         prev.map((ln, i) =>
-          i === selectedLineIndex
+          i === animationState.current.selectedLineIndex
             ? { ...ln,
                 start: { x: ln.start.x + dx, y: ln.start.y + dy },
                 end: { x: ln.end.x + dx, y: ln.end.y + dy } }
@@ -1144,38 +1161,38 @@ export default function InstagramPostCreator() {
       lastMousePosition.current = { x, y }
       drawCanvas()
       return
-    } else if (editingLineIndex !== null && editingEnd !== null) {
+    } else if (animationState.current.editingLineIndex !== null && animationState.current.editingEnd !== null) {
       setLines(prev => {
         const arr = [...prev]
-        const ln = { ...arr[editingLineIndex] }
-        if (editingEnd === 'start') ln.start = { x, y }
+        const ln = { ...arr[animationState.current.editingLineIndex] }
+        if (animationState.current.editingEnd === 'start') ln.start = { x, y }
         else ln.end = { x, y }
-        arr[editingLineIndex] = ln
+        arr[animationState.current.editingLineIndex] = ln
         return arr
       })
       drawCanvas()
       return
     }
 
-    if (selectedTexts.length > 0 && currentFrame === 2) {
+    if (animationState.current.selectedTexts.length > 0 && animationState.current.currentFrame === 2) {
       if (isRotating) {
         const groupBox = calculateGroupBoundingBox()
         if (groupBox) rotateGroup(x, y, groupBox)
       } else if (isDragging) {
-        if (selectedTexts.length === 1) {
-          dragSingle(x, y, selectedTexts[0])
+        if (animationState.current.selectedTexts.length === 1) {
+          dragSingle(x, y, animationState.current.selectedTexts[0])
         } else {
           dragGroup(x, y)
         }
-      } else if (isResizing && resizeHandle) {
-        if (selectedTexts.length === 1) {
-          const txt = selectedTexts[0]
+      } else if (isResizing && animationState.current.resizeHandle) {
+        if (animationState.current.selectedTexts.length === 1) {
+          const txt = animationState.current.selectedTexts[0]
           const pos = txt === 'subtitle'
-            ? subtitlePositionFrame2
-            : titlePositionsFrame2[txt === 'title1' ? 0 : 1]
-          resizeSingle(x, y, pos, txt, resizeHandle)
+            ? animationState.current.subtitlePositionFrame2
+            : animationState.current.titlePositionsFrame2[txt === 'title1' ? 0 : 1]
+          resizeSingle(x, y, pos, txt, animationState.current.resizeHandle)
         } else {
-          resizeGroup(x, y, resizeHandle)
+          resizeGroup(x, y, animationState.current.resizeHandle)
         }
       }
       drawCanvas()
@@ -1217,7 +1234,7 @@ export default function InstagramPostCreator() {
     x: number,
     y: number
   ) => {
-    if (currentFrame !== 2) return
+    if (animationState.current.currentFrame !== 2) return
     const now = Date.now()
     const isDoubleClick = now - lastClickTime.current < 300
     lastClickTime.current = now
@@ -1274,7 +1291,7 @@ export default function InstagramPostCreator() {
 
   const updateCursor = (canvas: HTMLCanvasElement, x: number, y: number) => {
     const groupBox = calculateGroupBoundingBox()
-    if (groupBox && currentFrame === 2 && isPointInRotatedBox(x, y, getRotatedGroupBoundingBox(groupBox))) {
+    if (groupBox && animationState.current.currentFrame === 2 && isPointInRotatedBox(x, y, getRotatedGroupBoundingBox(groupBox))) {
       if (isPointNearRotationArea(x, y, groupBox)) {
         canvas.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16.8\' height=\'16.8\' viewBox=\'0 0 24 24\' fill=\'none\'%3E%3Cg stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M20.49 15a9 9 0 1 1-2.12-9.36L23 10\' stroke=\'%23FFFFFF\' stroke-width=\'4.8\'/%3E%3Cpath d=\'M20.49 15a9 9 0 1 1-2.12-9.36L23 10\' stroke=\'%23000000\' stroke-width=\'2.4\'/%3E%3Cpolyline points=\'23 4 23 10 17 10\' stroke=\'%23FFFFFF\' stroke-width=\'4.8\'/%3E%3Cpolyline points=\'23 4 23 10 17 10\' stroke=\'%23000000\' stroke-width=\'2.4\'/%3E%3C/g%3E%3C/svg%3E") 8 8, auto'
         return
@@ -1288,14 +1305,14 @@ export default function InstagramPostCreator() {
       return
     }
 
-    const positions = currentFrame === 1
-      ? [titlePositionsFrame1[0], titlePositionsFrame1[1], subtitlePositionFrame1]
-      : [titlePositionsFrame2[0], titlePositionsFrame2[1], subtitlePositionFrame2]
+    const positions = animationState.current.currentFrame === 1
+      ? [animationState.current.titlePositionsFrame1[0], animationState.current.titlePositionsFrame1[1], animationState.current.subtitlePositionFrame1]
+      : [animationState.current.titlePositionsFrame2[0], animationState.current.titlePositionsFrame2[1], animationState.current.subtitlePositionFrame2]
 
     for (let i = 0; i < positions.length; i++) {
       const pos = positions[i]
       if (isPointInRotatedBox(x, y, getRotatedBoundingBox(pos))) {
-        if (currentFrame === 2) {
+        if (animationState.current.currentFrame === 2) {
           if (isPointNearRotationArea(x, y, pos)) {
             canvas.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16.8\' height=\'16.8\' viewBox=\'0 0 24 24\' fill=\'none\'%3E%3Cg stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M20.49 15a9 9 0 1 1-2.12-9.36L23 10\' stroke=\'%23FFFFFF\' stroke-width=\'4.8\'/%3E%3Cpath d=\'M20.49 15a9 9 0 1 1-2.12-9.36L23 10\' stroke=\'%23000000\' stroke-width=\'2.4\'/%3E%3Cpolyline points=\'23 4 23 10 17 10\' stroke=\'%23FFFFFF\' stroke-width=\'4.8\'/%3E%3Cpolyline points=\'23 4 23 10 17 10\' stroke=\'%23000000\' stroke-width=\'2.4\'/%3E%3C/g%3E%3C/svg%3E") 8 8, auto'
             return
@@ -1316,6 +1333,11 @@ export default function InstagramPostCreator() {
 
   // ─── STATIC TEXT DRAW WITH TREMBLING ─────────────────────────────────────────────
   const drawStaticText = (ctx: CanvasRenderingContext2D, frame: number) => {
+    const {
+      titlePositionsFrame1, titlePositionsFrame2, subtitlePositionFrame1, subtitlePositionFrame2,
+      tremblingIntensity, backgroundColor, titles, subtitle
+    } = animationState.current
+
     const positions = frame === 1 ? titlePositionsFrame1 : titlePositionsFrame2
     const subPos = frame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
 
@@ -1359,7 +1381,7 @@ export default function InstagramPostCreator() {
     ctx.translate(pos.x + pos.width/2, pos.y + pos.height/2)
     ctx.rotate(pos.rotation)
     ctx.font = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`
-    ctx.fillStyle = getContrastColor(backgroundColor)
+    ctx.fillStyle = getContrastColor(animationState.current.backgroundColor)
     ctx.textBaseline = 'middle'
     ctx.textAlign = 'center'
     ctx.fillText(text, 0, 0)
@@ -1368,6 +1390,7 @@ export default function InstagramPostCreator() {
 
   // ─── ANIMATION LOOP ─────────────────────────────────────────────────────────────
   const drawAnimatedContent = (ctx: CanvasRenderingContext2D, p: number) => {
+    const { lines, textEase } = animationState.current
     const f1 = lines.filter(l => l.frame === 1)
     const f2 = lines.filter(l => l.frame === 2)
     const ease = textEase  // or easeInOutQuint, whichever you're using
@@ -1448,7 +1471,7 @@ export default function InstagramPostCreator() {
   const handlePlayClick = () => {
     if (phase === 'idle' || phase === 'paused') {
       setIsPlaying(true); // This was missing! Starts the animation loop.
-      setOriginFrame(currentFrame as 1 | 2)
+      setOriginFrame(animationState.current.currentFrame as 1 | 2)
       setPhase('merge')
       setTimeout(() => setPhase('playing'), 300)
     } else { // 'playing' or 'merge'
@@ -1461,17 +1484,17 @@ export default function InstagramPostCreator() {
 
   // ─── POSITION MODAL & SETTINGS HANDLERS ────────────────────────────────────────
   const updatePosition = (newPos: TextPosition) => {
-    if (selectedTexts.includes('title1') || selectedTexts.includes('title2')) {
+    if (animationState.current.selectedTexts.includes('title1') || animationState.current.selectedTexts.includes('title2')) {
       setTitlePositionsFrame2(prev => {
         const arr = [...prev]
-        selectedTexts.forEach(st => {
+        animationState.current.selectedTexts.forEach(st => {
           const idx = st === 'title1' ? 0 : 1
           arr[idx] = newPos
         })
         return arr
       })
     }
-    if (selectedTexts.includes('subtitle')) {
+    if (animationState.current.selectedTexts.includes('subtitle')) {
       setSubtitlePositionFrame2(newPos)
     }
     setPositionModalOpen(false)
@@ -1508,7 +1531,7 @@ export default function InstagramPostCreator() {
     if (!canvas || isPlaying) return      // avoid double-start while playing
 
     /* 1. capture the canvas stream */
-    const stream = canvas.captureStream(frameRate)   // use current FPS slider
+    const stream = canvas.captureStream(animationState.current.frameRate)   // use current FPS slider
     recordingRef.current = new MediaRecorder(stream, {
       mimeType: 'video/webm;codecs=vp9'
     })
@@ -1527,7 +1550,7 @@ export default function InstagramPostCreator() {
     }
 
     /* 2. start animation & recording */
-    const fullCycleMs = (PROGRESS_END * 150 * 1000) / baseFps
+    const fullCycleMs = (PROGRESS_END * 150 * 1000) / animationState.current.baseFps
     recordingRef.current.start()
     setIsLooping(false)        // play one cycle only
     setIsPlaying(true)
@@ -1555,13 +1578,13 @@ export default function InstagramPostCreator() {
             {/* Title fields */}
             <FieldGroup step={1} label="Write a title">
               <Input
-                value={titles[0]}
-                onChange={e => setTitles([e.target.value, titles[1]])}
+                value={animationState.current.titles[0]}
+                onChange={e => setTitles([e.target.value, animationState.current.titles[1]])}
                 className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
               />
               <Input
-                value={titles[1]}
-                onChange={e => setTitles([titles[0], e.target.value])}
+                value={animationState.current.titles[1]}
+                onChange={e => setTitles([animationState.current.titles[0], e.target.value])}
                 className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
               />
             </FieldGroup>
@@ -1569,7 +1592,7 @@ export default function InstagramPostCreator() {
             {/* Instrument */}
             <FieldGroup step={2} label="Write the instrument">
               <Input
-                value={subtitle}
+                value={animationState.current.subtitle}
                 onChange={e => setSubtitle(e.target.value)}
                 className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
               />
@@ -1587,7 +1610,7 @@ export default function InstagramPostCreator() {
                     style={{ backgroundColor: c.value }}
                     className={`
                       w-8 h-8 rounded-none
-                      ${backgroundColor === c.value
+                      ${animationState.current.backgroundColor === c.value
                         ? 'ring-2 ring-black'
                         : 'ring-0'}
                     `}
@@ -1603,7 +1626,7 @@ export default function InstagramPostCreator() {
           <div className="w-[540px] flex flex-col ml-[336px]">
             <div
               className="w-[540px] h-[675px] bg-white rounded-none mb-2 relative overflow-hidden"
-              style={{ backgroundColor }}
+              style={{ backgroundColor: animationState.current.backgroundColor }}
             >
               <canvas
                 ref={canvasRef}
@@ -1638,7 +1661,7 @@ export default function InstagramPostCreator() {
                     transition-colors duration-300
                     ${phase === 'merge' || phase === 'playing'
                       ? 'bg-gray-200 text-transparent' // Fade to grey, hide text via color
-                      : currentFrame === 1
+                      : animationState.current.currentFrame === 1
                         ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
                         : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
                     }
@@ -1657,7 +1680,7 @@ export default function InstagramPostCreator() {
                     transition-colors duration-300
                     ${phase === 'merge' || phase === 'playing'
                       ? 'bg-gray-200 text-transparent'
-                      : currentFrame === 2
+                      : animationState.current.currentFrame === 2
                         ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
                         : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
                     }
@@ -1801,7 +1824,7 @@ export default function InstagramPostCreator() {
               <input
                 id="loopToggle"
                 type="checkbox"
-                checked={isLooping}
+                checked={animationState.current.isLooping}
                 onChange={e => setIsLooping(e.target.checked)}
                 className="h-4 w-4 rounded border-gray-300 focus:ring-2 focus:ring-blue-500"
               />
@@ -1817,7 +1840,7 @@ export default function InstagramPostCreator() {
                 min={1}
                 max={10}
                 step={1}
-                value={[lineThickness]}
+                value={[animationState.current.lineThickness]}
                 onValueChange={value => handleSettingsChange('lineThickness', value[0])}
               />
             </div>
@@ -1828,18 +1851,18 @@ export default function InstagramPostCreator() {
                 min={0}
                 max={10}
                 step={1}
-                value={[tremblingIntensity]}
+                value={[animationState.current.tremblingIntensity]}
                 onValueChange={value => handleSettingsChange('tremblingIntensity', value[0])}
               />
             </div>
             <div>
-              <Label htmlFor="baseFpsSlider">Animation Speed (Base FPS: {baseFps})</Label>
+              <Label htmlFor="baseFpsSlider">Animation Speed (Base FPS: {animationState.current.baseFps})</Label>
               <Slider
                 id="baseFpsSlider"
                 min={10}
                 max={120}
                 step={1}
-                value={[baseFps]}
+                value={[animationState.current.baseFps]}
                 onValueChange={([v]) => {
                   const num = Number(v)
                   if (!isNaN(num)) setBaseFps(num)
@@ -1853,7 +1876,7 @@ export default function InstagramPostCreator() {
                 min={MIN_FRAME_RATE}
                 max={120}
                 step={1}
-                value={[frameRate]}
+                value={[animationState.current.frameRate]}
                 onValueChange={([v]) => {
                   const num = Number(v)
                   if (!isNaN(num)) {
@@ -1869,7 +1892,7 @@ export default function InstagramPostCreator() {
                 min={0}
                 max={0.5}
                 step={0.01}
-                value={[pauseHold]}
+                value={[animationState.current.pauseHold]}
                 onValueChange={([v]) => setPauseHold(v)}
               />
             </div>
@@ -1880,7 +1903,7 @@ export default function InstagramPostCreator() {
                 min={2}
                 max={10}
                 step={1}
-                value={[easingPower]}
+                value={[animationState.current.easingPower]}
                 onValueChange={([v]) => setEasingPower(v)}
               />
             </div>
@@ -1891,7 +1914,7 @@ export default function InstagramPostCreator() {
                 min={2}
                 max={10}
                 step={1}
-                value={[lineEasePower]}
+                value={[animationState.current.lineEasePower]}
                 onValueChange={([v]) => setLineEasePower(v)}
               />
             </div>
@@ -1902,13 +1925,13 @@ export default function InstagramPostCreator() {
                 min={2}
                 max={10}
                 step={1}
-                value={[textEasePower]}
+                value={[animationState.current.textEasePower]}
                 onValueChange={([v]) => setTextEasePower(v)}
               />
             </div>
             <div>
               <Label htmlFor="scaleAnchor">Scale Anchor</Label>
-              <Select value={scaleAnchor} onValueChange={setScaleAnchor}>
+              <Select value={animationState.current.scaleAnchor} onValueChange={setScaleAnchor}>
                 <SelectTrigger id="scaleAnchor" className="w-full">
                   <SelectValue placeholder="corner/center" />
                 </SelectTrigger>
