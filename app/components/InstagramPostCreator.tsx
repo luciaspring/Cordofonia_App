@@ -1331,7 +1331,7 @@ export default function InstagramPostCreator() {
       lastDisplayTimeRef.current = timestamp
     }
 
-    setProgressRatio(Math.min(progress / 2.416, 1));   // 2.416 = full cycle
+    setProgressRatio(Math.min(progress / PROGRESS_END, 1));
 
     if (isPlaying) animationRef.current = requestAnimationFrame(animate)
   }
@@ -1586,12 +1586,12 @@ export default function InstagramPostCreator() {
               />
             </div>
 
-            {/* ─── CONTROLS ROW (exactly 540 px wide) */}
+            {/* ─── CONTROLS ROW (exactly 540 px wide) ─────────────────────────────── */}
             <div className={`flex w-full gap-2 mx-auto ${ROW_H}`}>
               {/* --- FRAME PAIR --- */}
               <div
                 className={`
-                  relative flex flex-[2] items-stretch
+                  relative flex flex-1 items-stretch
                   transition-[gap] duration-300 ease-in-out
                   ${phase === 'merge' || phase === 'playing' ? 'gap-0' : 'gap-2'}
                 `}
@@ -1649,14 +1649,15 @@ export default function InstagramPostCreator() {
               <Button
                 onClick={handlePlayClick}
                 className={`
-                  flex-1 ${ROUND_BTN_W} ${ROW_H}
+                  flex-1 h-full
                   rounded-full flex items-center justify-center
-                  ${phase === "playing"
-                    ? "bg-black text-white hover:bg-[#9E9E9E] hover:text-black"
-                    : "bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black"}
+                  transition-colors duration-300
+                  ${phase==='playing'
+                    ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                    : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
                 `}
               >
-                {phase === "playing"
+                {phase==='playing'
                   ? <span className="sf-icon text-xl">􀊅</span>
                   : <span className="sf-icon text-xl">􀊄</span>}
               </Button>
@@ -1664,7 +1665,7 @@ export default function InstagramPostCreator() {
               {/* --- SETTINGS (square) --- */}
               <Button
                 onClick={() => setSettingsOpen(true)}
-                className={`${SQUARE_W} ${ROW_H} bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center`}
+                className={`h-full aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center`}
               >
                 <span className="sf-icon text-xl">􀌆</span>
               </Button>
@@ -1672,7 +1673,7 @@ export default function InstagramPostCreator() {
               {/* --- EXPORT (square) --- */}
               <Button
                 onClick={exportVideo}
-                className={`${SQUARE_W} ${ROW_H} bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center`}
+                className={`h-full aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center`}
               >
                 <span className="sf-icon text-xl">􀈂</span>
               </Button>
