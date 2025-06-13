@@ -324,9 +324,16 @@ export default function InstagramPostCreator() {
     groupRotation
   ]);
 
+  // This new useEffect contains the animation logic and ensures it doesn't have stale state.
   useEffect(() => {
-    // This entire 'animate' function is redefined inside the effect.
-    // This ensures it never has a stale closure over state like `isLooping`.
+    if (!isPlaying) {
+      // When animation stops, draw one last static frame if needed
+      drawCanvas(0);
+      return;
+    }
+
+    let animationFrameId: number | null = null;
+
     const animate = (timestamp: number) => {
       if (!startTimeRef.current) startTimeRef.current = timestamp;
       const elapsed = timestamp - startTimeRef.current;
@@ -341,41 +348,47 @@ export default function InstagramPostCreator() {
         } else {
           setIsPlaying(false);
           setBarProgress(1);
-          return;
+          drawCanvas(PROGRESS_END); // draw final frame
+          return; // Stop the loop
         }
-      } else {
-        setBarProgress(progress / PROGRESS_END);
       }
-
+      
+      const currentProgress = Math.min(progress, PROGRESS_END);
+      setBarProgress(currentProgress / PROGRESS_END);
+      setProgressRatio(currentProgress / PROGRESS_END);
+      
       if (timestamp - lastDisplayTimeRef.current >= 1000 / frameRate) {
-        drawCanvas(progress);
+        drawCanvas(currentProgress);
         lastDisplayTimeRef.current = timestamp;
       }
-
-      setProgressRatio(Math.min(progress / PROGRESS_END, 1));
-
-      // The check for isPlaying is now inside the new closure, so it's always up-to-date.
-      if (isPlaying) {
-        animationRef.current = requestAnimationFrame(animate);
-      }
+      
+      animationFrameId = requestAnimationFrame(animate);
     };
 
-    if (isPlaying) {
-      startTimeRef.current = null;
-      lastDisplayTimeRef.current = 0;
-      animationRef.current = requestAnimationFrame(animate);
-    } else {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    }
+    startTimeRef.current = null;
+    lastDisplayTimeRef.current = 0;
+    animationFrameId = requestAnimationFrame(animate);
 
     return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
       }
     };
   }, [isPlaying, isLooping, baseFps, frameRate, drawCanvas, setBarProgress, setProgressRatio, setIsPlaying]);
+
+  useEffect(() => {
+    if (isPlaying) {
+      startTimeRef.current = null
+      lastDisplayTimeRef.current = 0
+      animationRef.current = requestAnimationFrame(animate)
+    } else {
+      if (animationRef.current) cancelAnimationFrame(animationRef.current)
+      drawCanvas()
+    }
+    return () => {
+      if (animationRef.current) cancelAnimationFrame(animationRef.current)
+    }
+  }, [isPlaying])
 
   useEffect(() => {
     if (isPlaying) {
