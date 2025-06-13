@@ -1,7 +1,7 @@
 // app/components/InstagramPostCreator.tsx
 'use client'
 
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -310,7 +310,6 @@ export default function InstagramPostCreator() {
     }
     // The animation loop handles drawing when isPlaying=true
   }, [
-    isPlaying,
     backgroundColor,
     currentFrame,
     lines,
@@ -323,66 +322,6 @@ export default function InstagramPostCreator() {
     selectedTexts,
     groupRotation
   ]);
-
-  // This new useEffect contains all animation logic and ensures it never has stale state.
-  useEffect(() => {
-    // If we're not playing, just draw a static frame and do nothing else.
-    if (!isPlaying) {
-      drawCanvas();
-      return;
-    }
-
-    // When isPlaying becomes true, this effect runs and starts the animation loop.
-    let frameId: number;
-
-    const animate = (timestamp: number) => {
-      // Initialize start time on the first frame of the animation.
-      if (!startTimeRef.current) {
-        startTimeRef.current = timestamp;
-      }
-      
-      const elapsed = timestamp - startTimeRef.current;
-      const progress = elapsed / ((1000 / baseFps) * 150);
-      
-      // Update the UI progress bar.
-      const cappedProgress = Math.min(progress, PROGRESS_END);
-      setBarProgress(cappedProgress / PROGRESS_END);
-      setProgressRatio(cappedProgress / PROGRESS_END);
-
-      // Throttle the actual canvas drawing to the selected frame rate.
-      if (timestamp - lastDisplayTimeRef.current >= 1000 / frameRate) {
-        drawCanvas(cappedProgress);
-        lastDisplayTimeRef.current = timestamp;
-      }
-
-      // Check if the animation cycle is complete.
-      if (progress < PROGRESS_END) {
-        // If not, request the next frame.
-        frameId = requestAnimationFrame(animate);
-      } else {
-        // If it is complete...
-        if (isLooping) {
-          // and we are looping, reset the start time and go again.
-          startTimeRef.current = null;
-          frameId = requestAnimationFrame(animate);
-        } else {
-          // otherwise, stop the animation.
-          setIsPlaying(false);
-          drawCanvas(PROGRESS_END); // Ensure the final frame is drawn perfectly.
-        }
-      }
-    };
-
-    // Reset timers and start the animation loop.
-    startTimeRef.current = null;
-    lastDisplayTimeRef.current = 0;
-    frameId = requestAnimationFrame(animate);
-
-    // Cleanup function to cancel the animation frame when the component unmounts or the effect re-runs.
-    return () => {
-      cancelAnimationFrame(frameId);
-    };
-  }, [isPlaying, isLooping, baseFps, frameRate, drawCanvas, setIsPlaying, setBarProgress, setProgressRatio]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -460,7 +399,7 @@ export default function InstagramPostCreator() {
   }
 
   // ─── DRAWING ROUTINES ────────────────────────────────────────────────────────────
-  const drawCanvas = useCallback((progress: number = 0) => {
+  const drawCanvas = (progress: number = 0) => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
@@ -493,20 +432,7 @@ export default function InstagramPostCreator() {
         }
       }
     }
-  }, [
-    backgroundColor,
-    isPlaying,
-    lines,
-    currentFrame,
-    selectedTexts,
-    titlePositionsFrame1,
-    titlePositionsFrame2,
-    subtitlePositionFrame1,
-    subtitlePositionFrame2,
-    tremblingIntensity,
-    lineThickness,
-    groupRotation,
-  ])
+  }
 
   // ─── STATIC TEXT DRAW WITH TREMBLING ─────────────────────────────────────────────
   const drawStaticText = (ctx: CanvasRenderingContext2D, frame: number) => {
@@ -1401,7 +1327,7 @@ export default function InstagramPostCreator() {
       } else {
         setIsPlaying(false)
         setBarProgress(1)             // keep bar filled at the very end
-        return; // Stop the loop
+        return
       }
     } else {
       /* normal progress update */
@@ -1976,6 +1902,5 @@ export default function InstagramPostCreator() {
     </div>
   )
 }
-
 
 
