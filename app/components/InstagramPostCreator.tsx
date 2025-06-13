@@ -325,18 +325,57 @@ export default function InstagramPostCreator() {
   ]);
 
   useEffect(() => {
+    // This entire 'animate' function is redefined inside the effect.
+    // This ensures it never has a stale closure over state like `isLooping`.
+    const animate = (timestamp: number) => {
+      if (!startTimeRef.current) startTimeRef.current = timestamp;
+      const elapsed = timestamp - startTimeRef.current;
+      const msPerBase = 1000 / baseFps;
+      let progress = elapsed / (msPerBase * 150);
+
+      if (progress >= PROGRESS_END) {
+        if (isLooping) {
+          startTimeRef.current = timestamp;
+          progress = 0;
+          setBarProgress(0);
+        } else {
+          setIsPlaying(false);
+          setBarProgress(1);
+          return;
+        }
+      } else {
+        setBarProgress(progress / PROGRESS_END);
+      }
+
+      if (timestamp - lastDisplayTimeRef.current >= 1000 / frameRate) {
+        drawCanvas(progress);
+        lastDisplayTimeRef.current = timestamp;
+      }
+
+      setProgressRatio(Math.min(progress / PROGRESS_END, 1));
+
+      // The check for isPlaying is now inside the new closure, so it's always up-to-date.
+      if (isPlaying) {
+        animationRef.current = requestAnimationFrame(animate);
+      }
+    };
+
     if (isPlaying) {
-      startTimeRef.current = null
-      lastDisplayTimeRef.current = 0
-      animationRef.current = requestAnimationFrame(animate)
+      startTimeRef.current = null;
+      lastDisplayTimeRef.current = 0;
+      animationRef.current = requestAnimationFrame(animate);
     } else {
-      if (animationRef.current) cancelAnimationFrame(animationRef.current)
-      drawCanvas()
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
     }
+
     return () => {
-      if (animationRef.current) cancelAnimationFrame(animationRef.current)
-    }
-  }, [isPlaying])
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [isPlaying, isLooping, baseFps, frameRate, drawCanvas, setBarProgress, setProgressRatio, setIsPlaying]);
 
   useEffect(() => {
     if (isPlaying) {
