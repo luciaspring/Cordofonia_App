@@ -337,12 +337,6 @@ export default function InstagramPostCreator() {
     }
   }, [isPlaying])
 
-  // Reset bar visuals on text edit
-  useEffect(() => {
-    setProgressRatio(0);
-    setBarProgress(0);
-  }, [titles, subtitle]);
-
   useEffect(() => {
     if (isPlaying) {
       const gap = 8
@@ -1430,9 +1424,9 @@ export default function InstagramPostCreator() {
   }
 
   const handlePlayClick = () => {
+    setBarProgress(0);
+    setProgressRatio(0);
     if (phase === 'idle' || phase === 'paused') {
-      setBarProgress(0);
-      setProgressRatio(0);
       setIsPlaying(true);
       setOriginFrame(currentFrame as 1 | 2);
       setPhase('merge');
@@ -1441,7 +1435,7 @@ export default function InstagramPostCreator() {
       setIsPlaying(false);
       setPhase('paused');
     }
-  }
+  };
 
   const toggleLoop = () => setIsLooping(prev => !prev)
 
