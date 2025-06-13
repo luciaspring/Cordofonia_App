@@ -320,7 +320,9 @@ export default function InstagramPostCreator() {
     subtitlePositionFrame1,
     subtitlePositionFrame2,
     selectedTexts,
-    groupRotation
+    groupRotation,
+    titles,
+    subtitle
   ]);
 
   useEffect(() => {
