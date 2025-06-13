@@ -1426,8 +1426,8 @@ export default function InstagramPostCreator() {
   }
 
   const handlePlayClick = () => {
+    setProgressRatio(0);  // Always reset on play!
     setBarProgress(0);
-    setProgressRatio(0);
     if (phase === 'idle' || phase === 'paused') {
       setIsPlaying(true);
       setOriginFrame(currentFrame as 1 | 2);
