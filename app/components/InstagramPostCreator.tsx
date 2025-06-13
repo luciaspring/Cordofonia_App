@@ -294,25 +294,34 @@ export default function InstagramPostCreator() {
     return () => { cancelled = true }
   }, [])
 
+  // Recalculate text dimensions only when the source text or fonts change.
   useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    const canvas = canvasRef.current;
+    if (!canvas || !fontLoaded) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    updateTextDimensions(ctx);
+  }, [titles, subtitle, fontLoaded]);
 
-    updateTextDimensions(ctx)
-    if (!isPlaying) drawCanvas()
+  // Redraw the static canvas whenever its contents change (but only when not playing).
+  useEffect(() => {
+    if (!isPlaying) {
+      drawCanvas();
+    }
+    // The animation loop handles drawing when isPlaying=true
   }, [
-    titles,
-    subtitle,
     backgroundColor,
     currentFrame,
     lines,
     lineThickness,
     tremblingIntensity,
-    frameRate,
-    fontLoaded
-  ])
+    titlePositionsFrame1,
+    titlePositionsFrame2,
+    subtitlePositionFrame1,
+    subtitlePositionFrame2,
+    selectedTexts,
+    groupRotation
+  ]);
 
   useEffect(() => {
     if (isPlaying) {
