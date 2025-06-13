@@ -1341,6 +1341,7 @@ export default function InstagramPostCreator() {
     }
 
     setProgressRatio(Math.min(progress / PROGRESS_END, 1));
+    console.log('progressRatio', progressRatio, 'phase', phase, 'isPlaying', isPlaying);
 
     if (isPlaying) animationRef.current = requestAnimationFrame(animate)
   }
