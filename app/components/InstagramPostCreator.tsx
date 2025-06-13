@@ -142,7 +142,7 @@ export default function InstagramPostCreator() {
   const [backgroundColor, setBackgroundColor] = useState('#E0B0FF')
   const [currentFrame, setCurrentFrame] = useState(1)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [isLooping, setIsLooping] = useState(false)
+  const [isLooping, setIsLooping] = useState(true)
   const [playProgress, setPlayProgress] = useState(0)    // 0 ... 1
   const [lines, setLines] = useState<Line[]>([])
   const [currentLine, setCurrentLine] = useState<Line | null>(null)
@@ -242,20 +242,6 @@ export default function InstagramPostCreator() {
 
   // Add this inside the Settings modal
   const [scaleAnchor, setScaleAnchor] = useState<'corner' | 'center'>('corner')
-
-  const MERGE_MS = 300                 // how long the two buttons take to "kiss"
-  type MergePhase = 'idle' | 'growing' | 'covered'
-  const [mergePhase, setMergePhase] = useState<MergePhase>('idle')
-  const [isMorphing, setIsMorphing] = useState(false)
-
-  // ─── UTILITY: contrast helper ─────────────────────────────────────────────
-  const getContrastColor = (bgColor: string): string => {
-    const r = parseInt(bgColor.slice(1, 3), 16)
-    const g = parseInt(bgColor.slice(3, 5), 16)
-    const b = parseInt(bgColor.slice(5, 7), 16)
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-    return luminance > 0.5 ? '#000000' : '#FFFFFF'
-  }
 
   // ─── EFFECT HOOKS ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -1415,25 +1401,56 @@ export default function InstagramPostCreator() {
   }
 
   const togglePlay = () => {
-    /* ── if we're starting the animation ───────────────────────────── */
-    if (!isPlaying) {
-      setBarProgress(0)
-      setMergePhase('growing')           // step ①  start the width-grow CSS
-      /* after the grow-time, let the grey overlay take over */
-      setTimeout(() => setMergePhase('covered'), MERGE_MS)
-
-      setIsPlaying(true)                 // kicks off requestAnimationFrame
-    }
-    /* ── if we're stopping ─────────────────────────────────────────── */
-    else {
-      setIsPlaying(false)
-      setMergePhase('idle')
-      setBarProgress(0)
-    }
+    setBarProgress(0)
+    setIsPlaying(prev => !prev)
+    if (isPlaying) setPlayProgress(0)           // NEW
   }
   const toggleLoop = () => setIsLooping(prev => !prev)
 
-  // ─── EXPORT HANDLER ─────────────────────────────────────────────────────────────
+  // ─── POSITION MODAL & SETTINGS HANDLERS ────────────────────────────────────────
+  const updatePosition = (newPos: TextPosition) => {
+    if (selectedTexts.includes('title1') || selectedTexts.includes('title2')) {
+      setTitlePositionsFrame2(prev => {
+        const arr = [...prev]
+        selectedTexts.forEach(st => {
+          const idx = st === 'title1' ? 0 : 1
+          arr[idx] = newPos
+        })
+        return arr
+      })
+    }
+    if (selectedTexts.includes('subtitle')) {
+      setSubtitlePositionFrame2(newPos)
+    }
+    setPositionModalOpen(false)
+    drawCanvas()
+  }
+
+  const handleSettingsChange = (name: string, val: number) => {
+    switch (name) {
+      case 'lineThickness':
+        setLineThickness(val)
+        break
+      case 'tremblingIntensity':
+        setTremblingIntensity(val)
+        break
+      case 'frameRate':
+        setFrameRate(val)
+        // Throttling happening inside animate; no need to restart loop
+        break
+    }
+    drawCanvas()
+  }
+
+  // ─── UTILITY ────────────────────────────────────────────────────────────────────
+  const getContrastColor = (bgColor: string): string => {
+    const r = parseInt(bgColor.slice(1, 3), 16)
+    const g = parseInt(bgColor.slice(3, 5), 16)
+    const b = parseInt(bgColor.slice(5, 7), 16)
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+    return luminance > 0.5 ? '#000000' : '#FFFFFF'
+  }
+
   const exportVideo = async () => {
     const canvas = canvasRef.current
     if (!canvas || isPlaying) return      // avoid double-start while playing
@@ -1468,37 +1485,6 @@ export default function InstagramPostCreator() {
       setIsPlaying(false)
       recordingRef.current?.stop()
     }, fullCycleMs + 200)      // +200 ms safety margin
-  }
-
-  // ─── POSITION MODAL & SETTINGS HANDLERS ────────────────────────────────────────
-  const updatePosition = (newPos: TextPosition) => {
-    if (selectedTexts.includes('title1') || selectedTexts.includes('title2')) {
-      setTitlePositionsFrame2(prev => {
-        const arr = [...prev]
-        selectedTexts.forEach(st => {
-          const idx = st === 'title1' ? 0 : 1
-          arr[idx] = newPos
-        })
-        return arr
-      })
-    }
-    if (selectedTexts.includes('subtitle')) {
-      setSubtitlePositionFrame2(newPos)
-    }
-    setPositionModalOpen(false)
-    drawCanvas()
-  }
-
-  const handlePlay = () => {
-    // 1) kick off the morph animation
-    setIsMorphing(true)
-
-    // 2) after 300ms (or however long your CSS transition is),
-    //    switch to the real progress‐bar mode:
-    setTimeout(() => {
-      setIsMorphing(false)
-      setIsPlaying(true)
-    }, 300)
   }
 
   // ─── JSX ────────────────────────────────────────────────────────────────────────
@@ -1583,20 +1569,13 @@ export default function InstagramPostCreator() {
             <div className="grid grid-cols-4 gap-2 w-[540px] mx-auto items-stretch">
 
               {/* ───────────────────  ①  Frame buttons  (2 columns)  ─────────────────── */}
-              <div
-                className={`
-                  relative flex gap-2 col-span-2
-                  ${isMorphing ? 'morphing' : ''}
-                `}
-              >
+              <div className={`relative flex gap-2 col-span-2 ${isPlaying ? 'merge gooey' : ''}`}>
+
                 {/* Frame 1 */}
                 <Button
                   onClick={() => handleFrameChange(1)}
                   className={`
-                    frame-btn frame1
-                    font-ui flex items-center justify-center
-                    h-full rounded-none overflow-hidden
-                    transition-all duration-300
+                    w-full h-full rounded-none
                     ${currentFrame === 1
                       ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
                       : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
@@ -1609,10 +1588,7 @@ export default function InstagramPostCreator() {
                 <Button
                   onClick={() => handleFrameChange(2)}
                   className={`
-                    frame-btn frame2
-                    font-ui flex items-center justify-center
-                    h-full rounded-none overflow-hidden
-                    transition-all duration-300
+                    w-full h-full rounded-none
                     ${currentFrame === 2
                       ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
                       : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
@@ -1621,12 +1597,12 @@ export default function InstagramPostCreator() {
                   {!isPlaying && 'Frame 2'}
                 </Button>
 
-                {/* only show the final grey bar once we're actually "playing" */}
+                {/* progress fill (unchanged) */}
                 {isPlaying && (
                   <div className="absolute inset-0 pointer-events-none overflow-hidden">
                     <div className="w-full h-full bg-gray-200" />
                     <div
-                      className="absolute top-0 left-0 h-full bg-black transition-[width]"
+                      className="absolute top-0 left-0 h-full bg-black"
                       style={{ width: `${progressRatio * 100}%` }}
                     />
                   </div>
@@ -1635,7 +1611,7 @@ export default function InstagramPostCreator() {
 
               {/* ───────────────────  ②  Play / Pause  (1 column)  ─────────────────── */}
               <Button
-                onClick={handlePlay}
+                onClick={togglePlay}
                 className={`
                   w-full h-full rounded-full flex items-center justify-center
                   ${isPlaying
