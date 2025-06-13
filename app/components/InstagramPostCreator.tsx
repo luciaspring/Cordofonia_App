@@ -1,7 +1,7 @@
 // app/components/InstagramPostCreator.tsx
 'use client'
 
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -303,40 +303,6 @@ export default function InstagramPostCreator() {
     updateTextDimensions(ctx);
   }, [titles, subtitle, fontLoaded]);
 
-  // Redraw the static canvas whenever its contents change (but only when not playing).
-  useEffect(() => {
-    if (!isPlaying) {
-      drawCanvas();
-    }
-    // The animation loop handles drawing when isPlaying=true
-  }, [
-    backgroundColor,
-    currentFrame,
-    lines,
-    lineThickness,
-    tremblingIntensity,
-    titlePositionsFrame1,
-    titlePositionsFrame2,
-    subtitlePositionFrame1,
-    subtitlePositionFrame2,
-    selectedTexts,
-    groupRotation
-  ]);
-
-  useEffect(() => {
-    if (isPlaying) {
-      startTimeRef.current = null
-      lastDisplayTimeRef.current = 0
-      animationRef.current = requestAnimationFrame(animate)
-    } else {
-      if (animationRef.current) cancelAnimationFrame(animationRef.current)
-      drawCanvas()
-    }
-    return () => {
-      if (animationRef.current) cancelAnimationFrame(animationRef.current)
-    }
-  }, [isPlaying])
-
   useEffect(() => {
     if (isPlaying) {
       const gap = 8
@@ -399,7 +365,7 @@ export default function InstagramPostCreator() {
   }
 
   // ─── DRAWING ROUTINES ────────────────────────────────────────────────────────────
-  const drawCanvas = (progress: number = 0) => {
+  const drawCanvas = useCallback((progress: number = 0) => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
@@ -432,59 +398,97 @@ export default function InstagramPostCreator() {
         }
       }
     }
-  }
+  }, [
+    backgroundColor,
+    currentFrame,
+    lines,
+    lineThickness,
+    tremblingIntensity,
+    titlePositionsFrame1,
+    titlePositionsFrame2,
+    subtitlePositionFrame1,
+    subtitlePositionFrame2,
+    selectedTexts,
+    groupRotation,
+    isPlaying,
+    titles,
+    subtitle
+  ])
 
-  // ─── STATIC TEXT DRAW WITH TREMBLING ─────────────────────────────────────────────
-  const drawStaticText = (ctx: CanvasRenderingContext2D, frame: number) => {
-    const positions = frame === 1 ? titlePositionsFrame1 : titlePositionsFrame2
-    const subPos = frame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
+  // Redraw the static canvas whenever its contents change (but only when not playing).
+  useEffect(() => {
+    if (!isPlaying) {
+      drawCanvas();
+    }
+    // The animation loop handles drawing when isPlaying=true
+  }, [
+    backgroundColor,
+    currentFrame,
+    lines,
+    lineThickness,
+    tremblingIntensity,
+    titlePositionsFrame1,
+    titlePositionsFrame2,
+    subtitlePositionFrame1,
+    subtitlePositionFrame2,
+    selectedTexts,
+    groupRotation,
+    drawCanvas // Add drawCanvas as a dependency
+  ]);
 
-    positions.forEach((pos, idx) => {
-      const tremX = (Math.random() - 0.5) * tremblingIntensity
-      const tremY = (Math.random() - 0.5) * tremblingIntensity
-      ctx.save()
-      const cx = pos.x + pos.width / 2
-      const cy = pos.y + pos.height / 2
-      ctx.translate(cx + tremX, cy + tremY)                         // centre pivot
-      ctx.rotate(pos.rotation)
-      ctx.font         = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`
-      ctx.fillStyle    = getContrastColor(backgroundColor)
-      ctx.textBaseline = 'middle'
-      ctx.textAlign    = 'left'
-      ctx.fillText(titles[idx], -pos.width / 2, 0)                  // shift left by ½ W
-      ctx.restore()
-    })
+  // THIS NEW EFFECT HANDLES THE ENTIRE ANIMATION LIFECYCLE
+  useEffect(() => {
+    if (!isPlaying) {
+      return;
+    }
 
-    const tremXsub = (Math.random() - 0.5) * tremblingIntensity
-    const tremYsub = (Math.random() - 0.5) * tremblingIntensity
+    let frameId: number | null = null;
+    startTimeRef.current = null;
+    lastDisplayTimeRef.current = 0;
 
-    ctx.save()
-    const scx = subPos.x + subPos.width / 2
-    const scy = subPos.y + subPos.height / 2
-    ctx.translate(scx + tremXsub, scy + tremYsub)
-    ctx.rotate(subPos.rotation)
-    ctx.font         = `${subPos.fontSize}px "${AFFAIRS}", sans-serif`
-    ctx.fillStyle    = getContrastColor(backgroundColor)
-    ctx.textBaseline = 'middle'
-    ctx.textAlign    = 'left'
-    const lx = -subPos.width / 2
-    const ty = -subPos.height / 2
-    ctx.fillText('Instrumento:', lx, ty)
-    ctx.fillText(subtitle, lx, ty + subPos.fontSize + 8)
-    ctx.restore()
-  }
+    const animate = (timestamp: number) => {
+      if (!startTimeRef.current) {
+        startTimeRef.current = timestamp;
+      }
+      const elapsed = timestamp - startTimeRef.current;
+      const msPerBase = 1000 / baseFps;
+      let progress = elapsed / (msPerBase * 150);
 
-  const drawRotatedText = (ctx: CanvasRenderingContext2D, pos: TextPosition, text: string) => {
-    ctx.save()
-    ctx.translate(pos.x + pos.width/2, pos.y + pos.height/2)
-    ctx.rotate(pos.rotation)
-    ctx.font = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`
-    ctx.fillStyle = getContrastColor(backgroundColor)
-    ctx.textBaseline = 'middle'
-    ctx.textAlign = 'center'
-    ctx.fillText(text, 0, 0)
-    ctx.restore()
-  }
+      if (progress >= PROGRESS_END) {
+        if (isLooping) {
+          startTimeRef.current = timestamp; // Reset for loop
+          progress = 0;
+          setBarProgress(0);
+        } else {
+          setIsPlaying(false);
+          setBarProgress(1);
+          drawCanvas(PROGRESS_END); // Draw final frame
+          return;
+        }
+      } else {
+        setBarProgress(progress / PROGRESS_END);
+      }
+
+      if (timestamp - lastDisplayTimeRef.current >= 1000 / frameRate) {
+        drawCanvas(progress);
+        lastDisplayTimeRef.current = timestamp;
+      }
+      
+      setProgressRatio(Math.min(progress / PROGRESS_END, 1));
+
+      if (isPlaying) { // Check isPlaying inside the loop
+         frameId = requestAnimationFrame(animate);
+      }
+    };
+
+    frameId = requestAnimationFrame(animate);
+
+    return () => {
+      if (frameId) {
+        cancelAnimationFrame(frameId);
+      }
+    };
+  }, [isPlaying, isLooping, baseFps, frameRate, drawCanvas, setBarProgress, setProgressRatio, setIsPlaying]);
 
   const drawLines = (ctx: CanvasRenderingContext2D, framelines: Line[]) => {
     ctx.lineWidth = lineThickness
@@ -1310,41 +1314,59 @@ export default function InstagramPostCreator() {
     canvas.style.cursor = 'default'
   }
 
-  // ─── ANIMATION LOOP ─────────────────────────────────────────────────────────────
-  const animate = (timestamp: number) => {
-    if (!startTimeRef.current) startTimeRef.current = timestamp
-    const elapsed = timestamp - startTimeRef.current
-    const msPerBase = 1000 / baseFps
-    let progress = (elapsed / (msPerBase * 150))
+  // ─── STATIC TEXT DRAW WITH TREMBLING ─────────────────────────────────────────────
+  const drawStaticText = (ctx: CanvasRenderingContext2D, frame: number) => {
+    const positions = frame === 1 ? titlePositionsFrame1 : titlePositionsFrame2
+    const subPos = frame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
 
-    /* ── loop handling ─────────────────────────── */
-    if (progress >= PROGRESS_END) {
-      if (isLooping) {
-        // restart immediately
-        startTimeRef.current = timestamp
-        progress = 0                  // ← first frame of new cycle
-        setBarProgress(0)             // ① instantly hide the black bar
-      } else {
-        setIsPlaying(false)
-        setBarProgress(1)             // keep bar filled at the very end
-        return
-      }
-    } else {
-      /* normal progress update */
-      setBarProgress(progress / PROGRESS_END)   // ② animate bar
-    }
+    positions.forEach((pos, idx) => {
+      const tremX = (Math.random() - 0.5) * tremblingIntensity
+      const tremY = (Math.random() - 0.5) * tremblingIntensity
+      ctx.save()
+      const cx = pos.x + pos.width / 2
+      const cy = pos.y + pos.height / 2
+      ctx.translate(cx + tremX, cy + tremY)                         // centre pivot
+      ctx.rotate(pos.rotation)
+      ctx.font         = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`
+      ctx.fillStyle    = getContrastColor(backgroundColor)
+      ctx.textBaseline = 'middle'
+      ctx.textAlign    = 'left'
+      ctx.fillText(titles[idx], -pos.width / 2, 0)                  // shift left by ½ W
+      ctx.restore()
+    })
 
-    /* Throttled canvas draw (unchanged) */
-    if (timestamp - lastDisplayTimeRef.current >= 1000 / frameRate) {
-      drawCanvas(progress)
-      lastDisplayTimeRef.current = timestamp
-    }
+    const tremXsub = (Math.random() - 0.5) * tremblingIntensity
+    const tremYsub = (Math.random() - 0.5) * tremblingIntensity
 
-    setProgressRatio(Math.min(progress / PROGRESS_END, 1));
-
-    if (isPlaying) animationRef.current = requestAnimationFrame(animate)
+    ctx.save()
+    const scx = subPos.x + subPos.width / 2
+    const scy = subPos.y + subPos.height / 2
+    ctx.translate(scx + tremXsub, scy + tremYsub)
+    ctx.rotate(subPos.rotation)
+    ctx.font         = `${subPos.fontSize}px "${AFFAIRS}", sans-serif`
+    ctx.fillStyle    = getContrastColor(backgroundColor)
+    ctx.textBaseline = 'middle'
+    ctx.textAlign    = 'left'
+    const lx = -subPos.width / 2
+    const ty = -subPos.height / 2
+    ctx.fillText('Instrumento:', lx, ty)
+    ctx.fillText(subtitle, lx, ty + subPos.fontSize + 8)
+    ctx.restore()
   }
 
+  const drawRotatedText = (ctx: CanvasRenderingContext2D, pos: TextPosition, text: string) => {
+    ctx.save()
+    ctx.translate(pos.x + pos.width/2, pos.y + pos.height/2)
+    ctx.rotate(pos.rotation)
+    ctx.font = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`
+    ctx.fillStyle = getContrastColor(backgroundColor)
+    ctx.textBaseline = 'middle'
+    ctx.textAlign = 'center'
+    ctx.fillText(text, 0, 0)
+    ctx.restore()
+  }
+
+  // ─── ANIMATION LOOP ─────────────────────────────────────────────────────────────
   const drawAnimatedContent = (ctx: CanvasRenderingContext2D, p: number) => {
     const f1 = lines.filter(l => l.frame === 1)
     const f2 = lines.filter(l => l.frame === 2)
@@ -1902,5 +1924,6 @@ export default function InstagramPostCreator() {
     </div>
   )
 }
+
 
 
