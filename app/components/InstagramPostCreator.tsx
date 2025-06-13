@@ -246,6 +246,7 @@ export default function InstagramPostCreator() {
   const MERGE_MS = 300                 // how long the two buttons take to "kiss"
   type MergePhase = 'idle' | 'growing' | 'covered'
   const [mergePhase, setMergePhase] = useState<MergePhase>('idle')
+  const [isMorphing, setIsMorphing] = useState(false)
 
   // ─── UTILITY: contrast helper ─────────────────────────────────────────────
   const getContrastColor = (bgColor: string): string => {
@@ -1488,6 +1489,18 @@ export default function InstagramPostCreator() {
     drawCanvas()
   }
 
+  const handlePlay = () => {
+    // 1) kick off the morph animation
+    setIsMorphing(true)
+
+    // 2) after 300ms (or however long your CSS transition is),
+    //    switch to the real progress‐bar mode:
+    setTimeout(() => {
+      setIsMorphing(false)
+      setIsPlaying(true)
+    }, 300)
+  }
+
   // ─── JSX ────────────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-white">
@@ -1573,18 +1586,17 @@ export default function InstagramPostCreator() {
               <div
                 className={`
                   relative flex gap-2 col-span-2
-                  ${isPlaying ? 'gooey' : ''}
-                  ${mergePhase === 'growing' ? 'gap-0' : ''}
+                  ${isMorphing ? 'morphing' : ''}
                 `}
               >
                 {/* Frame 1 */}
                 <Button
                   onClick={() => handleFrameChange(1)}
                   className={`
+                    frame-btn frame1
                     font-ui flex items-center justify-center
                     h-full rounded-none overflow-hidden
-                    transition-[flex-basis] duration-[300ms]
-                    ${mergePhase === 'growing' ? 'flex-[1_1_50%]' : 'flex-1'}
+                    transition-all duration-300
                     ${currentFrame === 1
                       ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
                       : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
@@ -1597,10 +1609,10 @@ export default function InstagramPostCreator() {
                 <Button
                   onClick={() => handleFrameChange(2)}
                   className={`
+                    frame-btn frame2
                     font-ui flex items-center justify-center
                     h-full rounded-none overflow-hidden
-                    transition-[flex-basis] duration-[300ms]
-                    ${mergePhase === 'growing' ? 'flex-[1_1_50%]' : 'flex-1'}
+                    transition-all duration-300
                     ${currentFrame === 2
                       ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
                       : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
@@ -1609,13 +1621,13 @@ export default function InstagramPostCreator() {
                   {!isPlaying && 'Frame 2'}
                 </Button>
 
-                {/* grey "base" + progress fill */}
-                {mergePhase === 'covered' && (
+                {/* only show the final grey bar once we're actually "playing" */}
+                {isPlaying && (
                   <div className="absolute inset-0 pointer-events-none overflow-hidden">
                     <div className="w-full h-full bg-gray-200" />
                     <div
-                      className="absolute top-0 left-0 h-full bg-black"
-                      style={{ width: `${barProgress * 100}%` }}
+                      className="absolute top-0 left-0 h-full bg-black transition-[width]"
+                      style={{ width: `${progressRatio * 100}%` }}
                     />
                   </div>
                 )}
@@ -1623,7 +1635,7 @@ export default function InstagramPostCreator() {
 
               {/* ───────────────────  ②  Play / Pause  (1 column)  ─────────────────── */}
               <Button
-                onClick={togglePlay}
+                onClick={handlePlay}
                 className={`
                   w-full h-full rounded-full flex items-center justify-center
                   ${isPlaying
