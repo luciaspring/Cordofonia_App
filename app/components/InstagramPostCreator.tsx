@@ -1587,11 +1587,12 @@ export default function InstagramPostCreator() {
             </div>
 
             {/* ─── CONTROLS ROW (exactly 540 px wide) ─────────────────────────────── */}
-            <div className={`flex w-full gap-2 mx-auto ${ROW_H}`}>
-              {/* --- FRAME PAIR --- */}
+            <div className={`grid grid-cols-4 w-full gap-2 mx-auto ${ROW_H}`}>
+              {/* --- FRAME PAIR (2/4 width) --- */}
               <div
                 className={`
-                  relative flex flex-1 items-stretch
+                  col-span-2
+                  relative flex items-stretch
                   transition-[gap] duration-300 ease-in-out
                   ${phase === 'merge' || phase === 'playing' ? 'gap-0' : 'gap-2'}
                 `}
@@ -1645,11 +1646,11 @@ export default function InstagramPostCreator() {
                 />
               </div>
 
-              {/* --- PLAY / PAUSE OVAL --- */}
+              {/* --- PLAY / PAUSE OVAL (1/4 width) --- */}
               <Button
                 onClick={handlePlayClick}
                 className={`
-                  flex-1 h-full
+                  h-full
                   rounded-full flex items-center justify-center
                   transition-colors duration-300
                   ${phase==='playing'
@@ -1662,21 +1663,22 @@ export default function InstagramPostCreator() {
                   : <span className="sf-icon text-xl">􀊄</span>}
               </Button>
 
-              {/* --- SETTINGS (square) --- */}
-              <Button
-                onClick={() => setSettingsOpen(true)}
-                className={`h-full aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center`}
-              >
-                <span className="sf-icon text-xl">􀌆</span>
-              </Button>
+              {/* --- SETTINGS & EXPORT (1/4 width) --- */}
+              <div className="flex gap-2">
+                  <Button
+                    onClick={() => setSettingsOpen(true)}
+                    className={`flex-1 h-full aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center`}
+                  >
+                    <span className="sf-icon text-xl">􀌆</span>
+                  </Button>
 
-              {/* --- EXPORT (square) --- */}
-              <Button
-                onClick={exportVideo}
-                className={`h-full aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center`}
-              >
-                <span className="sf-icon text-xl">􀈂</span>
-              </Button>
+                  <Button
+                    onClick={exportVideo}
+                    className={`flex-1 h-full aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center`}
+                  >
+                    <span className="sf-icon text-xl">􀈂</span>
+                  </Button>
+              </div>
             </div>
           </div>
         </div>
