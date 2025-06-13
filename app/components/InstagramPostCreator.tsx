@@ -224,6 +224,20 @@ export default function InstagramPostCreator() {
     baseFps,
     frameRate,
     textEase,
+    selectedLineIndex,
+    editingLineIndex,
+    editingEnd,
+    resizeHandle,
+    pauseHold,
+    easingPower,
+    lineEasePower,
+    textEasePower,
+    scaleAnchor,
+    currentLine,
+    isResizing,
+    isDragging,
+    isRotating,
+    isDraggingLine,
   })
 
   useEffect(() => {
@@ -245,6 +259,20 @@ export default function InstagramPostCreator() {
       baseFps,
       frameRate,
       textEase,
+      selectedLineIndex,
+      editingLineIndex,
+      editingEnd,
+      resizeHandle,
+      pauseHold,
+      easingPower,
+      lineEasePower,
+      textEasePower,
+      scaleAnchor,
+      currentLine,
+      isResizing,
+      isDragging,
+      isRotating,
+      isDraggingLine,
     }
   })
 
@@ -1534,7 +1562,7 @@ export default function InstagramPostCreator() {
     if (!canvas || isPlaying) return      // avoid double-start while playing
 
     /* 1. capture the canvas stream */
-    const stream = canvas.captureStream(frameRate)   // use current FPS slider
+    const stream = canvas.captureStream(animationState.current.frameRate)   // use current FPS slider
     recordingRef.current = new MediaRecorder(stream, {
       mimeType: 'video/webm;codecs=vp9'
     })
