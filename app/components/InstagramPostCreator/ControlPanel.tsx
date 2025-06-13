@@ -37,13 +37,13 @@ export default function ControlPanel({
           id="title1"
           value={titles[0]}
           onChange={(e) => setTitles([e.target.value, titles[1]])}
-          className="mt-1 bg-white rounded text-lg h-10"
+          className="mt-1 bg-gray-100 border-gray-300 rounded-none text-lg h-10 focus:bg-gray-50"
         />
         <Input
           id="title2"
           value={titles[1]}
           onChange={(e) => setTitles([titles[0], e.target.value])}
-          className="mt-2 bg-white rounded text-lg h-10"
+          className="mt-2 bg-gray-100 border-gray-300 rounded-none text-lg h-10 focus:bg-gray-50"
         />
       </div>
       <div>
@@ -52,7 +52,7 @@ export default function ControlPanel({
           id="subtitle"
           value={subtitle}
           onChange={(e) => setSubtitle(e.target.value)}
-          className="mt-1 bg-white rounded text-lg h-10"
+          className="mt-1 bg-gray-100 border-gray-300 rounded-none text-lg h-10 focus:bg-gray-50"
         />
       </div>
       <div>
