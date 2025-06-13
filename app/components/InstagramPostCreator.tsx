@@ -1428,18 +1428,20 @@ export default function InstagramPostCreator() {
   }
 
   const handlePlayClick = () => {
-    setProgressRatio(0);  // Always reset on play!
-    setBarProgress(0);
+    setProgressRatio(0)
+    setBarProgress(0)
+    startTimeRef.current = null
+    lastDisplayTimeRef.current = 0
     if (phase === 'idle' || phase === 'paused') {
-      setIsPlaying(true);
-      setOriginFrame(currentFrame as 1 | 2);
-      setPhase('merge');
-      setTimeout(() => setPhase('playing'), 300);
+      setIsPlaying(true)
+      setOriginFrame(currentFrame as 1 | 2)
+      setPhase('merge')
+      setTimeout(() => setPhase('playing'), 300)
     } else {
-      setIsPlaying(false);
-      setPhase('paused');
+      setIsPlaying(false)
+      setPhase('paused')
     }
-  };
+  }
 
   const toggleLoop = () => setIsLooping(prev => !prev)
 
