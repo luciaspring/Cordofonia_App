@@ -1587,16 +1587,22 @@ export default function InstagramPostCreator() {
             {/* ─── CONTROLS ROW (exactly 540 px wide) ─────────────────────────────── */}
             <div className={`flex w-full gap-2 mx-auto ${ROW_H}`}>
               {/* ——— FRAME PAIR ——— */}
-              <div className={`relative flex flex-[2] ${phase==='merge' ? 'gap-0' : 'gap-2'} transition-[gap] duration-300`}>
-                {/* ─── Progress bar (shows only while playing) ─── */}
+              <div
+                className={`
+                  relative flex flex-[2] 
+                  ${phase==='playing' ? 'is-playing' : ''}
+                  ${phase==='merge' ? 'merge' : ''}
+                  transition-[gap] duration-300
+                `}
+              >
+                {/* progress bar – permanent element */}
                 <div
-                  className={`
-                    absolute inset-0 pointer-events-none bg-black
-                    transition-[width] duration-[33ms]          /* ~30 fps */
-                  `}
-                  style={{
-                    width: phase==='playing' ? `${progressRatio * 100}%` : '0%'
-                  }}
+                  className="
+                    absolute inset-0 bg-black pointer-events-none
+                    transition-[width] duration-[40ms] ease-linear
+                    z-[1]                         /* above grey, still under buttons */
+                  "
+                  style={{ width: phase==='playing' ? `${progressRatio * 100}%` : '0%' }}
                 />
 
                 {/* Frame-1 button */}
@@ -1636,17 +1642,6 @@ export default function InstagramPostCreator() {
                 >
                   {(phase==='idle'||phase==='paused') && 'Frame 2'}
                 </Button>
-
-                {/* —── GREY PROGRESS OVERLAY ——— */}
-                {phase==='playing' && (
-                  <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                    <div className="w-full h-full bg-gray-200" />
-                    <div
-                      className="absolute top-0 left-0 h-full bg-black transition-[width]"
-                      style={{ width: `${progressRatio * 100}%` }}
-                    />
-                  </div>
-                )}
               </div>
 
               {/* ——— PLAY / PAUSE OVAL ——— */}
