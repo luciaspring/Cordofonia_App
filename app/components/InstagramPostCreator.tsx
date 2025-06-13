@@ -310,6 +310,7 @@ export default function InstagramPostCreator() {
     }
     // The animation loop handles drawing when isPlaying=true
   }, [
+    isPlaying,
     backgroundColor,
     currentFrame,
     lines,
