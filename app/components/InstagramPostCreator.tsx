@@ -1650,8 +1650,8 @@ export default function InstagramPostCreator() {
                 <div
                   className="absolute inset-0 bg-black pointer-events-none z-10"
                   style={{
-                    width: phase === 'playing' ? `${progressRatio * 100}%` : '0%',
-                    opacity: phase === 'playing' ? 1 : 0,
+                    width: (phase === 'playing' || phase === 'merge') ? `${progressRatio * 100}%` : '0%',
+                    opacity: (phase === 'playing' || phase === 'merge') ? 1 : 0,
                     transition: 'width 80ms linear, opacity 100ms ease-in-out'
                   }}
                 />
