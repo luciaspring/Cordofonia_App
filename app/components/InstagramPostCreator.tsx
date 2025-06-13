@@ -1,7 +1,7 @@
 // app/components/InstagramPostCreator.tsx
 'use client'
 
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -400,7 +400,7 @@ export default function InstagramPostCreator() {
   }
 
   // ─── DRAWING ROUTINES ────────────────────────────────────────────────────────────
-  const drawCanvas = (progress: number = 0) => {
+  const drawCanvas = useCallback((progress: number = 0) => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
@@ -433,7 +433,20 @@ export default function InstagramPostCreator() {
         }
       }
     }
-  }
+  }, [
+    backgroundColor,
+    isPlaying,
+    lines,
+    currentFrame,
+    selectedTexts,
+    titlePositionsFrame1,
+    titlePositionsFrame2,
+    subtitlePositionFrame1,
+    subtitlePositionFrame2,
+    tremblingIntensity,
+    lineThickness,
+    groupRotation,
+  ])
 
   // ─── STATIC TEXT DRAW WITH TREMBLING ─────────────────────────────────────────────
   const drawStaticText = (ctx: CanvasRenderingContext2D, frame: number) => {
