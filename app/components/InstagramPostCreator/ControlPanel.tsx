@@ -37,13 +37,23 @@ export default function ControlPanel({
           id="title1"
           value={titles[0]}
           onChange={(e) => setTitles([e.target.value, titles[1]])}
-          className="mt-1 bg-gray-100 border-gray-300 rounded-none text-lg h-10 focus:bg-gray-50"
+          className="mt-1 !bg-gray-100 !border-gray-300 !rounded-none text-lg h-10 focus:!bg-gray-50 focus:!border-gray-400"
+          style={{ 
+            backgroundColor: '#f3f4f6',
+            borderColor: '#d1d5db',
+            borderRadius: '0px'
+          }}
         />
         <Input
           id="title2"
           value={titles[1]}
           onChange={(e) => setTitles([titles[0], e.target.value])}
-          className="mt-2 bg-gray-100 border-gray-300 rounded-none text-lg h-10 focus:bg-gray-50"
+          className="mt-2 !bg-gray-100 !border-gray-300 !rounded-none text-lg h-10 focus:!bg-gray-50 focus:!border-gray-400"
+          style={{ 
+            backgroundColor: '#f3f4f6',
+            borderColor: '#d1d5db',
+            borderRadius: '0px'
+          }}
         />
       </div>
       <div>
@@ -52,7 +62,12 @@ export default function ControlPanel({
           id="subtitle"
           value={subtitle}
           onChange={(e) => setSubtitle(e.target.value)}
-          className="mt-1 bg-gray-100 border-gray-300 rounded-none text-lg h-10 focus:bg-gray-50"
+          className="mt-1 !bg-gray-100 !border-gray-300 !rounded-none text-lg h-10 focus:!bg-gray-50 focus:!border-gray-400"
+          style={{ 
+            backgroundColor: '#f3f4f6',
+            borderColor: '#d1d5db',
+            borderRadius: '0px'
+          }}
         />
       </div>
       <div>
