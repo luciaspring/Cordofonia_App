@@ -337,7 +337,7 @@ export default function InstagramPostCreator() {
     return () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current)
     }
-  }, [isPlaying])
+  }, [isPlaying, titles, subtitle])
 
   useEffect(() => {
     if (isPlaying) {
