@@ -1594,57 +1594,49 @@ export default function InstagramPostCreator() {
                   ${phase === 'merge' || phase === 'playing' ? 'gap-0' : 'gap-2'}
                 `}
               >
-                {/* ─── BLACK PROGRESS BAR ─── */}
+                {/* black progress bar underneath */}
                 <div
                   className="
                     absolute inset-0 bg-black pointer-events-none
-                    transition-[width] duration-40 ease-linear
-                    z-10
+                    transition-[width] duration-40 ease-linear z-10
                   "
                   style={{
-                    // only grow once we're into the playing phase…
                     width: phase === 'playing'
                       ? `${progressRatio * 100}%`
                       : '0%',
                   }}
                 />
 
-                {/* ─── Frame 1 ─── */}
+                {/* Frame 1 */}
                 <Button
                   ref={frame1Ref}
                   onClick={() => handleFrameChange(1)}
-                  disabled={phase !== 'idle' && phase !== 'paused'}
+                  disabled={phase === 'playing'}            {/* only disable while playing */}
                   className={`
-                    transition-all duration-200
-                    rounded-none overflow-hidden
+                    transition-all duration-200 rounded-none overflow-hidden
                     ${ROW_H}
 
-                    /* idle: fixed half-width, merge/playing: flex-1 so it fills half the container */
                     ${phase === 'merge' || phase === 'playing'
-                      ? 'flex-1'
-                      : `flex-none ${FRAME_W}`}
+                      ? 'flex-1'                            /* collapse→flex-1 */
+                      : `flex-none ${FRAME_W}`}            /* idle→fixed w-1/2 */
 
-                    /* idle styling, vs merge/playing (both grey) */
                     ${phase === 'merge' || phase === 'playing'
-                      ? 'bg-gray-200 text-black'
+                      ? 'bg-gray-200 text-black'            /* fade to grey */
                       : currentFrame === 1
                         ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
-                    }
+                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
                   `}
                 >
-                  {/* only show label when you can still switch frames */}
-                  {(phase === 'idle' || phase === 'paused') && 'Frame 1'}
+                  {phase !== 'playing' && 'Frame 1'}        {/* only hide once playing */}
                 </Button>
 
-                {/* ─── Frame 2 ─── */}
+                {/* Frame 2 */}
                 <Button
                   ref={frame2Ref}
                   onClick={() => handleFrameChange(2)}
-                  disabled={phase !== 'idle' && phase !== 'paused'}
+                  disabled={phase === 'playing'}
                   className={`
-                    transition-all duration-200
-                    rounded-none overflow-hidden
+                    transition-all duration-200 rounded-none overflow-hidden
                     ${ROW_H}
 
                     ${phase === 'merge' || phase === 'playing'
@@ -1655,11 +1647,10 @@ export default function InstagramPostCreator() {
                       ? 'bg-gray-200 text-black'
                       : currentFrame === 2
                         ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
-                    }
+                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
                   `}
                 >
-                  {(phase === 'idle' || phase === 'paused') && 'Frame 2'}
+                  {phase !== 'playing' && 'Frame 2'}
                 </Button>
               </div>
 
