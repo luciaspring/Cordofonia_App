@@ -324,59 +324,65 @@ export default function InstagramPostCreator() {
     groupRotation
   ]);
 
-  // This new useEffect contains the animation logic and ensures it doesn't have stale state.
+  // This new useEffect contains all animation logic and ensures it never has stale state.
   useEffect(() => {
+    // If we're not playing, just draw a static frame and do nothing else.
     if (!isPlaying) {
-      // When animation stops, draw one last static frame if needed
-      drawCanvas(0);
+      drawCanvas();
       return;
     }
 
-    let animationFrameId: number | null = null;
-    const startTimeRef = React.useRef<number | null>(null);
-    const lastDisplayTimeRef = React.useRef<number>(0);
+    // When isPlaying becomes true, this effect runs and starts the animation loop.
+    let frameId: number;
 
     const animate = (timestamp: number) => {
-      if (!startTimeRef.current) startTimeRef.current = timestamp;
-      const elapsed = timestamp - startTimeRef.current;
-      const msPerBase = 1000 / baseFps;
-      let progress = elapsed / (msPerBase * 150);
-
-      if (progress >= PROGRESS_END) {
-        if (isLooping) {
-          startTimeRef.current = timestamp;
-          progress = 0;
-          setBarProgress(0);
-        } else {
-          setIsPlaying(false);
-          setBarProgress(1);
-          drawCanvas(PROGRESS_END); // draw final frame
-          return; // Stop the loop
-        }
+      // Initialize start time on the first frame of the animation.
+      if (!startTimeRef.current) {
+        startTimeRef.current = timestamp;
       }
       
-      const currentProgress = Math.min(progress, PROGRESS_END);
-      setBarProgress(currentProgress / PROGRESS_END);
-      setProgressRatio(currentProgress / PROGRESS_END);
+      const elapsed = timestamp - startTimeRef.current;
+      const progress = elapsed / ((1000 / baseFps) * 150);
       
+      // Update the UI progress bar.
+      const cappedProgress = Math.min(progress, PROGRESS_END);
+      setBarProgress(cappedProgress / PROGRESS_END);
+      setProgressRatio(cappedProgress / PROGRESS_END);
+
+      // Throttle the actual canvas drawing to the selected frame rate.
       if (timestamp - lastDisplayTimeRef.current >= 1000 / frameRate) {
-        drawCanvas(currentProgress);
+        drawCanvas(cappedProgress);
         lastDisplayTimeRef.current = timestamp;
       }
-      
-      animationFrameId = requestAnimationFrame(animate);
-    };
 
-    startTimeRef.current = null;
-    lastDisplayTimeRef.current = 0;
-    animationFrameId = requestAnimationFrame(animate);
-
-    return () => {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
+      // Check if the animation cycle is complete.
+      if (progress < PROGRESS_END) {
+        // If not, request the next frame.
+        frameId = requestAnimationFrame(animate);
+      } else {
+        // If it is complete...
+        if (isLooping) {
+          // and we are looping, reset the start time and go again.
+          startTimeRef.current = null;
+          frameId = requestAnimationFrame(animate);
+        } else {
+          // otherwise, stop the animation.
+          setIsPlaying(false);
+          drawCanvas(PROGRESS_END); // Ensure the final frame is drawn perfectly.
+        }
       }
     };
-  }, [isPlaying, isLooping, baseFps, frameRate, drawCanvas, setBarProgress, setProgressRatio, setIsPlaying]);
+
+    // Reset timers and start the animation loop.
+    startTimeRef.current = null;
+    lastDisplayTimeRef.current = 0;
+    frameId = requestAnimationFrame(animate);
+
+    // Cleanup function to cancel the animation frame when the component unmounts or the effect re-runs.
+    return () => {
+      cancelAnimationFrame(frameId);
+    };
+  }, [isPlaying, isLooping, baseFps, frameRate, drawCanvas, setIsPlaying, setBarProgress, setProgressRatio]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -1395,7 +1401,7 @@ export default function InstagramPostCreator() {
       } else {
         setIsPlaying(false)
         setBarProgress(1)             // keep bar filled at the very end
-        return
+        return; // Stop the loop
       }
     } else {
       /* normal progress update */
@@ -1970,5 +1976,6 @@ export default function InstagramPostCreator() {
     </div>
   )
 }
+
 
 
