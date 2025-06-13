@@ -1534,7 +1534,7 @@ export default function InstagramPostCreator() {
     if (!canvas || isPlaying) return      // avoid double-start while playing
 
     /* 1. capture the canvas stream */
-    const stream = canvas.captureStream(animationState.current.frameRate)   // use current FPS slider
+    const stream = canvas.captureStream(frameRate)   // use current FPS slider
     recordingRef.current = new MediaRecorder(stream, {
       mimeType: 'video/webm;codecs=vp9'
     })
@@ -1553,7 +1553,7 @@ export default function InstagramPostCreator() {
     }
 
     /* 2. start animation & recording */
-    const fullCycleMs = (PROGRESS_END * 150 * 1000) / animationState.current.baseFps
+    const fullCycleMs = (PROGRESS_END * 150 * 1000) / baseFps
     recordingRef.current.start()
     setIsLooping(false)        // play one cycle only
     setIsPlaying(true)
@@ -1581,12 +1581,12 @@ export default function InstagramPostCreator() {
             {/* Title fields */}
             <FieldGroup step={1} label="Write a title">
               <Input
-                value={animationState.current.titles[0]}
+                value={titles[0]}
                 onChange={e => setTitles(prev => [e.target.value, prev[1]])}
                 className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
               />
               <Input
-                value={animationState.current.titles[1]}
+                value={titles[1]}
                 onChange={e => setTitles(prev => [prev[0], e.target.value])}
                 className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
               />
@@ -1595,7 +1595,7 @@ export default function InstagramPostCreator() {
             {/* Instrument */}
             <FieldGroup step={2} label="Write the instrument">
               <Input
-                value={animationState.current.subtitle}
+                value={subtitle}
                 onChange={e => setSubtitle(e.target.value)}
                 className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
               />
@@ -1613,7 +1613,7 @@ export default function InstagramPostCreator() {
                     style={{ backgroundColor: c.value }}
                     className={`
                       w-8 h-8 rounded-none
-                      ${animationState.current.backgroundColor === c.value
+                      ${backgroundColor === c.value
                         ? 'ring-2 ring-black'
                         : 'ring-0'}
                     `}
@@ -1629,7 +1629,7 @@ export default function InstagramPostCreator() {
           <div className="w-[540px] flex flex-col ml-[336px]">
             <div
               className="w-[540px] h-[675px] bg-white rounded-none mb-2 relative overflow-hidden"
-              style={{ backgroundColor: animationState.current.backgroundColor }}
+              style={{ backgroundColor: backgroundColor }}
             >
               <canvas
                 ref={canvasRef}
@@ -1664,7 +1664,7 @@ export default function InstagramPostCreator() {
                     transition-colors duration-300
                     ${phase === 'merge' || phase === 'playing'
                       ? 'bg-gray-200 text-transparent' // Fade to grey, hide text via color
-                      : animationState.current.currentFrame === 1
+                      : currentFrame === 1
                         ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
                         : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
                     }
@@ -1683,7 +1683,7 @@ export default function InstagramPostCreator() {
                     transition-colors duration-300
                     ${phase === 'merge' || phase === 'playing'
                       ? 'bg-gray-200 text-transparent'
-                      : animationState.current.currentFrame === 2
+                      : currentFrame === 2
                         ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
                         : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
                     }
@@ -1827,7 +1827,7 @@ export default function InstagramPostCreator() {
               <input
                 id="loopToggle"
                 type="checkbox"
-                checked={animationState.current.isLooping}
+                checked={isLooping}
                 onChange={e => setIsLooping(e.target.checked)}
                 className="h-4 w-4 rounded border-gray-300 focus:ring-2 focus:ring-blue-500"
               />
@@ -1843,7 +1843,7 @@ export default function InstagramPostCreator() {
                 min={1}
                 max={10}
                 step={1}
-                value={[animationState.current.lineThickness]}
+                value={[lineThickness]}
                 onValueChange={value => handleSettingsChange('lineThickness', value[0])}
               />
             </div>
@@ -1854,18 +1854,18 @@ export default function InstagramPostCreator() {
                 min={0}
                 max={10}
                 step={1}
-                value={[animationState.current.tremblingIntensity]}
+                value={[tremblingIntensity]}
                 onValueChange={value => handleSettingsChange('tremblingIntensity', value[0])}
               />
             </div>
             <div>
-              <Label htmlFor="baseFpsSlider">Animation Speed (Base FPS: {animationState.current.baseFps})</Label>
+              <Label htmlFor="baseFpsSlider">Animation Speed (Base FPS: {baseFps})</Label>
               <Slider
                 id="baseFpsSlider"
                 min={10}
                 max={120}
                 step={1}
-                value={[animationState.current.baseFps]}
+                value={[baseFps]}
                 onValueChange={([v]) => {
                   const num = Number(v)
                   if (!isNaN(num)) setBaseFps(num)
@@ -1879,7 +1879,7 @@ export default function InstagramPostCreator() {
                 min={MIN_FRAME_RATE}
                 max={120}
                 step={1}
-                value={[animationState.current.frameRate]}
+                value={[frameRate]}
                 onValueChange={([v]) => {
                   const num = Number(v)
                   if (!isNaN(num)) {
@@ -1895,7 +1895,7 @@ export default function InstagramPostCreator() {
                 min={0}
                 max={0.5}
                 step={0.01}
-                value={[animationState.current.pauseHold]}
+                value={[pauseHold]}
                 onValueChange={([v]) => setPauseHold(v)}
               />
             </div>
@@ -1906,7 +1906,7 @@ export default function InstagramPostCreator() {
                 min={2}
                 max={10}
                 step={1}
-                value={[animationState.current.easingPower]}
+                value={[easingPower]}
                 onValueChange={([v]) => setEasingPower(v)}
               />
             </div>
@@ -1917,7 +1917,7 @@ export default function InstagramPostCreator() {
                 min={2}
                 max={10}
                 step={1}
-                value={[animationState.current.lineEasePower]}
+                value={[lineEasePower]}
                 onValueChange={([v]) => setLineEasePower(v)}
               />
             </div>
@@ -1928,13 +1928,13 @@ export default function InstagramPostCreator() {
                 min={2}
                 max={10}
                 step={1}
-                value={[animationState.current.textEasePower]}
+                value={[textEasePower]}
                 onValueChange={([v]) => setTextEasePower(v)}
               />
             </div>
             <div>
               <Label htmlFor="scaleAnchor">Scale Anchor</Label>
-              <Select value={animationState.current.scaleAnchor} onValueChange={setScaleAnchor}>
+              <Select value={scaleAnchor} onValueChange={setScaleAnchor}>
                 <SelectTrigger id="scaleAnchor" className="w-full">
                   <SelectValue placeholder="corner/center" />
                 </SelectTrigger>
