@@ -1423,6 +1423,43 @@ export default function InstagramPostCreator() {
   }
   const toggleLoop = () => setIsLooping(prev => !prev)
 
+  // ─── EXPORT HANDLER ─────────────────────────────────────────────────────────────
+  const exportVideo = async () => {
+    const canvas = canvasRef.current
+    if (!canvas || isPlaying) return      // avoid double-start while playing
+
+    /* 1. capture the canvas stream */
+    const stream = canvas.captureStream(frameRate)   // use current FPS slider
+    recordingRef.current = new MediaRecorder(stream, {
+      mimeType: 'video/webm;codecs=vp9'
+    })
+    recordedChunks.current = []
+    recordingRef.current.ondataavailable = e => {
+      if (e.data.size) recordedChunks.current.push(e.data)
+    }
+    recordingRef.current.onstop = () => {
+      const blob   = new Blob(recordedChunks.current, { type: 'video/webm' })
+      const url    = URL.createObjectURL(blob)
+      const a      = document.createElement('a')
+      a.href       = url
+      a.download   = 'instagram_post.webm'
+      a.click()
+      URL.revokeObjectURL(url)
+    }
+
+    /* 2. start animation & recording */
+    const fullCycleMs = (PROGRESS_END * 150 * 1000) / baseFps
+    recordingRef.current.start()
+    setIsLooping(false)        // play one cycle only
+    setIsPlaying(true)
+
+    /* 3. stop everything after one cycle */
+    setTimeout(() => {
+      setIsPlaying(false)
+      recordingRef.current?.stop()
+    }, fullCycleMs + 200)      // +200 ms safety margin
+  }
+
   // ─── POSITION MODAL & SETTINGS HANDLERS ────────────────────────────────────────
   const updatePosition = (newPos: TextPosition) => {
     if (selectedTexts.includes('title1') || selectedTexts.includes('title2')) {
