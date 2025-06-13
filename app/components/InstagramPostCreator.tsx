@@ -1589,18 +1589,17 @@ export default function InstagramPostCreator() {
               {/* ——— FRAME PAIR ——— */}
               <div
                 className={`
-                  relative flex flex-[2] 
-                  ${phase==='playing' ? 'is-playing' : ''}
-                  ${phase==='merge' ? 'merge' : ''}
-                  transition-[gap] duration-300
+                  relative flex flex-[2] items-stretch
+                  gap-2                           /* normal spacing again            */
+                  ${phase==='playing' ? 'is-playing merge' : ''}
                 `}
               >
-                {/* progress bar – permanent element */}
+                {/* ③  PROGRESS BAR  – always present, animated via width only */}
                 <div
                   className="
                     absolute inset-0 bg-black pointer-events-none
-                    transition-[width] duration-[40ms] ease-linear
-                    z-[1]                         /* above grey, still under buttons */
+                    transition-[width] duration-40 ease-linear
+                    z-[2]                       /*   ↑ was 1, now 2 – above grey    */
                   "
                   style={{ width: phase==='playing' ? `${progressRatio * 100}%` : '0%' }}
                 />
