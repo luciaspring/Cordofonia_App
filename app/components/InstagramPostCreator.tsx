@@ -338,13 +338,6 @@ export default function InstagramPostCreator() {
   }, [isPlaying])
 
   useEffect(() => {
-    setPhase('idle');
-    setBarProgress(0);
-    setProgressRatio(0);
-    setIsPlaying(false);
-  }, [titles, subtitle]);
-
-  useEffect(() => {
     if (isPlaying) {
       const gap = 8
       const w1 = frame1Ref.current?.offsetWidth || 0
@@ -1432,13 +1425,15 @@ export default function InstagramPostCreator() {
 
   const handlePlayClick = () => {
     if (phase === 'idle' || phase === 'paused') {
-      setIsPlaying(true); // This was missing! Starts the animation loop.
-      setOriginFrame(currentFrame as 1 | 2)
-      setPhase('merge')
-      setTimeout(() => setPhase('playing'), 300)
-    } else { // 'playing' or 'merge'
-      setIsPlaying(false); // This stops the animation loop.
-      setPhase('paused')
+      setBarProgress(0);
+      setProgressRatio(0);
+      setIsPlaying(true);
+      setOriginFrame(currentFrame as 1 | 2);
+      setPhase('merge');
+      setTimeout(() => setPhase('playing'), 300);
+    } else {
+      setIsPlaying(false);
+      setPhase('paused');
     }
   }
 
