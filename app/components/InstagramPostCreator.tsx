@@ -1584,109 +1584,88 @@ export default function InstagramPostCreator() {
               />
             </div>
 
-            {/* ─── CONTROLS ROW (exactly 540px wide) ─────────────────────────────── */}
+            {/* ─── CONTROLS ROW (exactly 540 px wide) ─────────────────────────────── */}
             <div className={`flex w-full gap-2 mx-auto ${ROW_H}`}>
-              {/* ─── FRAME PAIR ───────────────────────────────────────── */}
-              <div
-                className={`
-                  relative flex flex-[2] items-stretch
-                  transition-gap duration-200 ease-out
-                  ${phase === 'merge' || phase === 'playing' ? 'gap-0' : 'gap-2'}
-                `}
-              >
-                {/* black progress bar underneath */}
-                <div
-                  className="
-                    absolute inset-0 bg-black pointer-events-none
-                    transition-[width] duration-40 ease-linear z-10
-                  "
-                  style={{
-                    width: phase === 'playing'
-                      ? `${progressRatio * 100}%`
-                      : '0%',
-                  }}
-                />
-
-                {/* Frame 1 */}
+              {/* ——— FRAME PAIR ——— */}
+              <div className={`relative flex flex-[2] ${phase==='merge' ? 'gap-0' : 'gap-2'} transition-[gap] duration-300`}>
+                {/* Frame-1 button */}
                 <Button
                   ref={frame1Ref}
                   onClick={() => handleFrameChange(1)}
-                  disabled={phase === 'playing'}            {/* only disable while playing */}
+                  disabled={phase!=='idle' && phase!=='paused'}
                   className={`
-                    transition-all duration-200 rounded-none overflow-hidden
-                    ${ROW_H}
-
-                    ${phase === 'merge' || phase === 'playing'
-                      ? 'flex-1'                            /* collapse→flex-1 */
-                      : `flex-none ${FRAME_W}`}            /* idle→fixed w-1/2 */
-
-                    ${phase === 'merge' || phase === 'playing'
-                      ? 'bg-gray-200 text-black'            /* fade to grey */
-                      : currentFrame === 1
-                        ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
+                    flex-1 ${ROW_H} ${phase==='merge' ? 'w-full' : FRAME_W}
+                    rounded-none overflow-hidden
+                    transition-[width,background-color] duration-300
+                    ${originFrame===1 && phase!=='idle' && phase!=='paused'
+                      ? 'bg-gray-200 text-black'                         /* fades to grey */
+                      : currentFrame===1
+                          ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                          : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
                   `}
                 >
-                  {phase !== 'playing' && 'Frame 1'}        {/* only hide once playing */}
+                  {(phase==='idle'||phase==='paused') && 'Frame 1'}
                 </Button>
 
-                {/* Frame 2 */}
+                {/* Frame-2 button */}
                 <Button
                   ref={frame2Ref}
                   onClick={() => handleFrameChange(2)}
-                  disabled={phase === 'playing'}
+                  disabled={phase!=='idle' && phase!=='paused'}
                   className={`
-                    transition-all duration-200 rounded-none overflow-hidden
-                    ${ROW_H}
-
-                    ${phase === 'merge' || phase === 'playing'
-                      ? 'flex-1'
-                      : `flex-none ${FRAME_W}`}
-
-                    ${phase === 'merge' || phase === 'playing'
+                    flex-1 ${ROW_H} ${phase==='merge' ? 'w-0 p-0 opacity-0' : FRAME_W}
+                    rounded-none overflow-hidden
+                    transition-[width,opacity,padding,background-color] duration-300
+                    ${originFrame===2 && phase!=='idle' && phase!=='paused'
                       ? 'bg-gray-200 text-black'
-                      : currentFrame === 2
-                        ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
+                      : currentFrame===2
+                          ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                          : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
                   `}
                 >
-                  {phase !== 'playing' && 'Frame 2'}
+                  {(phase==='idle'||phase==='paused') && 'Frame 2'}
                 </Button>
+
+                {/* ——— GREY PROGRESS OVERLAY ——— */}
+                {phase==='playing' && (
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                    <div className="w-full h-full bg-gray-200" />
+                    <div
+                      className="absolute top-0 left-0 h-full bg-black transition-[width]"
+                      style={{ width: `${progressRatio * 100}%` }}
+                    />
+                  </div>
+                )}
               </div>
 
-              {/* ─── PLAY / PAUSE OVAL ─────────────────────────────── */}
+              {/* ——— PLAY / PAUSE OVAL ——— */}
               <Button
                 onClick={handlePlayClick}
                 className={`
                   flex-1 ${ROUND_BTN_W} ${ROW_H}
                   rounded-full flex items-center justify-center
-                  ${phase === 'playing'
+                  ${phase==='playing'
                     ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
                     : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
-                  transition-colors
                 `}
               >
-                {phase === 'playing'
+                {phase==='playing'
                   ? <span className="sf-icon text-xl">􀊅</span>
                   : <span className="sf-icon text-xl">􀊄</span>}
               </Button>
 
-              {/* ─── SETTINGS (square) ─────────────────────────── */}
+              {/* ——— SETTINGS (square) ——— */}
               <Button
                 onClick={() => setSettingsOpen(true)}
-                className={`${SQUARE_W} ${ROW_H}
-                  bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black
-                  rounded-none flex items-center justify-center`}
+                className={`${SQUARE_W} ${ROW_H} bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center`}
               >
                 <span className="sf-icon text-xl">􀌆</span>
               </Button>
 
-              {/* ─── EXPORT (square) ──────────────────────────── */}
+              {/* ——— EXPORT (square) ——— */}
               <Button
                 onClick={exportVideo}
-                className={`${SQUARE_W} ${ROW_H}
-                  bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black
-                  rounded-none flex items-center justify-center`}
+                className={`${SQUARE_W} ${ROW_H} bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center`}
               >
                 <span className="sf-icon text-xl">􀈂</span>
               </Button>
