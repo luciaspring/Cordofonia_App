@@ -1586,84 +1586,61 @@ export default function InstagramPostCreator() {
 
             {/* ─── CONTROLS ROW (exactly 540 px wide) */}
             <div className={`flex w-full gap-2 mx-auto ${ROW_H}`}>
-              {/* --- FRAME PAIR (with black progress bar on top) --- */}
-              <div className="relative flex flex-[2] items-stretch min-w-0">
-                {/* --- BLACK PROGRESS BAR --- */}
-                <div
-                  className="absolute top-0 left-0 h-full bg-black pointer-events-none z-10 transition-[width] duration-75"
-                  style={{
-                    width:
-                      phase === "playing"
-                        ? `${progressRatio * 100}%`
-                        : phase === "merge"
-                          ? "100%"
-                          : "0%",
-                    opacity: phase === "playing" || phase === "merge" ? 1 : 0,
-                    transition: "width 80ms linear, opacity 200ms",
-                  }}
-                />
-
-                {/* --- Frame 1 button --- */}
+              {/* --- FRAME PAIR --- */}
+              <div
+                className={`
+                  relative flex flex-[2] items-stretch
+                  transition-[gap] duration-300 ease-in-out
+                  ${phase === 'merge' || phase === 'playing' ? 'gap-0' : 'gap-2'}
+                `}
+              >
+                {/* --- Frame 1 button (forms left half of grey track) --- */}
                 <Button
                   ref={frame1Ref}
                   onClick={() => handleFrameChange(1)}
-                  disabled={phase !== "idle" && phase !== "paused"}
+                  disabled={phase !== 'idle' && phase !== 'paused'}
                   className={`
-                    transition-all duration-300 rounded-none overflow-hidden ${ROW_H}
-                    ${phase === "merge" || phase === "playing"
-                      ? "flex-1"
-                      : "flex-none w-[180px]"} 
-                    ${phase === "merge" || phase === "playing"
-                      ? "bg-gray-200 text-black"
+                    flex-1 rounded-none overflow-hidden h-full
+                    transition-colors duration-300
+                    ${phase === 'merge' || phase === 'playing'
+                      ? 'bg-gray-200 text-transparent' // Fade to grey, hide text via color
                       : currentFrame === 1
-                        ? "bg-black text-white hover:bg-[#9E9E9E] hover:text-black"
-                        : "bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black"}
-                    relative z-20
+                        ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
+                    }
                   `}
-                  style={{
-                    transitionProperty: "flex-grow, background-color, color, width, opacity",
-                    ...(phase === "merge"
-                      ? { transitionDuration: "300ms" }
-                      : {}),
-                    opacity:
-                      phase === "playing"
-                        ? 0.0
-                        : 1,
-                  }}
                 >
-                  {(phase === "idle" || phase === "paused" || phase === "merge") && "Frame 1"}
+                  Frame 1
                 </Button>
 
-                {/* --- Frame 2 button --- */}
+                {/* --- Frame 2 button (forms right half of grey track) --- */}
                 <Button
                   ref={frame2Ref}
                   onClick={() => handleFrameChange(2)}
-                  disabled={phase !== "idle" && phase !== "paused"}
+                  disabled={phase !== 'idle' && phase !== 'paused'}
                   className={`
-                    transition-all duration-300 rounded-none overflow-hidden ${ROW_H}
-                    ${phase === "merge" || phase === "playing"
-                      ? "flex-1"
-                      : "flex-none w-[180px]"}
-                    ${phase === "merge" || phase === "playing"
-                      ? "bg-gray-200 text-black"
+                    flex-1 rounded-none overflow-hidden h-full
+                    transition-colors duration-300
+                    ${phase === 'merge' || phase === 'playing'
+                      ? 'bg-gray-200 text-transparent'
                       : currentFrame === 2
-                        ? "bg-black text-white hover:bg-[#9E9E9E] hover:text-black"
-                        : "bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black"}
-                    relative z-20
+                        ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
+                    }
                   `}
-                  style={{
-                    transitionProperty: "flex-grow, background-color, color, width, opacity",
-                    ...(phase === "merge"
-                      ? { transitionDuration: "300ms" }
-                      : {}),
-                    opacity:
-                      phase === "playing"
-                        ? 0.0
-                        : 1,
-                  }}
                 >
-                  {(phase === "idle" || phase === "paused" || phase === "merge") && "Frame 2"}
+                  Frame 2
                 </Button>
+                
+                {/* --- BLACK PROGRESS BAR (on top of the grey track) --- */}
+                <div
+                  className="absolute inset-0 bg-black pointer-events-none z-10"
+                  style={{
+                    width: phase === 'playing' ? `${progressRatio * 100}%` : '0%',
+                    opacity: phase === 'playing' ? 1 : 0,
+                    transition: 'width 80ms linear, opacity 100ms ease-in-out'
+                  }}
+                />
               </div>
 
               {/* --- PLAY / PAUSE OVAL --- */}
