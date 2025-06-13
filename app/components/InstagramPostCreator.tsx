@@ -501,6 +501,9 @@ export default function InstagramPostCreator() {
   }, [isPlaying, isLooping, baseFps, frameRate, titles, subtitle, lines, backgroundColor, titlePositionsFrame1, titlePositionsFrame2, subtitlePositionFrame1, subtitlePositionFrame2, tremblingIntensity, lineThickness, textEase, setBarProgress, setIsPlaying, setProgressRatio])
 
   const drawLines = (ctx: CanvasRenderingContext2D, framelines: Line[]) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
     ctx.lineWidth = lineThickness
     ctx.lineCap = 'butt'
     ctx.lineJoin = 'round'
