@@ -1587,60 +1587,52 @@ export default function InstagramPostCreator() {
             {/* ─── CONTROLS ROW (exactly 540 px wide) ─────────────────────────────── */}
             <div className={`flex w-full gap-2 mx-auto ${ROW_H}`}>
               {/* ——— FRAME PAIR ——— */}
-              <div
-                className={`
-                  relative flex flex-[2] items-stretch
-                  gap-2                           /* normal spacing again            */
-                  ${phase==='playing' ? 'is-playing merge' : ''}
-                `}
-              >
-                {/* ③  PROGRESS BAR  – always present, animated via width only */}
-                <div
-                  className="
-                    absolute inset-0 bg-black pointer-events-none
-                    transition-[width] duration-40 ease-linear
-                    z-[2]                       /*   ↑ was 1, now 2 – above grey    */
-                  "
-                  style={{ width: phase==='playing' ? `${progressRatio * 100}%` : '0%' }}
-                />
-
-                {/* Frame-1 button */}
+              <div className={`
+                relative flex flex-[2] gap-2 items-stretch
+                ${isPlaying ? 'is-playing merge' : ''}
+              `}>
+                {/* Frame 1 */}
                 <Button
                   ref={frame1Ref}
                   onClick={() => handleFrameChange(1)}
-                  disabled={phase!=='idle' && phase!=='paused'}
                   className={`
-                    flex-1 ${ROW_H} ${phase==='merge' ? 'w-full' : FRAME_W}
-                    rounded-none overflow-hidden
-                    transition-[width,background-color] duration-300
-                    ${originFrame===1 && phase!=='idle' && phase!=='paused'
-                      ? 'bg-gray-200 text-black'                         /* fades to grey */
-                      : currentFrame===1
-                          ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                          : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
-                  `}
+                    frame-btn                          /* ①  ← add this token */
+                    flex-none h-full                   /* stop flex grow, we animate width */
+                    px-6                               /* give them content padding         */
+                    ${currentFrame === 1
+                      ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                      : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
+                    }`}
                 >
-                  {(phase==='idle'||phase==='paused') && 'Frame 1'}
+                  Frame 1
                 </Button>
 
-                {/* Frame-2 button */}
+                {/* Frame 2 */}
                 <Button
                   ref={frame2Ref}
                   onClick={() => handleFrameChange(2)}
-                  disabled={phase!=='idle' && phase!=='paused'}
                   className={`
-                    flex-1 ${ROW_H} ${phase==='merge' ? 'w-0 p-0 opacity-0' : FRAME_W}
-                    rounded-none overflow-hidden
-                    transition-[width,opacity,padding,background-color] duration-300
-                    ${originFrame===2 && phase!=='idle' && phase!=='paused'
-                      ? 'bg-gray-200 text-black'
-                      : currentFrame===2
-                          ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                          : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
-                  `}
+                    frame-btn                          /* ①  ← add this token */
+                    flex-none h-full                   /* stop flex grow, we animate width */
+                    px-6                               /* give them content padding         */
+                    ${currentFrame === 2
+                      ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                      : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
+                    }`}
                 >
-                  {(phase==='idle'||phase==='paused') && 'Frame 2'}
+                  Frame 2
                 </Button>
+
+                {/* ③  BLACK BAR – always mounted; width 0 when not playing */}
+                <div
+                  className="
+                    absolute inset-0 bg-black
+                    pointer-events-none
+                    transition-[width] duration-40 ease-linear
+                    z-[5]                     /* 5  beats the grey ::before (z:0) */
+                  "
+                  style={{ width: isPlaying ? `${progressRatio * 100}%` : '0%' }}
+                />
               </div>
 
               {/* ——— PLAY / PAUSE OVAL ——— */}
