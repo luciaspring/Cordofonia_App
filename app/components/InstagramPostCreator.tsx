@@ -153,6 +153,13 @@ export default function InstagramPostCreator() {
   const [editingEnd, setEditingEnd] = useState<'start' | 'end' | null>(null)
   const [initialPosition, setInitialPosition] = useState<TextPosition | null>(null)
 
+  type PlayPhase = 'idle'     // nothing happening
+                | 'merge'    // 0-300 ms, buttons animate
+                | 'playing'  // progress bar ticking
+                | 'paused'
+
+  const [phase, setPhase] = useState<PlayPhase>('idle')
+
   // ─── FRAME 1 defaults ───────────────────────────────────────────────
   const [titlePositionsFrame1, setTitlePositionsFrame1] = useState<TextPosition[]>([
     { x: M, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 }, // John
@@ -1400,11 +1407,17 @@ export default function InstagramPostCreator() {
     drawCanvas()
   }
 
-  const togglePlay = () => {
-    setBarProgress(0)
-    setIsPlaying(prev => !prev)
-    if (isPlaying) setPlayProgress(0)           // NEW
+  const handlePlayClick = () => {
+    if (phase === 'idle' || phase === 'paused') {
+      setPhase('merge')
+      setTimeout(() => setPhase('playing'), 300)      // 300 ms = CSS duration
+    } else {
+      // hitting Play while playing → pause
+      setPhase('paused')
+      // pause logic you already have (cancelAnimationFrame etc.)
+    }
   }
+
   const toggleLoop = () => setIsLooping(prev => !prev)
 
   // ─── POSITION MODAL & SETTINGS HANDLERS ────────────────────────────────────────
@@ -1569,40 +1582,57 @@ export default function InstagramPostCreator() {
             <div className="grid grid-cols-4 gap-2 w-[540px] mx-auto items-stretch">
 
               {/* ───────────────────  ①  Frame buttons  (2 columns)  ─────────────────── */}
-              <div className={`relative flex gap-2 col-span-2 ${isPlaying ? 'merge gooey' : ''}`}>
-
+              <div
+                className={`
+                  relative flex flex-[2]
+                  ${phase === 'merge' ? 'gap-0' : 'gap-2'}    /* gap animates 2 → 0 */
+                  transition-[gap] duration-300
+                `}
+              >
                 {/* Frame 1 */}
                 <Button
+                  ref={frame1Ref}
                   onClick={() => handleFrameChange(1)}
+                  disabled={phase !== 'idle' && phase !== 'paused'}   /* lock during merge */
                   className={`
-                    w-full h-full rounded-none
-                    ${currentFrame === 1
-                      ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                      : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
+                    frame-btn flex-1 h-full rounded-none overflow-hidden
+                    ${currentFrame === 1 ? 'text-white' : 'text-black'}
+                    ${phase === 'merge'
+                      ? 'w-full bg-gray-200'                  /* grows & turns grey */
+                      : 'w-1/2 ' +
+                        (currentFrame === 1
+                            ? 'bg-black hover:bg-[#9E9E9E] hover:text-black'
+                            : 'bg-gray-200 hover:bg-[#9E9E9E]')}
+                    transition-[width,background-color] duration-300
                   `}
                 >
-                  {!isPlaying && 'Frame 1'}
+                  {phase === 'idle' || phase === 'paused' ? 'Frame 1' : ''}
                 </Button>
 
-                {/* Frame 2 */}
+                {/* Frame 2 — collapses to width 0 / disappears */}
                 <Button
+                  ref={frame2Ref}
                   onClick={() => handleFrameChange(2)}
+                  disabled={phase !== 'idle' && phase !== 'paused'}
                   className={`
-                    w-full h-full rounded-none
-                    ${currentFrame === 2
-                      ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                      : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
+                    frame-btn flex-1 h-full rounded-none overflow-hidden
+                    ${phase === 'merge'
+                      ? 'w-0 p-0 opacity-0'                  /* shrinks & vanishes */
+                      : 'w-1/2 bg-gray-200 text-black hover:bg-[#9E9E9E]'}
+                    transition-[width,opacity,padding] duration-300
                   `}
                 >
-                  {!isPlaying && 'Frame 2'}
+                  {phase === 'idle' || phase === 'paused' ? 'Frame 2' : ''}
                 </Button>
 
-                {/* progress fill (unchanged) */}
-                {isPlaying && (
+                {/* ——— Progress overlay ——— */}
+                {phase === 'playing' && (
                   <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                    {/* solid grey base */}
                     <div className="w-full h-full bg-gray-200" />
+                    {/* animated black fill */}
                     <div
-                      className="absolute top-0 left-0 h-full bg-black"
+                      className="absolute top-0 left-0 h-full bg-black transition-[width]"
                       style={{ width: `${progressRatio * 100}%` }}
                     />
                   </div>
@@ -1611,20 +1641,17 @@ export default function InstagramPostCreator() {
 
               {/* ───────────────────  ②  Play / Pause  (1 column)  ─────────────────── */}
               <Button
-                onClick={togglePlay}
+                onClick={handlePlayClick}
                 className={`
-                  w-full h-full rounded-full flex items-center justify-center
-                  ${isPlaying
+                  flex-1 aspect-[2/1] rounded-full flex items-center justify-center
+                  ${phase === 'playing'
                     ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                    : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
-                  transition-colors
+                    : 'bg-gray-200 text-black hover:bg-[#9E9E9E]'}
                 `}
               >
-                {isPlaying ? (
-                  <span className="sf-icon text-xl">􀊅</span>  // pause
-                ) : (
-                  <span className="sf-icon text-xl">􀊄</span>  // play
-                )}
+                {phase === 'playing'
+                  ? <span className="sf-icon text-xl">􀊅</span>    // pause
+                  : <span className="sf-icon text-xl">􀊄</span>}   // play
               </Button>
 
               {/* ───────────────────  ③  Settings + Export  (1 column, 2 squares)  ─────────────────── */}
