@@ -1588,6 +1588,17 @@ export default function InstagramPostCreator() {
             <div className={`flex w-full gap-2 mx-auto ${ROW_H}`}>
               {/* ——— FRAME PAIR ——— */}
               <div className={`relative flex flex-[2] ${phase==='merge' ? 'gap-0' : 'gap-2'} transition-[gap] duration-300`}>
+                {/* ─── Progress bar (shows only while playing) ─── */}
+                <div
+                  className={`
+                    absolute inset-0 pointer-events-none bg-black
+                    transition-[width] duration-[33ms]          /* ~30 fps */
+                  `}
+                  style={{
+                    width: phase==='playing' ? `${progressRatio * 100}%` : '0%'
+                  }}
+                />
+
                 {/* Frame-1 button */}
                 <Button
                   ref={frame1Ref}
@@ -1626,7 +1637,7 @@ export default function InstagramPostCreator() {
                   {(phase==='idle'||phase==='paused') && 'Frame 2'}
                 </Button>
 
-                {/* ——— GREY PROGRESS OVERLAY ——— */}
+                {/* —── GREY PROGRESS OVERLAY ——— */}
                 {phase==='playing' && (
                   <div className="absolute inset-0 pointer-events-none overflow-hidden">
                     <div className="w-full h-full bg-gray-200" />
