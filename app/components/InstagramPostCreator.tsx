@@ -337,6 +337,12 @@ export default function InstagramPostCreator() {
     }
   }, [isPlaying])
 
+  // Reset bar visuals on text edit
+  useEffect(() => {
+    setProgressRatio(0);
+    setBarProgress(0);
+  }, [titles, subtitle]);
+
   useEffect(() => {
     if (isPlaying) {
       const gap = 8
