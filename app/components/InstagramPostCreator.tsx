@@ -1416,10 +1416,12 @@ export default function InstagramPostCreator() {
 
   const handlePlayClick = () => {
     if (phase === 'idle' || phase === 'paused') {
-      setOriginFrame(currentFrame as 1 | 2)     // remember which one is black
+      setIsPlaying(true); // This was missing! Starts the animation loop.
+      setOriginFrame(currentFrame as 1 | 2)
       setPhase('merge')
       setTimeout(() => setPhase('playing'), 300)
-    } else {
+    } else { // 'playing' or 'merge'
+      setIsPlaying(false); // This stops the animation loop.
       setPhase('paused')
     }
   }
