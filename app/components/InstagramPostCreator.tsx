@@ -1582,12 +1582,12 @@ export default function InstagramPostCreator() {
             <FieldGroup step={1} label="Write a title">
               <Input
                 value={animationState.current.titles[0]}
-                onChange={e => setTitles([e.target.value, animationState.current.titles[1]])}
+                onChange={e => setTitles(prev => [e.target.value, prev[1]])}
                 className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
               />
               <Input
                 value={animationState.current.titles[1]}
-                onChange={e => setTitles([animationState.current.titles[0], e.target.value])}
+                onChange={e => setTitles(prev => [prev[0], e.target.value])}
                 className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
               />
             </FieldGroup>
