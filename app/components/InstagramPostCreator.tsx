@@ -1584,93 +1584,118 @@ export default function InstagramPostCreator() {
               />
             </div>
 
-            {/* ─── CONTROLS ROW (exactly 540 px wide) ─────────────────────────────── */}
+            {/* ─── CONTROLS ROW (exactly 540px wide) ─────────────────────────────── */}
             <div className={`flex w-full gap-2 mx-auto ${ROW_H}`}>
-              {/* ——— FRAME PAIR ——— */}
+              {/* ─── FRAME PAIR ───────────────────────────────────────── */}
               <div
                 className={`
                   relative flex flex-[2] items-stretch
-                  gap-2                           /* normal spacing again            */
-                  ${phase==='playing' ? 'is-playing merge' : ''}
+                  transition-gap duration-200 ease-out
+                  ${phase === 'merge' || phase === 'playing' ? 'gap-0' : 'gap-2'}
                 `}
               >
-                {/* ③  PROGRESS BAR  – always present, animated via width only */}
+                {/* ─── BLACK PROGRESS BAR ─── */}
                 <div
                   className="
                     absolute inset-0 bg-black pointer-events-none
                     transition-[width] duration-40 ease-linear
-                    z-[2]                       /*   ↑ was 1, now 2 – above grey    */
+                    z-10
                   "
-                  style={{ width: phase==='playing' ? `${progressRatio * 100}%` : '0%' }}
+                  style={{
+                    // only grow once we're into the playing phase…
+                    width: phase === 'playing'
+                      ? `${progressRatio * 100}%`
+                      : '0%',
+                  }}
                 />
 
-                {/* Frame-1 button */}
+                {/* ─── Frame 1 ─── */}
                 <Button
                   ref={frame1Ref}
                   onClick={() => handleFrameChange(1)}
-                  disabled={phase!=='idle' && phase!=='paused'}
+                  disabled={phase !== 'idle' && phase !== 'paused'}
                   className={`
-                    flex-1 ${ROW_H} ${phase==='merge' ? 'w-full' : FRAME_W}
+                    transition-all duration-200
                     rounded-none overflow-hidden
-                    transition-[width,background-color] duration-300
-                    ${originFrame===1 && phase!=='idle' && phase!=='paused'
-                      ? 'bg-gray-200 text-black'                         /* fades to grey */
-                      : currentFrame===1
-                          ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                          : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
+                    ${ROW_H}
+
+                    /* idle: fixed half-width, merge/playing: flex-1 so it fills half the container */
+                    ${phase === 'merge' || phase === 'playing'
+                      ? 'flex-1'
+                      : `flex-none ${FRAME_W}`}
+
+                    /* idle styling, vs merge/playing (both grey) */
+                    ${phase === 'merge' || phase === 'playing'
+                      ? 'bg-gray-200 text-black'
+                      : currentFrame === 1
+                        ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
+                    }
                   `}
                 >
-                  {(phase==='idle'||phase==='paused') && 'Frame 1'}
+                  {/* only show label when you can still switch frames */}
+                  {(phase === 'idle' || phase === 'paused') && 'Frame 1'}
                 </Button>
 
-                {/* Frame-2 button */}
+                {/* ─── Frame 2 ─── */}
                 <Button
                   ref={frame2Ref}
                   onClick={() => handleFrameChange(2)}
-                  disabled={phase!=='idle' && phase!=='paused'}
+                  disabled={phase !== 'idle' && phase !== 'paused'}
                   className={`
-                    flex-1 ${ROW_H} ${phase==='merge' ? 'w-0 p-0 opacity-0' : FRAME_W}
+                    transition-all duration-200
                     rounded-none overflow-hidden
-                    transition-[width,opacity,padding,background-color] duration-300
-                    ${originFrame===2 && phase!=='idle' && phase!=='paused'
+                    ${ROW_H}
+
+                    ${phase === 'merge' || phase === 'playing'
+                      ? 'flex-1'
+                      : `flex-none ${FRAME_W}`}
+
+                    ${phase === 'merge' || phase === 'playing'
                       ? 'bg-gray-200 text-black'
-                      : currentFrame===2
-                          ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                          : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
+                      : currentFrame === 2
+                        ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
+                    }
                   `}
                 >
-                  {(phase==='idle'||phase==='paused') && 'Frame 2'}
+                  {(phase === 'idle' || phase === 'paused') && 'Frame 2'}
                 </Button>
               </div>
 
-              {/* ——— PLAY / PAUSE OVAL ——— */}
+              {/* ─── PLAY / PAUSE OVAL ─────────────────────────────── */}
               <Button
                 onClick={handlePlayClick}
                 className={`
                   flex-1 ${ROUND_BTN_W} ${ROW_H}
                   rounded-full flex items-center justify-center
-                  ${phase==='playing'
+                  ${phase === 'playing'
                     ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
                     : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
+                  transition-colors
                 `}
               >
-                {phase==='playing'
+                {phase === 'playing'
                   ? <span className="sf-icon text-xl">􀊅</span>
                   : <span className="sf-icon text-xl">􀊄</span>}
               </Button>
 
-              {/* ——— SETTINGS (square) ——— */}
+              {/* ─── SETTINGS (square) ─────────────────────────── */}
               <Button
                 onClick={() => setSettingsOpen(true)}
-                className={`${SQUARE_W} ${ROW_H} bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center`}
+                className={`${SQUARE_W} ${ROW_H}
+                  bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black
+                  rounded-none flex items-center justify-center`}
               >
                 <span className="sf-icon text-xl">􀌆</span>
               </Button>
 
-              {/* ——— EXPORT (square) ——— */}
+              {/* ─── EXPORT (square) ──────────────────────────── */}
               <Button
                 onClick={exportVideo}
-                className={`${SQUARE_W} ${ROW_H} bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center`}
+                className={`${SQUARE_W} ${ROW_H}
+                  bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black
+                  rounded-none flex items-center justify-center`}
               >
                 <span className="sf-icon text-xl">􀈂</span>
               </Button>
