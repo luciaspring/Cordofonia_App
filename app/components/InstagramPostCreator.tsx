@@ -333,6 +333,8 @@ export default function InstagramPostCreator() {
     }
 
     let animationFrameId: number | null = null;
+    const startTimeRef = React.useRef<number | null>(null);
+    const lastDisplayTimeRef = React.useRef<number>(0);
 
     const animate = (timestamp: number) => {
       if (!startTimeRef.current) startTimeRef.current = timestamp;
