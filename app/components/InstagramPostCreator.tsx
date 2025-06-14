@@ -344,6 +344,19 @@ export default function InstagramPostCreator() {
     };
   }, [isPlaying, animationKey]);
 
+  useEffect(() => {
+    if (isPlaying) {
+      const gap = 8
+      const w1 = frame1Ref.current?.offsetWidth || 0
+      const w2 = frame2Ref.current?.offsetWidth || 0
+      totalBarWRef.current = w1 + gap + w2          // remember full length
+      setBarW(0)                                    // start empty
+    } else {
+      totalBarWRef.current = 0
+      setBarW(0)
+    }
+  }, [isPlaying])
+
   // ─── TEXT DIMENSION UPDATER ──────────────────────────────────────────────────────
   const updateTextDimensions = (ctx: CanvasRenderingContext2D) => {
     const measureText = (text: string, fontSize: number) => {
