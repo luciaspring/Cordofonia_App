@@ -325,16 +325,6 @@ export default function InstagramPostCreator() {
   ]);
 
   useEffect(() => {
-    setAnimationKey(k => k + 1);
-    setIsPlaying(false);
-    setPhase('idle');
-    setBarProgress(0);
-    setProgressRatio(0);
-    startTimeRef.current = null;
-    lastDisplayTimeRef.current = 0;
-  }, [titles, subtitle]);
-
-  useEffect(() => {
     if (isPlaying) {
       startTimeRef.current = null;
       lastDisplayTimeRef.current = 0;
@@ -346,7 +336,17 @@ export default function InstagramPostCreator() {
     return () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
-  }, [isPlaying, titles, subtitle]);
+  }, [isPlaying, animationKey]);
+
+  useEffect(() => {
+    setAnimationKey(k => k + 1);
+    setIsPlaying(false);
+    setPhase('idle');
+    setBarProgress(0);
+    setProgressRatio(0);
+    startTimeRef.current = null;
+    lastDisplayTimeRef.current = 0;
+  }, [titles, subtitle]);
 
   useEffect(() => {
     if (isPlaying) {
