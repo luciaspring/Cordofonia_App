@@ -1628,17 +1628,14 @@ export default function InstagramPostCreator() {
             </div>
 
             {/* ─── CONTROLS ROW (exactly 540 px wide) ─────────────────────────────── */}
-            <div
-              className={`
-                grid grid-cols-4 w-full mx-auto relative ${ROW_H}
-                ${phase === 'merge' || phase === 'playing' ? 'gap-0' : 'gap-2'}
-              `}
-            >
+            <div className={`grid grid-cols-4 w-full gap-2 mx-auto ${ROW_H}`}>
               {/* --- FRAME PAIR (2/4 width) --- */}
               <div
                 className={`
                   col-span-2
                   relative flex items-stretch
+                  transition-[gap] duration-300 ease-in-out
+                  ${phase === 'merge' || phase === 'playing' ? 'gap-0' : 'gap-2'}
                 `}
               >
                 {/* --- Frame 1 button (forms left half of grey track) --- */}
@@ -1694,7 +1691,6 @@ export default function InstagramPostCreator() {
               <Button
                 onClick={handlePlayClick}
                 className={`
-                  w-full
                   h-full
                   rounded-full flex items-center justify-center
                   transition-colors duration-300
@@ -1709,7 +1705,7 @@ export default function InstagramPostCreator() {
               </Button>
 
               {/* --- SETTINGS & EXPORT (1/4 width) --- */}
-              <div className="flex gap-2 w-full h-full">
+              <div className="flex gap-2">
                   <Button
                     onClick={() => setSettingsOpen(true)}
                     className={`flex-1 h-full aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center`}
