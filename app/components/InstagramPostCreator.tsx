@@ -205,6 +205,8 @@ export default function InstagramPostCreator() {
     centerY: number
   } | null>(null)
 
+  const [animationKey, setAnimationKey] = useState(0);
+
   // Ref's for animation and mouse tracking
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<number | null>(null)
@@ -326,19 +328,28 @@ export default function InstagramPostCreator() {
   ]);
 
   useEffect(() => {
-    console.log('ANIMATION EFFECT TRIGGERED', { isPlaying, titles, subtitle });
     if (isPlaying) {
-      startTimeRef.current = null
-      lastDisplayTimeRef.current = 0
-      animationRef.current = requestAnimationFrame(animate)
+      startTimeRef.current = null;
+      lastDisplayTimeRef.current = 0;
+      animationRef.current = requestAnimationFrame(animate);
     } else {
-      if (animationRef.current) cancelAnimationFrame(animationRef.current)
-      drawCanvas()
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      drawCanvas();
     }
     return () => {
-      if (animationRef.current) cancelAnimationFrame(animationRef.current)
-    }
-  }, [isPlaying, titles, subtitle])
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    };
+  }, [isPlaying, animationKey]);
+
+  useEffect(() => {
+    setAnimationKey(k => k + 1);
+    setIsPlaying(false);
+    setPhase('idle');
+    setBarProgress(0);
+    setProgressRatio(0);
+    startTimeRef.current = null;
+    lastDisplayTimeRef.current = 0;
+  }, [titles, subtitle]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -1607,7 +1618,7 @@ export default function InstagramPostCreator() {
               style={{ backgroundColor }}
             >
               <canvas
-                key={titles.join('-') + subtitle}
+                key={animationKey}
                 ref={canvasRef}
                 width={1080}
                 height={1350}
