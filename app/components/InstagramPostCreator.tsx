@@ -326,6 +326,7 @@ export default function InstagramPostCreator() {
   ]);
 
   useEffect(() => {
+    console.log('ANIMATION EFFECT TRIGGERED', { isPlaying, titles, subtitle });
     if (isPlaying) {
       startTimeRef.current = null
       lastDisplayTimeRef.current = 0
