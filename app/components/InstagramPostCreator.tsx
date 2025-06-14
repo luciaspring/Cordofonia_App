@@ -217,6 +217,9 @@ export default function InstagramPostCreator() {
   const lastClickTime = useRef<number>(0)
   const frame1Ref = useRef<HTMLButtonElement>(null)
   const frame2Ref = useRef<HTMLButtonElement>(null)
+  const barRef = useRef<HTMLDivElement>(null);
+  const totalBarWRef = useRef<number>(0)          // save once when play starts
+  const [barW, setBarW] = useState<number>(0)
 
   /* ——— MediaRecorder support ——— */
   const recordingRef = useRef<MediaRecorder | null>(null)
@@ -326,6 +329,7 @@ export default function InstagramPostCreator() {
     setIsPlaying(false);
     setPhase('idle');
     setBarProgress(0);
+    if (barRef.current) barRef.current.style.width = '0%';
     startTimeRef.current = null;
     lastDisplayTimeRef.current = 0;
   }, [titles, subtitle]);
@@ -1339,14 +1343,18 @@ export default function InstagramPostCreator() {
       }
     } else {
       /* normal progress update */
-      const newProgress = Math.min(progress / PROGRESS_END, 1)
-      setBarProgress(newProgress)
+      setBarProgress(progress / PROGRESS_END)   // ② animate bar
     }
 
     /* Throttled canvas draw (unchanged) */
     if (timestamp - lastDisplayTimeRef.current >= 1000 / frameRate) {
       drawCanvas(progress)
       lastDisplayTimeRef.current = timestamp
+    }
+
+    const newProgress = Math.min(progress / PROGRESS_END, 1);
+    if (barRef.current) {
+      barRef.current.style.width = `${newProgress * 100}%`;
     }
 
     if (isPlaying) animationRef.current = requestAnimationFrame(animate)
@@ -1431,6 +1439,7 @@ export default function InstagramPostCreator() {
   }
 
   const handlePlayClick = () => {
+    if (barRef.current) barRef.current.style.width = '0%';
     if (isPlaying) {
       // Try to forcibly stop everything
       setIsPlaying(false);
@@ -1619,93 +1628,97 @@ export default function InstagramPostCreator() {
             </div>
 
             {/* ─── CONTROLS ROW (exactly 540 px wide) ─────────────────────────────── */}
-            <div className="grid grid-cols-4 w-full gap-2 mx-auto h-16">
-              {/* ¼ + ¼ wrapper so the 2 frame-buttons can merge */}
+            <div className={`grid grid-cols-4 w-full gap-2 mx-auto ${ROW_H}`}>
+              {/* --- FRAME PAIR (2/4 width) --- */}
               <div
                 className={`
-                  col-span-2 
+                  col-span-2
                   relative flex items-stretch
                   transition-[gap] duration-300 ease-in-out
                   ${phase === 'merge' || phase === 'playing' ? 'gap-0' : 'gap-2'}
                 `}
               >
-                {/* Frame 1 */}
+                {/* --- Frame 1 button (forms left half of grey track) --- */}
                 <Button
                   ref={frame1Ref}
                   onClick={() => handleFrameChange(1)}
                   disabled={phase !== 'idle' && phase !== 'paused'}
                   className={`
-                    flex-1 h-full rounded-none overflow-hidden 
+                    flex-1 rounded-none overflow-hidden h-full
                     transition-colors duration-300
                     ${phase === 'merge' || phase === 'playing'
-                      ? 'bg-gray-200 text-transparent'
+                      ? 'bg-gray-200 text-transparent' // Fade to grey, hide text via color
                       : currentFrame === 1
-                        ? 'bg-black text-white hover:bg-[#9E9E9E]'
-                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E]'}
+                        ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
+                    }
                   `}
                 >
                   Frame 1
                 </Button>
 
-                {/* Frame 2 */}
+                {/* --- Frame 2 button (forms right half of grey track) --- */}
                 <Button
                   ref={frame2Ref}
                   onClick={() => handleFrameChange(2)}
                   disabled={phase !== 'idle' && phase !== 'paused'}
                   className={`
-                    flex-1 h-full rounded-none overflow-hidden 
+                    flex-1 rounded-none overflow-hidden h-full
                     transition-colors duration-300
                     ${phase === 'merge' || phase === 'playing'
                       ? 'bg-gray-200 text-transparent'
                       : currentFrame === 2
-                        ? 'bg-black text-white hover:bg-[#9E9E9E]'
-                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E]'}
+                        ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
+                    }
                   `}
                 >
                   Frame 2
                 </Button>
-
-                {/* Progress bar that sits ON TOP of both frame buttons */}
+                
+                {/* --- BLACK PROGRESS BAR (on top of the grey track) --- */}
                 <div
-                  className="absolute inset-0 bg-black pointer-events-none z-10"
+                  ref={barRef}
+                  className="absolute inset-0 bg-black pointer-events-none z-10 transition-opacity duration-150"
                   style={{
-                    width: `${barProgress * 100}%`,
                     opacity: phase === 'playing' || phase === 'merge' ? 1 : 0,
-                    transition: 'width 80ms linear, opacity 100ms ease-in-out',
+                    width: 0
                   }}
                 />
               </div>
 
-              {/* Play / Pause (¼) */}
+              {/* --- PLAY / PAUSE OVAL (1/4 width) --- */}
               <Button
                 onClick={handlePlayClick}
                 className={`
-                  h-full rounded-full flex items-center justify-center
+                  h-full
+                  rounded-full flex items-center justify-center
                   transition-colors duration-300
-                  ${phase === 'playing'
-                    ? 'bg-black text-white hover:bg-[#9E9E9E]'
-                    : 'bg-gray-200 text-black hover:bg-[#9E9E9E]'}
+                  ${phase==='playing'
+                    ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                    : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
                 `}
               >
-                {phase === 'playing'
+                {phase==='playing'
                   ? <span className="sf-icon text-xl">􀊅</span>
                   : <span className="sf-icon text-xl">􀊄</span>}
               </Button>
 
-              {/* Settings + Export (¼, stays perfect squares) */}
+              {/* --- SETTINGS & EXPORT (1/4 width) --- */}
               <div className="flex gap-2">
-                <Button
-                  onClick={() => setSettingsOpen(true)}
-                  className="flex-1 aspect-square h-full bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center"
-                >
-                  <span className="sf-icon text-xl">􀌆</span>
-                </Button>
-                <Button
-                  onClick={exportVideo}
-                  className="flex-1 aspect-square h-full bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center"
-                >
-                  <span className="sf-icon text-xl">􀈂</span>
-                </Button>
+                  <Button
+                    onClick={() => setSettingsOpen(true)}
+                    className={`flex-1 h-full aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center`}
+                  >
+                    <span className="sf-icon text-xl">􀌆</span>
+                  </Button>
+
+                  <Button
+                    onClick={exportVideo}
+                    className={`flex-1 h-full aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center`}
+                  >
+                    <span className="sf-icon text-xl">􀈂</span>
+                  </Button>
               </div>
             </div>
           </div>
