@@ -1319,6 +1319,7 @@ export default function InstagramPostCreator() {
     const elapsed = timestamp - startTimeRef.current
     const msPerBase = 1000 / baseFps
     let progress = (elapsed / (msPerBase * 150))
+    console.log('ANIMATE', { timestamp, isPlaying, progress, barProgress, progressRatio, phase });
 
     /* ── loop handling ─────────────────────────── */
     if (progress >= PROGRESS_END) {
@@ -1527,6 +1528,7 @@ export default function InstagramPostCreator() {
   }
 
   // ─── JSX ────────────────────────────────────────────────────────────────────────
+  console.log('RENDER', { phase, progressRatio, isPlaying, titles, subtitle });
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-white">
       <div className="bg-white border border-gray-200 p-4 rounded-lg font-ui">
