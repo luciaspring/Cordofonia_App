@@ -252,7 +252,9 @@ export default function InstagramPostCreator() {
 
   /* height = the row height you already finalised  ─────────── */
   const ROW_H = 'h-16'            // 64 px  (change only here if needed)
-  // all three constants no longer needed
+  const ROUND_BTN_W = 'w-52'      // oval play-btn width 208 px
+  const SQUARE_W   = 'w-20'       // 80 px square (settings/export)
+  const FRAME_W    = 'w-1/2'      // each frame btn takes half of its flex box
 
   // ─── EFFECT HOOKS ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -1626,17 +1628,14 @@ export default function InstagramPostCreator() {
             </div>
 
             {/* ─── CONTROLS ROW (exactly 540 px wide) ─────────────────────────────── */}
-            <div
-              className={`
-                grid grid-cols-4 w-full mx-auto relative ${ROW_H}
-                ${phase === 'merge' || phase === 'playing' ? 'gap-0' : 'gap-2'}
-              `}
-            >
+            <div className={`grid grid-cols-4 w-full gap-2 mx-auto ${ROW_H}`}>
               {/* --- FRAME PAIR (2/4 width) --- */}
               <div
                 className={`
                   col-span-2
                   relative flex items-stretch
+                  transition-[gap] duration-300 ease-in-out
+                  ${phase === 'merge' || phase === 'playing' ? 'gap-0' : 'gap-2'}
                 `}
               >
                 {/* --- Frame 1 button (forms left half of grey track) --- */}
