@@ -217,7 +217,6 @@ export default function InstagramPostCreator() {
   const lastClickTime = useRef<number>(0)
   const frame1Ref = useRef<HTMLButtonElement>(null)
   const frame2Ref = useRef<HTMLButtonElement>(null)
-  const barRef = useRef<HTMLDivElement>(null);
   const totalBarWRef = useRef<number>(0)          // save once when play starts
   const [barW, setBarW] = useState<number>(0)
 
@@ -235,6 +234,7 @@ export default function InstagramPostCreator() {
 
   /* timeline progress 0 → 1 for the merged bar */
   const [barProgress, setBarProgress] = useState(0)
+  const [progressRatio, setProgressRatio] = useState(0)
 
   // Add these easing functions near the top, after state declarations
   const easeLines = (t: number) =>
@@ -329,7 +329,7 @@ export default function InstagramPostCreator() {
     setIsPlaying(false);
     setPhase('idle');
     setBarProgress(0);
-    if (barRef.current) barRef.current.style.width = '0%';
+    setProgressRatio(0);
     startTimeRef.current = null;
     lastDisplayTimeRef.current = 0;
   }, [titles, subtitle]);
@@ -1353,9 +1353,7 @@ export default function InstagramPostCreator() {
     }
 
     const newProgress = Math.min(progress / PROGRESS_END, 1);
-    if (barRef.current) {
-      barRef.current.style.width = `${newProgress * 100}%`;
-    }
+    setProgressRatio(newProgress);
 
     if (isPlaying) animationRef.current = requestAnimationFrame(animate)
   }
@@ -1439,7 +1437,6 @@ export default function InstagramPostCreator() {
   }
 
   const handlePlayClick = () => {
-    if (barRef.current) barRef.current.style.width = '0%';
     if (isPlaying) {
       // Try to forcibly stop everything
       setIsPlaying(false);
@@ -1449,11 +1446,13 @@ export default function InstagramPostCreator() {
         startTimeRef.current = null;
         lastDisplayTimeRef.current = 0;
         setBarProgress(0);
+        setProgressRatio(0);
       }, 10);
     } else {
       // Try to forcibly reset and play
       setPhase('idle');
       setTimeout(() => {
+        setProgressRatio(0);
         setBarProgress(0);
         startTimeRef.current = null;
         lastDisplayTimeRef.current = 0;
@@ -1548,7 +1547,7 @@ export default function InstagramPostCreator() {
   }
 
   // ─── JSX ────────────────────────────────────────────────────────────────────────
-  console.log('RENDER', { phase, isPlaying, titles, subtitle });
+  console.log('RENDER', { phase, progressRatio, isPlaying, titles, subtitle });
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-white">
       <div className="bg-white border border-gray-200 p-4 rounded-lg font-ui">
@@ -1627,72 +1626,47 @@ export default function InstagramPostCreator() {
               />
             </div>
 
-            {/* ─── CONTROLS ROW (exactly 540 px wide) ─────────────────────────────── */}
-            <div className={`grid grid-cols-4 w-full gap-2 mx-auto ${ROW_H}`}>
-              {/* --- FRAME PAIR (2/4 width) --- */}
-              <div
+            {/* ─── CONTROLS ROW : perfectly 4-way split ───────────────────────── */}
+            <div className="flex w-full gap-2 h-16 relative">
+              {/* 1 / 4  →  Frame 1 */}
+              <Button
+                onClick={() => handleFrameChange(1)}
+                disabled={phase !== 'idle' && phase !== 'paused'}
                 className={`
-                  col-span-2
-                  relative flex items-stretch
-                  transition-[gap] duration-300 ease-in-out
-                  ${phase === 'merge' || phase === 'playing' ? 'gap-0' : 'gap-2'}
+                  flex-1 w-full h-full rounded-none overflow-hidden
+                  transition-colors duration-300
+                  ${phase === 'merge' || phase === 'playing'
+                    ? 'bg-gray-200 text-transparent'
+                    : currentFrame === 1
+                      ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                      : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
                 `}
               >
-                {/* --- Frame 1 button (forms left half of grey track) --- */}
-                <Button
-                  ref={frame1Ref}
-                  onClick={() => handleFrameChange(1)}
-                  disabled={phase !== 'idle' && phase !== 'paused'}
-                  className={`
-                    flex-1 rounded-none overflow-hidden h-full
-                    transition-colors duration-300
-                    ${phase === 'merge' || phase === 'playing'
-                      ? 'bg-gray-200 text-transparent' // Fade to grey, hide text via color
-                      : currentFrame === 1
-                        ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
-                    }
-                  `}
-                >
-                  Frame 1
-                </Button>
+                Frame 1
+              </Button>
 
-                {/* --- Frame 2 button (forms right half of grey track) --- */}
-                <Button
-                  ref={frame2Ref}
-                  onClick={() => handleFrameChange(2)}
-                  disabled={phase !== 'idle' && phase !== 'paused'}
-                  className={`
-                    flex-1 rounded-none overflow-hidden h-full
-                    transition-colors duration-300
-                    ${phase === 'merge' || phase === 'playing'
-                      ? 'bg-gray-200 text-transparent'
-                      : currentFrame === 2
-                        ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
-                    }
-                  `}
-                >
-                  Frame 2
-                </Button>
-                
-                {/* --- BLACK PROGRESS BAR (on top of the grey track) --- */}
-                <div
-                  ref={barRef}
-                  className="absolute inset-0 bg-black pointer-events-none z-10 transition-opacity duration-150"
-                  style={{
-                    opacity: phase === 'playing' || phase === 'merge' ? 1 : 0,
-                    width: 0
-                  }}
-                />
-              </div>
+              {/* 2 / 4  →  Frame 2 */}
+              <Button
+                onClick={() => handleFrameChange(2)}
+                disabled={phase !== 'idle' && phase !== 'paused'}
+                className={`
+                  flex-1 w-full h-full rounded-none overflow-hidden
+                  transition-colors duration-300
+                  ${phase === 'merge' || phase === 'playing'
+                    ? 'bg-gray-200 text-transparent'
+                    : currentFrame === 2
+                      ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                      : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
+                `}
+              >
+                Frame 2
+              </Button>
 
-              {/* --- PLAY / PAUSE OVAL (1/4 width) --- */}
+              {/* 3 / 4  →  Play / Pause (fills its ¼) */}
               <Button
                 onClick={handlePlayClick}
                 className={`
-                  h-full
-                  rounded-full flex items-center justify-center
+                  flex-1 w-full h-full rounded-full flex items-center justify-center
                   transition-colors duration-300
                   ${phase==='playing'
                     ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
@@ -1704,22 +1678,30 @@ export default function InstagramPostCreator() {
                   : <span className="sf-icon text-xl">􀊄</span>}
               </Button>
 
-              {/* --- SETTINGS & EXPORT (1/4 width) --- */}
-              <div className="flex gap-2">
-                  <Button
-                    onClick={() => setSettingsOpen(true)}
-                    className={`flex-1 h-full aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center`}
-                  >
-                    <span className="sf-icon text-xl">􀌆</span>
-                  </Button>
-
-                  <Button
-                    onClick={exportVideo}
-                    className={`flex-1 h-full aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center`}
-                  >
-                    <span className="sf-icon text-xl">􀈂</span>
-                  </Button>
+              {/* 4 / 4  →  Settings + Export (two perfect squares) */}
+              <div className="flex-1 flex gap-2">
+                <Button
+                  onClick={() => setSettingsOpen(true)}
+                  className="flex-1 aspect-square h-full bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center"
+                >
+                  <span className="sf-icon text-xl">􀌆</span>
+                </Button>
+                <Button
+                  onClick={exportVideo}
+                  className="flex-1 aspect-square h-full bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center"
+                >
+                  <span className="sf-icon text-xl">􀈂</span>
+                </Button>
               </div>
+
+              {/* ── Black progress bar spanning the first two buttons ── */}
+              <div
+                className="pointer-events-none absolute left-0 top-0 h-full bg-black z-10 transition-[width,opacity] duration-[80ms] ease-linear"
+                style={{
+                  width: (phase === 'playing' || phase === 'merge') ? `${progressRatio * 50}%` : 0, // 50 % = first two ¼'s
+                  opacity: (phase === 'playing' || phase === 'merge') ? 1 : 0
+                }}
+              />
             </div>
           </div>
         </div>
