@@ -1626,60 +1626,82 @@ export default function InstagramPostCreator() {
               />
             </div>
 
-            {/* ─── CONTROLS ROW : perfectly 4-way split ───────────────────────── */}
-            <div className="flex w-full gap-2 h-16 relative">
-              {/* 1 / 4  →  Frame 1 */}
-              <Button
-                onClick={() => handleFrameChange(1)}
-                disabled={phase !== 'idle' && phase !== 'paused'}
+            {/* ─── CONTROLS ROW : four equal quarters + merge anim ───────────── */}
+            <div className="flex w-full h-16 gap-2">
+
+              {/* 1-2 / 4  : wrapper for Frame 1 & 2  (flex-2 == ½ row) */}
+              <div
                 className={`
-                  flex-1 w-full h-full rounded-none overflow-hidden
-                  transition-colors duration-300
-                  ${phase === 'merge' || phase === 'playing'
-                    ? 'bg-gray-200 text-transparent'
-                    : currentFrame === 1
-                      ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                      : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
+                  relative flex flex-[2] items-stretch
+                  transition-[gap] duration-300 ease-in-out
+                  ${phase === 'merge' || phase === 'playing' ? 'gap-0' : 'gap-2'}
                 `}
               >
-                Frame 1
-              </Button>
+                {/* Frame 1 */}
+                <Button
+                  onClick={() => handleFrameChange(1)}
+                  disabled={phase !== 'idle' && phase !== 'paused'}
+                  className={`
+                    flex-1 w-full h-full rounded-none overflow-hidden
+                    transition-colors duration-300
+                    ${phase === 'merge' || phase === 'playing'
+                      ? 'bg-gray-200 text-transparent'
+                      : currentFrame === 1
+                        ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
+                  `}
+                >
+                  Frame&nbsp;1
+                </Button>
 
-              {/* 2 / 4  →  Frame 2 */}
-              <Button
-                onClick={() => handleFrameChange(2)}
-                disabled={phase !== 'idle' && phase !== 'paused'}
-                className={`
-                  flex-1 w-full h-full rounded-none overflow-hidden
-                  transition-colors duration-300
-                  ${phase === 'merge' || phase === 'playing'
-                    ? 'bg-gray-200 text-transparent'
-                    : currentFrame === 2
-                      ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                      : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
-                `}
-              >
-                Frame 2
-              </Button>
+                {/* Frame 2 */}
+                <Button
+                  onClick={() => handleFrameChange(2)}
+                  disabled={phase !== 'idle' && phase !== 'paused'}
+                  className={`
+                    flex-1 w-full h-full rounded-none overflow-hidden
+                    transition-colors duration-300
+                    ${phase === 'merge' || phase === 'playing'
+                      ? 'bg-gray-200 text-transparent'
+                      : currentFrame === 2
+                        ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
+                  `}
+                >
+                  Frame&nbsp;2
+                </Button>
 
-              {/* 3 / 4  →  Play / Pause (fills its ¼) */}
+                {/* black progress bar that spans the half-row */}
+                <div
+                  className="absolute left-0 top-0 h-full bg-black pointer-events-none z-10
+                             transition-[width,opacity] duration-[80ms] ease-linear"
+                  style={{
+                    width: (phase === 'playing' || phase === 'merge')
+                      ? `${progressRatio * 100}%`
+                      : 0,
+                    opacity: (phase === 'playing' || phase === 'merge') ? 1 : 0
+                  }}
+                />
+              </div>
+
+              {/* 3 / 4 : Play / Pause */}
               <Button
                 onClick={handlePlayClick}
                 className={`
                   flex-1 w-full h-full rounded-full flex items-center justify-center
                   transition-colors duration-300
-                  ${phase==='playing'
+                  ${phase === 'playing'
                     ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
                     : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
                 `}
               >
-                {phase==='playing'
+                {phase === 'playing'
                   ? <span className="sf-icon text-xl">􀊅</span>
                   : <span className="sf-icon text-xl">􀊄</span>}
               </Button>
 
-              {/* 4 / 4  →  Settings + Export (two perfect squares) */}
-              <div className="flex-1 flex gap-2">
+              {/* 4 / 4 : Settings + Export (perfect squares) */}
+              <div className="flex flex-1 gap-2">
                 <Button
                   onClick={() => setSettingsOpen(true)}
                   className="flex-1 aspect-square h-full bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center"
@@ -1693,15 +1715,6 @@ export default function InstagramPostCreator() {
                   <span className="sf-icon text-xl">􀈂</span>
                 </Button>
               </div>
-
-              {/* ── Black progress bar spanning the first two buttons ── */}
-              <div
-                className="pointer-events-none absolute left-0 top-0 h-full bg-black z-10 transition-[width,opacity] duration-[80ms] ease-linear"
-                style={{
-                  width: (phase === 'playing' || phase === 'merge') ? `${progressRatio * 50}%` : 0, // 50 % = first two ¼'s
-                  opacity: (phase === 'playing' || phase === 'merge') ? 1 : 0
-                }}
-              />
             </div>
           </div>
         </div>
