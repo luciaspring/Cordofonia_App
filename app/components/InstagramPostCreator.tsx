@@ -205,6 +205,8 @@ export default function InstagramPostCreator() {
     centerY: number
   } | null>(null)
 
+  const [animationKey, setAnimationKey] = useState(0);
+
   // Ref's for animation and mouse tracking
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<number | null>(null)
@@ -1612,6 +1614,7 @@ export default function InstagramPostCreator() {
               style={{ backgroundColor }}
             >
               <canvas
+                key={animationKey}
                 ref={canvasRef}
                 width={1080}
                 height={1350}
