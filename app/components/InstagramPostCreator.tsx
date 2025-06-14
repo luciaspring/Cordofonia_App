@@ -217,7 +217,7 @@ export default function InstagramPostCreator() {
   const lastClickTime = useRef<number>(0)
   const frame1Ref = useRef<HTMLButtonElement>(null)
   const frame2Ref = useRef<HTMLButtonElement>(null)
-  const barRef = useRef<HTMLDivElement>(null)
+  const barRef = useRef<HTMLDivElement>(null);
   const totalBarWRef = useRef<number>(0)          // save once when play starts
   const [barW, setBarW] = useState<number>(0)
 
@@ -235,9 +235,6 @@ export default function InstagramPostCreator() {
 
   /* timeline progress 0 → 1 for the merged bar */
   const [barProgress, setBarProgress] = useState(0)
-
-  /* progress (0 → 1) for the merged bar */
-  const [progressRatio, setProgressRatio] = useState(0)
 
   // Add these easing functions near the top, after state declarations
   const easeLines = (t: number) =>
@@ -328,6 +325,16 @@ export default function InstagramPostCreator() {
   ]);
 
   useEffect(() => {
+    setAnimationKey(k => k + 1);
+    setIsPlaying(false);
+    setPhase('idle');
+    setBarProgress(0);
+    if (barRef.current) barRef.current.style.width = '0%';
+    startTimeRef.current = null;
+    lastDisplayTimeRef.current = 0;
+  }, [titles, subtitle]);
+
+  useEffect(() => {
     if (isPlaying) {
       startTimeRef.current = null;
       lastDisplayTimeRef.current = 0;
@@ -340,16 +347,6 @@ export default function InstagramPostCreator() {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
   }, [isPlaying, animationKey]);
-
-  useEffect(() => {
-    setAnimationKey(k => k + 1);
-    setIsPlaying(false);
-    setPhase('idle');
-    setBarProgress(0);
-    setProgressRatio(0);
-    startTimeRef.current = null;
-    lastDisplayTimeRef.current = 0;
-  }, [titles, subtitle]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -1330,7 +1327,7 @@ export default function InstagramPostCreator() {
     const elapsed = timestamp - startTimeRef.current
     const msPerBase = 1000 / baseFps
     let progress = (elapsed / (msPerBase * 150))
-    console.log('ANIMATE', { timestamp, isPlaying, progress, barProgress, progressRatio, phase });
+    console.log('ANIMATE', { timestamp, isPlaying, progress, barProgress, phase });
 
     /* ── loop handling ─────────────────────────── */
     if (progress >= PROGRESS_END) {
@@ -1356,8 +1353,9 @@ export default function InstagramPostCreator() {
     }
 
     const newProgress = Math.min(progress / PROGRESS_END, 1);
-    setProgressRatio(newProgress);
-    console.log('progressRatio (setting)', newProgress, 'phase', phase, 'isPlaying', isPlaying);
+    if (barRef.current) {
+      barRef.current.style.width = `${newProgress * 100}%`;
+    }
 
     if (isPlaying) animationRef.current = requestAnimationFrame(animate)
   }
@@ -1441,6 +1439,7 @@ export default function InstagramPostCreator() {
   }
 
   const handlePlayClick = () => {
+    if (barRef.current) barRef.current.style.width = '0%';
     if (isPlaying) {
       // Try to forcibly stop everything
       setIsPlaying(false);
@@ -1450,13 +1449,11 @@ export default function InstagramPostCreator() {
         startTimeRef.current = null;
         lastDisplayTimeRef.current = 0;
         setBarProgress(0);
-        setProgressRatio(0);
       }, 10);
     } else {
       // Try to forcibly reset and play
       setPhase('idle');
       setTimeout(() => {
-        setProgressRatio(0);
         setBarProgress(0);
         startTimeRef.current = null;
         lastDisplayTimeRef.current = 0;
@@ -1551,7 +1548,7 @@ export default function InstagramPostCreator() {
   }
 
   // ─── JSX ────────────────────────────────────────────────────────────────────────
-  console.log('RENDER', { phase, progressRatio, isPlaying, titles, subtitle });
+  console.log('RENDER', { phase, isPlaying, titles, subtitle });
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-white">
       <div className="bg-white border border-gray-200 p-4 rounded-lg font-ui">
@@ -1681,11 +1678,11 @@ export default function InstagramPostCreator() {
                 
                 {/* --- BLACK PROGRESS BAR (on top of the grey track) --- */}
                 <div
-                  className="absolute inset-0 bg-black pointer-events-none z-10"
+                  ref={barRef}
+                  className="absolute inset-0 bg-black pointer-events-none z-10 transition-opacity duration-150"
                   style={{
-                    width: (phase === 'playing' || phase === 'merge') ? `${progressRatio * 100}%` : '0%',
-                    opacity: (phase === 'playing' || phase === 'merge') ? 1 : 0,
-                    transition: 'width 80ms linear, opacity 100ms ease-in-out'
+                    opacity: phase === 'playing' || phase === 'merge' ? 1 : 0,
+                    width: 0
                   }}
                 />
               </div>
