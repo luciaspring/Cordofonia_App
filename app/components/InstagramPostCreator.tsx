@@ -252,9 +252,7 @@ export default function InstagramPostCreator() {
 
   /* height = the row height you already finalised  ─────────── */
   const ROW_H = 'h-16'            // 64 px  (change only here if needed)
-  const ROUND_BTN_W = 'w-52'      // oval play-btn width 208 px
-  const SQUARE_W   = 'w-20'       // 80 px square (settings/export)
-  const FRAME_W    = 'w-1/2'      // each frame btn takes half of its flex box
+  // all three constants no longer needed
 
   // ─── EFFECT HOOKS ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -1628,14 +1626,17 @@ export default function InstagramPostCreator() {
             </div>
 
             {/* ─── CONTROLS ROW (exactly 540 px wide) ─────────────────────────────── */}
-            <div className={`grid grid-cols-4 w-full gap-2 mx-auto ${ROW_H}`}>
+            <div
+              className={`
+                grid grid-cols-4 w-full mx-auto relative ${ROW_H}
+                ${phase === 'merge' || phase === 'playing' ? 'gap-0' : 'gap-2'}
+              `}
+            >
               {/* --- FRAME PAIR (2/4 width) --- */}
               <div
                 className={`
                   col-span-2
                   relative flex items-stretch
-                  transition-[gap] duration-300 ease-in-out
-                  ${phase === 'merge' || phase === 'playing' ? 'gap-0' : 'gap-2'}
                 `}
               >
                 {/* --- Frame 1 button (forms left half of grey track) --- */}
@@ -1691,6 +1692,7 @@ export default function InstagramPostCreator() {
               <Button
                 onClick={handlePlayClick}
                 className={`
+                  w-full
                   h-full
                   rounded-full flex items-center justify-center
                   transition-colors duration-300
@@ -1705,7 +1707,7 @@ export default function InstagramPostCreator() {
               </Button>
 
               {/* --- SETTINGS & EXPORT (1/4 width) --- */}
-              <div className="flex gap-2">
+              <div className="flex gap-2 w-full h-full">
                   <Button
                     onClick={() => setSettingsOpen(true)}
                     className={`flex-1 h-full aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center`}
