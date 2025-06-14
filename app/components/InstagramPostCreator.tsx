@@ -1430,19 +1430,19 @@ export default function InstagramPostCreator() {
   }
 
   const handlePlayClick = () => {
-    setProgressRatio(0)
-    setBarProgress(0)
-    startTimeRef.current = null
-    lastDisplayTimeRef.current = 0
-    if (phase === 'idle' || phase === 'paused') {
+    // "Double toggle" pattern ensures full reset
+    setIsPlaying(false)
+    setPhase('idle')
+    setTimeout(() => {
+      setProgressRatio(0)
+      setBarProgress(0)
+      startTimeRef.current = null
+      lastDisplayTimeRef.current = 0
       setIsPlaying(true)
       setOriginFrame(currentFrame as 1 | 2)
       setPhase('merge')
       setTimeout(() => setPhase('playing'), 300)
-    } else {
-      setIsPlaying(false)
-      setPhase('paused')
-    }
+    }, 10)
   }
 
   const toggleLoop = () => setIsLooping(prev => !prev)
@@ -1595,6 +1595,7 @@ export default function InstagramPostCreator() {
               style={{ backgroundColor }}
             >
               <canvas
+                key={titles.join('-') + subtitle}
                 ref={canvasRef}
                 width={1080}
                 height={1350}
