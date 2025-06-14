@@ -1430,20 +1430,32 @@ export default function InstagramPostCreator() {
   }
 
   const handlePlayClick = () => {
-    // "Double toggle" pattern ensures full reset
-    setIsPlaying(false)
-    setPhase('idle')
-    setTimeout(() => {
-      setProgressRatio(0)
-      setBarProgress(0)
-      startTimeRef.current = null
-      lastDisplayTimeRef.current = 0
-      setIsPlaying(true)
-      setOriginFrame(currentFrame as 1 | 2)
-      setPhase('merge')
-      setTimeout(() => setPhase('playing'), 300)
-    }, 10)
-  }
+    if (isPlaying) {
+      // Try to forcibly stop everything
+      setIsPlaying(false);
+      setPhase('paused');
+      setTimeout(() => {
+        if (animationRef.current) cancelAnimationFrame(animationRef.current);
+        startTimeRef.current = null;
+        lastDisplayTimeRef.current = 0;
+        setBarProgress(0);
+        setProgressRatio(0);
+      }, 10);
+    } else {
+      // Try to forcibly reset and play
+      setPhase('idle');
+      setTimeout(() => {
+        setProgressRatio(0);
+        setBarProgress(0);
+        startTimeRef.current = null;
+        lastDisplayTimeRef.current = 0;
+        setIsPlaying(true);
+        setOriginFrame(currentFrame as 1 | 2);
+        setPhase('merge');
+        setTimeout(() => setPhase('playing'), 300);
+      }, 10);
+    }
+  };
 
   const toggleLoop = () => setIsLooping(prev => !prev)
 
