@@ -1564,14 +1564,16 @@ export default function InstagramPostCreator() {
         {/* widen gap so the new, wider left column sits clear of the frame */}
         <div className="flex space-x-8">
           {/* ─── LEFT PANEL ───────────────────────────────────────── */}
-          <div className="w-[336px] pt-0 pr-6 flex flex-col h-full">
+          <div className="w-[336px] pr-6 flex flex-col">
             <h1 className="text-[15px] font-semibold tracking-wide text-black leading-tight mb-4">
               Cordofonia Instagram<br />Posts Creator Tool
             </h1>
 
-            {/* --- everything below the heading is pushed to the bottom --- */}
-            <div className="flex flex-col mt-auto space-y-4">
+            {/* vertical spacer pushes the form to the bottom */}
+            <div className="flex-1" />
 
+            {/* form blocks kept together & still spaced */}
+            <div className="space-y-4">
               {/* Title fields */}
               <FieldGroup step={1} label="Write a title">
                 <div className="space-y-2">
@@ -1625,7 +1627,6 @@ export default function InstagramPostCreator() {
                   ))}
                 </div>
               </FieldGroup>
-
             </div>
           </div>
 
