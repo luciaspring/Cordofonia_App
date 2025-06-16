@@ -1570,10 +1570,9 @@ export default function InstagramPostCreator() {
               Cordofonia Instagram<br />Posts Creator Tool
             </h1>
 
-            {/* everything below the heading gets its own flex column */}
-            <div className="flex flex-col h-full">
-              {/* ① Title block — centred in the available space */}
-              <div className="flex flex-col justify-center flex-1">
+            <div className="flex flex-col h-full">          {/* NEW wrapper */}
+              {/* ── ① centred Title block ─────────────── */}
+              <div className="flex flex-col flex-1 justify-center">
                 <FieldGroup step={1} label="Write a title">
                   <Input
                     value={titles[0]}
@@ -1588,8 +1587,8 @@ export default function InstagramPostCreator() {
                 </FieldGroup>
               </div>
 
-              {/* ② Instrument + ③ Colours — stay glued to the bottom */}
-              <div className="space-y-6">
+              {/* ── ② + ③ glued to the bottom ────────── */}
+              <div className="flex flex-col space-y-6">
                 <FieldGroup step={2} label="Write the instrument">
                   <Input
                     value={subtitle}
