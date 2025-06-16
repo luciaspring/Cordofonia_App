@@ -1565,15 +1565,15 @@ export default function InstagramPostCreator() {
         <div className="flex space-x-8">
           {/* ─── LEFT PANEL ───────────────────────────────────────── */}
           {/* 312 px = 8 squares × 32 px  + 7 gaps × 8 px  → allow a little breathing room */}
-          <div className="w-[336px] pt-0 pr-6 flex flex-col h-[675px]">
+          <div className="w-[336px] pt-0 pr-6 h-[675px] flex flex-col">
             <h1 className="text-[15px] font-semibold tracking-wide text-black leading-tight mb-4">
               Cordofonia Instagram<br />Posts Creator Tool
             </h1>
 
-            {/* everything below the heading gets its own flex stack */}
-            <div className="flex flex-col flex-grow">
-              {/* #1 – centre of the column */}
-              <div className="flex-1 flex items-center">
+            {/* ── NEW FLEX-BOX THAT FILLS THE REMAINING HEIGHT ── */}
+            <div className="flex-1 flex flex-col">
+              {/* ① TITLE block vertically centred */}  
+              <div className="flex-1 flex flex-col justify-center">
                 <FieldGroup step={1} label="Write a title">
                   <Input
                     value={titles[0]}
@@ -1588,8 +1588,8 @@ export default function InstagramPostCreator() {
                 </FieldGroup>
               </div>
 
-              {/* #2 – lives midway between #1 and the picker */}
-              <div className="flex items-center mb-6">
+              {/* ② INSTRUMENT + ③ COLOURS sit at the very bottom */}
+              <div className="space-y-4">
                 <FieldGroup step={2} label="Write the instrument">
                   <Input
                     value={subtitle}
@@ -1597,10 +1597,7 @@ export default function InstagramPostCreator() {
                     className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
                   />
                 </FieldGroup>
-              </div>
 
-              {/* #3 – hard-pinned to the bottom */}
-              <div className="mt-auto">
                 <FieldGroup step={3} label="Pick a color">
                   {/* keep all squares on one line */}
                   <div className="flex flex-nowrap gap-2 mt-2">
