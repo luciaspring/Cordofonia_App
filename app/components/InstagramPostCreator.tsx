@@ -1564,42 +1564,41 @@ export default function InstagramPostCreator() {
         {/* widen gap so the new, wider left column sits clear of the frame */}
         <div className="flex space-x-8">
           {/* ─── LEFT PANEL ────────────────────────────────────────── */}
-          <div className="w-[336px] pr-6 pt-0 flex flex-col">
+          <div className="w-[336px] h-[675px] relative pt-0 pr-6">
             {/*  A. header (stays at the very top) */}
             <h1 className="text-[17px] font-bold leading-tight mb-4">
               Cordofonia Instagram<br />Posts Creator Tool
             </h1>
 
-            {/*  B. the three numbered steps  */}
-            <div className="flex flex-col flex-1 justify-between pt-[50vh]">
-              {/* 1 — TITLE  (already centred with –translate-y-1/2) */}
-              <div className="-translate-y-1/2">
-                <FieldGroup step={1} label="Write a title">
-                  <Input
-                    value={titles[0]}
-                    onChange={e => setTitles([e.target.value, titles[1]])}
-                    className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
-                  />
-                  <Input
-                    value={titles[1]}
-                    onChange={e => setTitles([titles[0], e.target.value])}
-                    className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
-                  />
-                </FieldGroup>
-              </div>
+            {/* 1 ─ TITLE in the vertical centre */}
+            <div className="absolute left-0 w-full top-1/2 -translate-y-1/2">
+              <FieldGroup step={1} label="Write a title">
+                <Input
+                  value={titles[0]}
+                  onChange={e => setTitles([e.target.value, titles[1]])}
+                  className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                />
+                <Input
+                  value={titles[1]}
+                  onChange={e => setTitles([titles[0], e.target.value])}
+                  className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                />
+              </FieldGroup>
+            </div>
 
-              {/* 2 — INSTRUMENT  ←- centred between #1 and #3 */}
-              <div className="my-auto">
-                <FieldGroup step={2} label="Write the instrument">
-                  <Input
-                    value={subtitle}
-                    onChange={e => setSubtitle(e.target.value)}
-                    className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
-                  />
-                </FieldGroup>
-              </div>
+            {/* 2 ─ INSTRUMENT halfway between #1 and #3 */}
+            <div className="absolute left-0 w-full top-[75%] -translate-y-1/2">
+              <FieldGroup step={2} label="Write the instrument">
+                <Input
+                  value={subtitle}
+                  onChange={e => setSubtitle(e.target.value)}
+                  className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                />
+              </FieldGroup>
+            </div>
 
-              {/* 3 — COLOUR PICKER  (stays at the bottom) */}
+            {/* 3 ─ COLOUR PICKER pinned to the bottom */}
+            <div className="absolute left-0 w-full bottom-0">
               <FieldGroup step={3} label="Pick a color">
                 <div className="flex flex-nowrap gap-2 mt-2">
                   {colorOptions.map(c => (
