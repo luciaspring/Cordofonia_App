@@ -1611,9 +1611,7 @@ export default function InstagramPostCreator() {
                     style={{ backgroundColor: c.value }}
                     className={`
                       w-8 h-8 rounded-none
-                      ${backgroundColor === c.value
-                        ? 'ring-2 ring-black'
-                        : 'ring-0'}
+                      ${backgroundColor === c.value ? 'ring-[3px] ring-inset ring-black' : 'ring-0'}
                     `}
                   />
                 ))}
