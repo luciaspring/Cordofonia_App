@@ -1565,57 +1565,60 @@ export default function InstagramPostCreator() {
         <div className="flex space-x-8">
           {/* ─── LEFT PANEL ───────────────────────────────────────── */}
           {/* 312 px = 8 squares × 32 px  + 7 gaps × 8 px  → allow a little breathing room */}
-          <div className="w-[336px] pr-6 flex flex-col">
+          <div className="w-[336px] pt-0 pr-6 flex flex-col h-full">
             <h1 className="text-[15px] font-semibold tracking-wide text-black leading-tight mb-4">
               Cordofonia Instagram<br />Posts Creator Tool
             </h1>
 
-            {/* vertical spacer pushes the form to the bottom */}
-            <div className="flex-1" />
+            {/* everything below the heading gets its own flex stack */}
+            <div className="flex flex-col flex-grow">
+              {/* #1 – centre of the column */}
+              <div className="flex-1 flex items-center">
+                <FieldGroup step={1} label="Write a title">
+                  <Input
+                    value={titles[0]}
+                    onChange={e => setTitles([e.target.value, titles[1]])}
+                    className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                  />
+                  <Input
+                    value={titles[1]}
+                    onChange={e => setTitles([titles[0], e.target.value])}
+                    className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                  />
+                </FieldGroup>
+              </div>
 
-            {/* form blocks kept together & still spaced */}
-            <div className="space-y-4">
-              {/* Title fields */}
-              <FieldGroup step={1} label="Write a title">
-                <Input
-                  value={titles[0]}
-                  onChange={e => setTitles([e.target.value, titles[1]])}
-                  className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
-                />
-                <Input
-                  value={titles[1]}
-                  onChange={e => setTitles([titles[0], e.target.value])}
-                  className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
-                />
-              </FieldGroup>
+              {/* #2 – lives midway between #1 and the picker */}
+              <div className="flex items-center mb-6">
+                <FieldGroup step={2} label="Write the instrument">
+                  <Input
+                    value={subtitle}
+                    onChange={e => setSubtitle(e.target.value)}
+                    className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                  />
+                </FieldGroup>
+              </div>
 
-              {/* Instrument */}
-              <FieldGroup step={2} label="Write the instrument">
-                <Input
-                  value={subtitle}
-                  onChange={e => setSubtitle(e.target.value)}
-                  className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
-                />
-              </FieldGroup>
-
-              {/* Colors */}
-              <FieldGroup step={3} label="Pick a color">
-                {/* keep all squares on one line */}
-                <div className="flex flex-nowrap gap-2 mt-2">
-                  {colorOptions.map(c => (
-                    <button
-                      key={c.value}
-                      onClick={() => setBackgroundColor(c.value)}
-                      aria-label={c.name}
-                      style={{ backgroundColor: c.value }}
-                      className={`
-                        w-8 h-8 rounded-none
-                        ${backgroundColor === c.value ? 'ring-[3px] ring-inset ring-black' : 'ring-0'}
-                      `}
-                    />
-                  ))}
-                </div>
-              </FieldGroup>
+              {/* #3 – hard-pinned to the bottom */}
+              <div className="mt-auto">
+                <FieldGroup step={3} label="Pick a color">
+                  {/* keep all squares on one line */}
+                  <div className="flex flex-nowrap gap-2 mt-2">
+                    {colorOptions.map(c => (
+                      <button
+                        key={c.value}
+                        onClick={() => setBackgroundColor(c.value)}
+                        aria-label={c.name}
+                        style={{ backgroundColor: c.value }}
+                        className={`
+                          w-8 h-8 rounded-none
+                          ${backgroundColor === c.value ? 'ring-[3px] ring-inset ring-black' : 'ring-0'}
+                        `}
+                      />
+                    ))}
+                  </div>
+                </FieldGroup>
+              </div>
             </div>
           </div>
 
