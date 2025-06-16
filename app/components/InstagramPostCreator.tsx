@@ -459,7 +459,7 @@ export default function InstagramPostCreator() {
       ctx.translate(cx + tremX, cy + tremY)                         // centre pivot
       ctx.rotate(pos.rotation)
       ctx.font         = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`
-      ctx.fillStyle    = getContrastColor(backgroundColor)
+      ctx.fillStyle    = getContrastColor()
       ctx.textBaseline = 'middle'
       ctx.textAlign    = 'left'
       ctx.fillText(titles[idx], -pos.width / 2, 0)                  // shift left by ½ W
@@ -475,7 +475,7 @@ export default function InstagramPostCreator() {
     ctx.translate(scx + tremXsub, scy + tremYsub)
     ctx.rotate(subPos.rotation)
     ctx.font         = `${subPos.fontSize}px "${AFFAIRS}", sans-serif`
-    ctx.fillStyle    = getContrastColor(backgroundColor)
+    ctx.fillStyle    = getContrastColor()
     ctx.textBaseline = 'middle'
     ctx.textAlign    = 'left'
     const lx = -subPos.width / 2
@@ -490,7 +490,7 @@ export default function InstagramPostCreator() {
     ctx.translate(pos.x + pos.width/2, pos.y + pos.height/2)
     ctx.rotate(pos.rotation)
     ctx.font = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`
-    ctx.fillStyle = getContrastColor(backgroundColor)
+    ctx.fillStyle = getContrastColor()
     ctx.textBaseline = 'middle'
     ctx.textAlign = 'center'
     ctx.fillText(text, 0, 0)
@@ -599,7 +599,7 @@ export default function InstagramPostCreator() {
       ctx.translate(x + dynW / 2 + tremX, y + dynH / 2 + tremY)    // centre pivot
       ctx.rotate(rotation)
       ctx.font         = `bold ${fontSize}px "${SUL_SANS}", sans-serif`
-      ctx.fillStyle    = getContrastColor(backgroundColor)
+      ctx.fillStyle    = getContrastColor()
       ctx.textBaseline = 'middle'
       ctx.textAlign    = 'left'
       ctx.fillText(text, -dynW / 2, 0)                             // draw from left edge
@@ -623,7 +623,7 @@ export default function InstagramPostCreator() {
     ctx.translate(sx + dynSW / 2 + streX, sy + dynSH / 2 + streY)
     ctx.rotate(srot)
     ctx.font         = `${sFontSize}px "${AFFAIRS}", sans-serif`
-    ctx.fillStyle    = getContrastColor(backgroundColor)
+    ctx.fillStyle    = getContrastColor()
     ctx.textBaseline = 'middle'
     ctx.textAlign    = 'left'
     const lx = -dynSW / 2
@@ -1518,13 +1518,7 @@ export default function InstagramPostCreator() {
   }
 
   // ─── UTILITY ────────────────────────────────────────────────────────────────────
-  const getContrastColor = (bgColor: string): string => {
-    const r = parseInt(bgColor.slice(1, 3), 16)
-    const g = parseInt(bgColor.slice(3, 5), 16)
-    const b = parseInt(bgColor.slice(5, 7), 16)
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-    return luminance > 0.5 ? '#000000' : '#FFFFFF'
-  }
+  const getContrastColor = () => '#000000'
 
   const exportVideo = async () => {
     const canvas = canvasRef.current
