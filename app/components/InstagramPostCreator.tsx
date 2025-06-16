@@ -1691,35 +1691,36 @@ export default function InstagramPostCreator() {
               <Button
                 onClick={handlePlayClick}
                 className={`
+                  w-full               /* fill its ¼-column */
                   h-full
                   rounded-full flex items-center justify-center
                   transition-colors duration-300
                   ${phase==='playing'
                     ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
                     : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
-                `}
-              >
-                {phase==='playing'
-                  ? <span className="sf-icon text-xl">􀊅</span>
-                  : <span className="sf-icon text-xl">􀊄</span>}
-              </Button>
+                 `}
+               >
+                 {phase==='playing'
+                   ? <span className="sf-icon text-xl">􀊅</span>
+                   : <span className="sf-icon text-xl">􀊄</span>}
+               </Button>
 
               {/* --- SETTINGS & EXPORT (1/4 width) --- */}
-              <div className="flex gap-2">
-                  <Button
-                    onClick={() => setSettingsOpen(true)}
-                    className={`flex-1 h-full aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center`}
-                  >
-                    <span className="sf-icon text-xl">􀌆</span>
-                  </Button>
+              <div className="flex gap-2 w-full h-full">
+                   <Button
+                     onClick={() => setSettingsOpen(true)}
+                     className={`flex-1 h-full aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center`}
+                   >
+                     <span className="sf-icon text-xl">􀌆</span>
+                   </Button>
 
-                  <Button
-                    onClick={exportVideo}
-                    className={`flex-1 h-full aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center`}
-                  >
-                    <span className="sf-icon text-xl">􀈂</span>
-                  </Button>
-              </div>
+                   <Button
+                     onClick={exportVideo}
+                     className={`flex-1 h-full aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center`}
+                   >
+                     <span className="sf-icon text-xl">􀈂</span>
+                   </Button>
+               </div>
             </div>
           </div>
         </div>
