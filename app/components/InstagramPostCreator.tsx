@@ -1649,6 +1649,7 @@ export default function InstagramPostCreator() {
                 className={`
                   col-span-2
                   relative flex items-stretch
+                  bg-gray-200                /* keep the same grey as the square buttons */
                   transition-[gap] duration-300 ease-in-out
                   ${phase === 'merge' || phase === 'playing' ? 'gap-0' : 'gap-2'}
                 `}
