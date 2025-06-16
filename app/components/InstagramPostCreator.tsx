@@ -1570,38 +1570,37 @@ export default function InstagramPostCreator() {
               Cordofonia Instagram<br />Posts Creator Tool
             </h1>
 
-            <div className="flex-1 grid grid-rows-[1fr_auto_1fr] gap-4">
-              {/* middle row ⬇️ (#1) */}
-              <div className="row-start-2">
-                <FieldGroup step={1} label="Write a title">
-                  <Input
-                    value={titles[0]}
-                    onChange={e => setTitles([e.target.value, titles[1]])}
-                    className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
-                  />
-                  <Input
-                    value={titles[1]}
-                    onChange={e => setTitles([titles[0], e.target.value])}
-                    className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
-                  />
-                </FieldGroup>
-              </div>
+            {/* 1 ─ TITLE in the vertical centre */}
+            <div className="absolute left-0 w-full top-1/2 -translate-y-1/2">
+              <FieldGroup step={1} label="Write a title">
+                <Input
+                  value={titles[0]}
+                  onChange={e => setTitles([e.target.value, titles[1]])}
+                  className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                />
+                <Input
+                  value={titles[1]}
+                  onChange={e => setTitles([titles[0], e.target.value])}
+                  className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                />
+              </FieldGroup>
+            </div>
 
-              {/* bottom half of the space ⬇️ — we centre #2 inside it */}
-              <div className="row-start-3 flex items-center justify-center">
-                <FieldGroup step={2} label="Write the instrument">
-                  <Input
-                    value={subtitle}
-                    onChange={e => setSubtitle(e.target.value)}
-                    className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
-                  />
-                </FieldGroup>
-              </div>
+            {/* 2 ─ INSTRUMENT halfway between #1 and #3 */}
+            <div className="absolute left-0 w-full top-[75%] -translate-y-1/2">
+              <FieldGroup step={2} label="Write the instrument">
+                <Input
+                  value={subtitle}
+                  onChange={e => setSubtitle(e.target.value)}
+                  className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                />
+              </FieldGroup>
             </div>
 
             {/* 3 ─ COLOUR PICKER pinned to the card's inner edge */}
-            <div className="absolute inset-x-0 bottom-4">
+            <div className="absolute left-0 w-full bottom-4">
               <FieldGroup step={3} label="Pick a color">
+                {/* colour swatch wrapper  ─ pin to the very bottom */}
                 <div className="flex flex-nowrap gap-2 mt-2">
                   {colorOptions.map(c => (
                     <button
