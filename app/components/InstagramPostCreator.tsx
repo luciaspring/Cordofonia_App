@@ -1572,7 +1572,7 @@ export default function InstagramPostCreator() {
 
             {/*  B. the three numbered steps  */}
             <div className="flex flex-col flex-1 justify-between pt-[50vh]">
-              {/* 1. Write a title  */}
+              {/* 1 — TITLE  (already centred with –translate-y-1/2) */}
               <div className="-translate-y-1/2">
                 <FieldGroup step={1} label="Write a title">
                   <Input
@@ -1588,16 +1588,18 @@ export default function InstagramPostCreator() {
                 </FieldGroup>
               </div>
 
-              {/* 2. Write the instrument  */}
-              <FieldGroup step={2} label="Write the instrument">
-                <Input
-                  value={subtitle}
-                  onChange={e => setSubtitle(e.target.value)}
-                  className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
-                />
-              </FieldGroup>
+              {/* 2 — INSTRUMENT  ←- centred between #1 and #3 */}
+              <div className="my-auto">
+                <FieldGroup step={2} label="Write the instrument">
+                  <Input
+                    value={subtitle}
+                    onChange={e => setSubtitle(e.target.value)}
+                    className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                  />
+                </FieldGroup>
+              </div>
 
-              {/* 3. Pick a color  */}
+              {/* 3 — COLOUR PICKER  (stays at the bottom) */}
               <FieldGroup step={3} label="Pick a color">
                 <div className="flex flex-nowrap gap-2 mt-2">
                   {colorOptions.map(c => (
