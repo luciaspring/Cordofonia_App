@@ -1600,6 +1600,7 @@ export default function InstagramPostCreator() {
             {/* 3 ─ COLOUR PICKER pinned to the card's inner edge */}
             <div className="absolute left-0 w-full bottom-4">
               <FieldGroup step={3} label="Pick a color">
+                {/* colour swatch wrapper  ─ pin to the very bottom */}
                 <div className="flex flex-nowrap gap-2 mt-2">
                   {colorOptions.map(c => (
                     <button
