@@ -1647,11 +1647,9 @@ export default function InstagramPostCreator() {
               {/* --- FRAME PAIR (2/4 width) --- */}
               <div
                 className={`
-                  col-span-2
-                  relative flex items-stretch
-                  bg-gray-200                /* keep the same grey as the square buttons */
+                  col-span-2 relative flex items-stretch
                   transition-[gap] duration-300 ease-in-out
-                  ${phase === 'merge' || phase === 'playing' ? 'gap-0' : 'gap-2'}
+                  ${phase === 'merge' || phase === 'playing' ? 'gap-0 bg-gray-200' : 'gap-2'}
                 `}
               >
                 {/* --- Frame 1 button (forms left half of grey track) --- */}
