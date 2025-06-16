@@ -1597,8 +1597,8 @@ export default function InstagramPostCreator() {
               </FieldGroup>
             </div>
 
-            {/* 3 ─ COLOUR PICKER pinned to the bottom */}
-            <div className="absolute left-0 w-full bottom-0">
+            {/* 3 ─ COLOUR PICKER pinned to the card's inner edge */}
+            <div className="absolute left-0 w-full bottom-4">
               <FieldGroup step={3} label="Pick a color">
                 <div className="flex flex-nowrap gap-2 mt-2">
                   {colorOptions.map(c => (
