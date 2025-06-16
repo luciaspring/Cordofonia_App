@@ -1564,14 +1564,14 @@ export default function InstagramPostCreator() {
         {/* widen gap so the new, wider left column sits clear of the frame */}
         <div className="flex space-x-8">
           {/* ─── LEFT PANEL ────────────────────────────────────────── */}
-          <div className="w-[336px] pt-0 pr-6 relative flex flex-col h-full">
+          <div className="w-[336px] h-[675px] relative pt-0 pr-6">
             {/*  A. header (stays at the very top) */}
             <h1 className="text-[17px] font-bold leading-tight mb-4">
               Cordofonia Instagram<br />Posts Creator Tool
             </h1>
 
-            <div className="flex flex-col justify-center flex-1 gap-4">
-              {/* #1  – stays centred on Y-axis */}
+            {/* 1 ─ TITLE in the vertical centre */}
+            <div className="absolute left-0 w-full top-1/2 -translate-y-1/2">
               <FieldGroup step={1} label="Write a title">
                 <Input
                   value={titles[0]}
@@ -1584,8 +1584,10 @@ export default function InstagramPostCreator() {
                   className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
                 />
               </FieldGroup>
+            </div>
 
-              {/* #2  – always halfway between #1 & #3 */}
+            {/* 2 ─ INSTRUMENT halfway between #1 and #3 */}
+            <div className="absolute left-0 w-full top-[75%] -translate-y-1/2">
               <FieldGroup step={2} label="Write the instrument">
                 <Input
                   value={subtitle}
@@ -1595,9 +1597,10 @@ export default function InstagramPostCreator() {
               </FieldGroup>
             </div>
 
-            {/* Colors – anchored to the bottom */}
-            <div className="absolute inset-x-0 bottom-4">
+            {/* 3 ─ COLOUR PICKER pinned to the card's inner edge */}
+            <div className="absolute left-0 w-full bottom-4">
               <FieldGroup step={3} label="Pick a color">
+                {/* colour swatch wrapper  ─ pin to the very bottom */}
                 <div className="flex flex-nowrap gap-2 mt-2">
                   {colorOptions.map(c => (
                     <button
