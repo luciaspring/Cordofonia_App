@@ -1565,58 +1565,55 @@ export default function InstagramPostCreator() {
         <div className="flex space-x-8">
           {/* ─── LEFT PANEL ────────────────────────────────────────── */}
           <div className="w-[336px] pr-6 h-[675px] flex flex-col">
-            {/* header – fixed at the very top */}
+            {/*  header – always sticks to the very top  */}
             <h1 className="text-[15px] font-semibold tracking-wide text-black leading-tight mb-4">
               Cordofonia Instagram<br />Posts Creator Tool
             </h1>
 
-            {/* ── INNER LAYOUT WRAPPER ── */}
-            <div className="flex flex-col flex-1">
-              {/* —— ① TITLE block centred vertically —— */}
-              <div className="flex flex-col flex-1 justify-center">
-                <FieldGroup step={1} label="Write a title">
-                  <Input
-                    value={titles[0]}
-                    onChange={e => setTitles([e.target.value, titles[1]])}
-                    className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
-                  />
-                  <Input
-                    value={titles[1]}
-                    onChange={e => setTitles([titles[0], e.target.value])}
-                    className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
-                  />
-                </FieldGroup>
-              </div>
+            {/* ① —— TITLE block (centred) —— */}
+            <div className="mt-auto mb-auto">
+              <FieldGroup step={1} label="Write a title">
+                <Input
+                  value={titles[0]}
+                  onChange={e => setTitles([e.target.value, titles[1]])}
+                  className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                />
+                <Input
+                  value={titles[1]}
+                  onChange={e => setTitles([titles[0], e.target.value])}
+                  className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                />
+              </FieldGroup>
+            </div>
 
-              {/* —— ② + ③ stick to the bottom —— */}
-              <div className="flex flex-col space-y-6 pb-4">
-                <FieldGroup step={2} label="Write the instrument">
-                  <Input
-                    value={subtitle}
-                    onChange={e => setSubtitle(e.target.value)}
-                    className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
-                  />
-                </FieldGroup>
+            {/* ② + ③ —— pinned to the bottom —— */}
+            <div className="flex flex-col space-y-6 pb-4">
+              <FieldGroup step={2} label="Write the instrument">
+                <Input
+                  value={subtitle}
+                  onChange={e => setSubtitle(e.target.value)}
+                  className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                />
+              </FieldGroup>
 
-                <FieldGroup step={3} label="Pick a color">
-                  <div className="flex flex-nowrap gap-2 mt-2">
-                    {colorOptions.map(c => (
-                      <button
-                        key={c.value}
-                        onClick={() => setBackgroundColor(c.value)}
-                        aria-label={c.name}
-                        style={{ backgroundColor: c.value }}
-                        className={`
-                          w-8 h-8 rounded-none
-                          ${backgroundColor === c.value
-                            ? 'ring-4 ring-inset ring-black'   /* <-- thick inner ring */
-                            : 'ring-0'}
-                        `}
-                      />
-                    ))}
-                  </div>
-                </FieldGroup>
-              </div>
+              <FieldGroup step={3} label="Pick a color">
+                <div className="flex flex-nowrap gap-2 mt-2">
+                  {colorOptions.map(c => (
+                    <button
+                      key={c.value}
+                      onClick={() => setBackgroundColor(c.value)}
+                      aria-label={c.name}
+                      style={{ backgroundColor: c.value }}
+                      className={`
+                        w-8 h-8 rounded-none
+                        ${backgroundColor === c.value
+                          ? 'ring-4 ring-inset ring-black'   /* thicker inner ring */
+                          : 'ring-0'}
+                      `}
+                    />
+                  ))}
+                </div>
+              </FieldGroup>
             </div>
           </div>
 
