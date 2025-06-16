@@ -1565,7 +1565,7 @@ export default function InstagramPostCreator() {
         <div className="flex space-x-8">
           {/* ─── LEFT PANEL ───────────────────────────────────────── */}
           {/* 312 px = 8 squares × 32 px  + 7 gaps × 8 px  → allow a little breathing room */}
-          <div className="w-[336px] pt-0 pr-6 flex flex-col h-full">
+          <div className="w-[336px] pt-0 pr-6 flex flex-col h-[675px]">
             <h1 className="text-[15px] font-semibold tracking-wide text-black leading-tight mb-4">
               Cordofonia Instagram<br />Posts Creator Tool
             </h1>
