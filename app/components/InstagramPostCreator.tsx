@@ -1721,7 +1721,7 @@ export default function InstagramPostCreator() {
                </Button>
 
               {/* --- SETTINGS & EXPORT (1/4 width) --- */}
-              <div className="flex gap-2 w-full">
+              <div className="flex gap-2 w-full items-center">
                    <Button
                      onClick={() => setSettingsOpen(true)}
                      className="flex-1 aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center"
@@ -1950,4 +1950,5 @@ export default function InstagramPostCreator() {
     </div>
   )
 }
+
 
