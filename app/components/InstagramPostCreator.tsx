@@ -1564,14 +1564,15 @@ export default function InstagramPostCreator() {
         {/* widen gap so the new, wider left column sits clear of the frame */}
         <div className="flex space-x-8">
           {/* ─── LEFT PANEL ────────────────────────────────────────── */}
-          <div className="w-[336px] pr-6 h-[675px] flex flex-col">
-            {/*  header – always sticks to the very top  */}
-            <h1 className="text-[15px] font-semibold tracking-wide text-black leading-tight mb-4">
+          <div className="w-[336px] pr-6 pt-0 flex flex-col">
+            {/*  A. header (stays at the very top) */}
+            <h1 className="text-[17px] font-bold leading-tight mb-4">
               Cordofonia Instagram<br />Posts Creator Tool
             </h1>
 
-            {/* ① —— TITLE block (centred) —— */}
-            <div className="mt-auto mb-auto">
+            {/*  B. the three numbered steps  */}
+            <div className="flex flex-col flex-1 justify-between">
+              {/* 1. Write a title  */}
               <FieldGroup step={1} label="Write a title">
                 <Input
                   value={titles[0]}
@@ -1584,10 +1585,8 @@ export default function InstagramPostCreator() {
                   className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
                 />
               </FieldGroup>
-            </div>
 
-            {/* ② + ③ —— pinned to the bottom —— */}
-            <div className="flex flex-col space-y-6 pb-4">
+              {/* 2. Write the instrument  */}
               <FieldGroup step={2} label="Write the instrument">
                 <Input
                   value={subtitle}
@@ -1596,6 +1595,7 @@ export default function InstagramPostCreator() {
                 />
               </FieldGroup>
 
+              {/* 3. Pick a color  */}
               <FieldGroup step={3} label="Pick a color">
                 <div className="flex flex-nowrap gap-2 mt-2">
                   {colorOptions.map(c => (
