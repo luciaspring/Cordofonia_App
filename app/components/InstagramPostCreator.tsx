@@ -1563,15 +1563,16 @@ export default function InstagramPostCreator() {
       <div className="bg-white border border-gray-200 p-4 rounded-lg font-ui">
         {/* widen gap so the new, wider left column sits clear of the frame */}
         <div className="flex space-x-8">
-          {/* ─── LEFT PANEL ───────────────────────────────────────── */}
-          {/* 312 px = 8 squares × 32 px  + 7 gaps × 8 px  → allow a little breathing room */}
-          <div className="w-[336px] pt-0 pr-6 h-[675px] flex flex-col">
+          {/* ─── LEFT PANEL ────────────────────────────────────────── */}
+          <div className="w-[336px] pr-6 h-[675px] flex flex-col">
+            {/* header – fixed at the very top */}
             <h1 className="text-[15px] font-semibold tracking-wide text-black leading-tight mb-4">
               Cordofonia Instagram<br />Posts Creator Tool
             </h1>
 
-            <div className="flex flex-col h-full">          {/* NEW wrapper */}
-              {/* ── ① centred Title block ─────────────── */}
+            {/* ── INNER LAYOUT WRAPPER ── */}
+            <div className="flex flex-col flex-1">
+              {/* —— ① TITLE block centred vertically —— */}
               <div className="flex flex-col flex-1 justify-center">
                 <FieldGroup step={1} label="Write a title">
                   <Input
@@ -1587,8 +1588,8 @@ export default function InstagramPostCreator() {
                 </FieldGroup>
               </div>
 
-              {/* ── ② + ③ glued to the bottom ────────── */}
-              <div className="flex flex-col space-y-6">
+              {/* —— ② + ③ stick to the bottom —— */}
+              <div className="flex flex-col space-y-6 pb-4">
                 <FieldGroup step={2} label="Write the instrument">
                   <Input
                     value={subtitle}
@@ -1598,7 +1599,6 @@ export default function InstagramPostCreator() {
                 </FieldGroup>
 
                 <FieldGroup step={3} label="Pick a color">
-                  {/* keep all squares on one line */}
                   <div className="flex flex-nowrap gap-2 mt-2">
                     {colorOptions.map(c => (
                       <button
@@ -1608,7 +1608,9 @@ export default function InstagramPostCreator() {
                         style={{ backgroundColor: c.value }}
                         className={`
                           w-8 h-8 rounded-none
-                          ${backgroundColor === c.value ? 'ring-[3px] ring-inset ring-black' : 'ring-0'}
+                          ${backgroundColor === c.value
+                            ? 'ring-4 ring-inset ring-black'   /* <-- thick inner ring */
+                            : 'ring-0'}
                         `}
                       />
                     ))}
