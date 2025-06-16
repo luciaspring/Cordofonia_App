@@ -1564,6 +1564,7 @@ export default function InstagramPostCreator() {
         {/* widen gap so the new, wider left column sits clear of the frame */}
         <div className="flex space-x-8">
           {/* ─── LEFT PANEL ───────────────────────────────────────── */}
+          {/* 312 px = 8 squares × 32 px  + 7 gaps × 8 px  → allow a little breathing room */}
           <div className="w-[336px] pr-6 flex flex-col">
             <h1 className="text-[15px] font-semibold tracking-wide text-black leading-tight mb-4">
               Cordofonia Instagram<br />Posts Creator Tool
@@ -1576,44 +1577,32 @@ export default function InstagramPostCreator() {
             <div className="space-y-4">
               {/* Title fields */}
               <FieldGroup step={1} label="Write a title">
-                <div className="space-y-2">
-                  <Input
-                    value={titles[0]}
-                    onChange={(e) => {
-                      const newTitles = [...titles]
-                      newTitles[0] = e.target.value
-                      setTitles(newTitles)
-                    }}
-                    placeholder="First line"
-                    className="h-8"
-                  />
-                  <Input
-                    value={titles[1]}
-                    onChange={(e) => {
-                      const newTitles = [...titles]
-                      newTitles[1] = e.target.value
-                      setTitles(newTitles)
-                    }}
-                    placeholder="Second line"
-                    className="h-8"
-                  />
-                </div>
+                <Input
+                  value={titles[0]}
+                  onChange={e => setTitles([e.target.value, titles[1]])}
+                  className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                />
+                <Input
+                  value={titles[1]}
+                  onChange={e => setTitles([titles[0], e.target.value])}
+                  className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                />
               </FieldGroup>
 
               {/* Instrument */}
               <FieldGroup step={2} label="Write the instrument">
                 <Input
                   value={subtitle}
-                  onChange={(e) => setSubtitle(e.target.value)}
-                  placeholder="e.g. Kora"
-                  className="h-8"
+                  onChange={e => setSubtitle(e.target.value)}
+                  className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
                 />
               </FieldGroup>
 
               {/* Colors */}
               <FieldGroup step={3} label="Pick a color">
-                <div className="grid grid-cols-4 gap-2">
-                  {colorOptions.map((c) => (
+                {/* keep all squares on one line */}
+                <div className="flex flex-nowrap gap-2 mt-2">
+                  {colorOptions.map(c => (
                     <button
                       key={c.value}
                       onClick={() => setBackgroundColor(c.value)}
