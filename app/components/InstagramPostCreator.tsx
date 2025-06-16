@@ -1571,7 +1571,7 @@ export default function InstagramPostCreator() {
             </h1>
 
             {/*  B. the three numbered steps  */}
-            <div className="flex flex-col flex-1 justify-between">
+            <div className="flex flex-col flex-1 justify-between pt-[50vh]">
               {/* 1. Write a title  */}
               <FieldGroup step={1} label="Write a title">
                 <Input
