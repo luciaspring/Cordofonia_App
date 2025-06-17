@@ -123,14 +123,7 @@ const FieldGroup: React.FC<{ step: number; label: string; children: React.ReactN
   children,
 }) => (
   <div className="space-y-2">
-    <p className="mb-2 tracking-wide">
-      <span className="text-[11px] font-semibold text-gray-500 mr-1">
-        {step}.
-      </span>
-      <span className="text-[15px] font-semibold text-gray-700">
-        {label}
-      </span>
-    </p>
+    <h1 className="text-[18px] font-semibold text-gray-700">{label}</h1>
     {children}
   </div>
 );
@@ -1617,14 +1610,16 @@ export default function InstagramPostCreator() {
               <div className="w-[266px] space-y-2">
                 <FieldGroup step={1} label="Write a title">
                   <Input
+                    id="title1"
                     value={titles[0]}
-                    onChange={e => setTitles([e.target.value, titles[1]])}
-                    className="h-9 w-full text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                    onChange={e => setTitles(prev => [e.target.value, prev[1]])}
+                    className="h-9 w-full text-[18px] bg-gray-200 border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                   />
                   <Input
+                    id="title2"
                     value={titles[1]}
-                    onChange={e => setTitles([titles[0], e.target.value])}
-                    className="h-9 w-full text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                    onChange={e => setTitles(prev => [prev[0], e.target.value])}
+                    className="h-9 w-full text-[18px] bg-gray-200 border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                   />
                 </FieldGroup>
               </div>
@@ -1639,9 +1634,10 @@ export default function InstagramPostCreator() {
               <div className="w-[266px] space-y-2">
                 <FieldGroup step={2} label="Write the instrument">
                   <Input
+                    id="subtitle"
                     value={subtitle}
                     onChange={e => setSubtitle(e.target.value)}
-                    className="h-9 w-full text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                    className="h-9 w-full text-[18px] bg-gray-200 border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                   />
                 </FieldGroup>
               </div>
