@@ -404,11 +404,10 @@ export default function InstagramPostCreator() {
   const updateTextDimensions = (ctx: CanvasRenderingContext2D) => {
     const measureText = (text: string, fontSize: number) => {
       ctx.font = `bold ${fontSize}px "${SUL_SANS}", sans-serif`
-      const metrics = ctx.measureText(text)
-      return {
-        width: metrics.width,
-        height: metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent || fontSize * 0.8
-      }
+      const m = ctx.measureText(text)
+      const ascent  = m.actualBoundingBoxAscent  || fontSize * 0.8
+      const descent = m.actualBoundingBoxDescent || fontSize * 0.2
+      return { width: m.width, height: ascent + descent }
     }
 
     /* ── TITLES ─────────────────────────────────────────────── */
