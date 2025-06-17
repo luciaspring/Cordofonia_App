@@ -129,7 +129,7 @@ const FieldGroup: React.FC<{ step: number; label: string; children: React.ReactN
       <span className="text-[11px] font-semibold text-gray-500 mr-1">
         {step}.
       </span>
-      <span className={`text-[${BASE_FONT_SIZE}px] font-semibold text-gray-700`}>
+      <span className="text-[15px] font-semibold text-gray-700">
         {label}
       </span>
     </p>
