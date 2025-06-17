@@ -1599,7 +1599,7 @@ export default function InstagramPostCreator() {
         <div className="flex space-x-8">
           {/* ─── LEFT PANEL ────────────────────────────────────────── */}
           {/* 675 px canvas + 8 px gap + 64 px control-row  = 747 px */}
-          <div ref={panelRef} className="w-[336px] h-[747px] relative pt-0 pr-6">
+          <div ref={panelRef} className="w-[540px] h-[747px] relative pt-0 pr-6">
             {/*  A. header (stays at the very top) */}
             <h1 className="text-[17px] font-bold leading-tight mb-4">
               Cordofonia Instagram<br />Posts Creator Tool
@@ -1667,8 +1667,8 @@ export default function InstagramPostCreator() {
           </div>
 
           {/* ─── RIGHT PANEL: Canvas & Controls */}
-          {/* push frame to the right by exactly the width of the colour-picker row */}
-          <div className="w-[540px] flex flex-col ml-[336px]">
+          {/* right column – same width as the left one */}
+          <div className="w-[540px] flex flex-col">
             <div
               className="w-[540px] h-[675px] bg-white rounded-none mb-2 relative overflow-hidden"
               style={{ backgroundColor }}
