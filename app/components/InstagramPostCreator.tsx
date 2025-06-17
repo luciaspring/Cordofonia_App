@@ -1614,7 +1614,6 @@ export default function InstagramPostCreator() {
               ref={titleRef}
               className="absolute left-0 top-1/2 -translate-y-1/2"
             >
-              {/* title block only */}
               <div className="w-[266px] space-y-2">
                 <FieldGroup step={1} label="Write a title">
                   <Input
@@ -1631,13 +1630,17 @@ export default function InstagramPostCreator() {
               </div>
             </div>
 
-            {/* 2 ─ INSTRUMENT, positioned midway via instrumentTop */}
+            {/* 2 ─ INSTRUMENT, positioned via instrumentTop */}
             <div
               ref={instrumentRef}
               className="absolute left-0 w-[266px] space-y-2"
               style={{
-                top: instrumentTop != null ? instrumentTop : '50%',
-                transform: instrumentTop == null ? 'translateY(-50%)' : undefined
+                top: instrumentTop != null
+                  ? instrumentTop
+                  : '50%',
+                transform: instrumentTop == null
+                  ? 'translateY(-50%)'
+                  : undefined
               }}
             >
               <FieldGroup step={2} label="Write the instrument">
