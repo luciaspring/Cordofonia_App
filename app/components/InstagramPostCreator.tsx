@@ -1,7 +1,7 @@
 // app/components/InstagramPostCreator.tsx
 'use client'
 
-import React, { useState, useRef, useEffect, useLayoutEffect } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -207,11 +207,6 @@ export default function InstagramPostCreator() {
 
   const [animationKey, setAnimationKey] = useState(0);
 
-  /*  put this near your other "const …" declarations  */
-  const GOO_BG = 'bg-gray-200'                   // colour that melts
-  const isGooeyPhase = (p: PlayPhase) =>         // true while buttons touch
-    p === 'merge' || p === 'playing'
-
   // Ref's for animation and mouse tracking
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<number | null>(null)
@@ -260,15 +255,6 @@ export default function InstagramPostCreator() {
   const ROUND_BTN_W = 'w-52'      // oval play-btn width 208 px
   const SQUARE_W   = 'w-20'       // 80 px square (settings/export)
   const FRAME_W    = 'w-1/2'      // each frame btn takes half of its flex box
-
-  /* refs & state for auto-positioning block #2 */
-  const panelRef      = useRef<HTMLDivElement>(null)
-  const titleRef      = useRef<HTMLDivElement>(null)
-  const swatchRef     = useRef<HTMLDivElement>(null)
-  const instrumentRef = useRef<HTMLDivElement>(null)
-  /* dynamic top-offset for block #2 — start as null so it's hidden until we
-     have real measurements */
-  const [instrumentTop, setInstrumentTop] = useState<number | null>(null)
 
   // ─── EFFECT HOOKS ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -375,31 +361,6 @@ export default function InstagramPostCreator() {
     }
   }, [isPlaying])
 
-  /* keep the "instrument" block exactly halfway between title & swatches */
-  useLayoutEffect(() => {
-    const recalc = () => {
-      if (
-        !panelRef.current ||
-        !titleRef.current ||
-        !swatchRef.current ||
-        !instrumentRef.current
-      ) return
-
-      const panelRect  = panelRef.current.getBoundingClientRect()
-      const titleRect  = titleRef.current.getBoundingClientRect()
-      const swatchRect = swatchRef.current.getBoundingClientRect()
-
-      /* midway between the title block and the colour-picker row */
-      const midpoint   = (titleRect.bottom + swatchRect.top) / 2
-      const instHeight = instrumentRef.current.offsetHeight
-      setInstrumentTop(midpoint - panelRect.top - instHeight / 2)
-    }
-
-    recalc()                            // initial paint
-    window.addEventListener('resize', recalc)
-    return () => window.removeEventListener('resize', recalc)
-  }, [titles, subtitle, fontLoaded])    // re-check whenever the title changes
-
   // ─── TEXT DIMENSION UPDATER ──────────────────────────────────────────────────────
   const updateTextDimensions = (ctx: CanvasRenderingContext2D) => {
     const measureText = (text: string, fontSize: number) => {
@@ -498,7 +459,7 @@ export default function InstagramPostCreator() {
       ctx.translate(cx + tremX, cy + tremY)                         // centre pivot
       ctx.rotate(pos.rotation)
       ctx.font         = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`
-      ctx.fillStyle    = getContrastColor()
+      ctx.fillStyle    = getContrastColor(backgroundColor)
       ctx.textBaseline = 'middle'
       ctx.textAlign    = 'left'
       ctx.fillText(titles[idx], -pos.width / 2, 0)                  // shift left by ½ W
@@ -514,7 +475,7 @@ export default function InstagramPostCreator() {
     ctx.translate(scx + tremXsub, scy + tremYsub)
     ctx.rotate(subPos.rotation)
     ctx.font         = `${subPos.fontSize}px "${AFFAIRS}", sans-serif`
-    ctx.fillStyle    = getContrastColor()
+    ctx.fillStyle    = getContrastColor(backgroundColor)
     ctx.textBaseline = 'middle'
     ctx.textAlign    = 'left'
     const lx = -subPos.width / 2
@@ -529,7 +490,7 @@ export default function InstagramPostCreator() {
     ctx.translate(pos.x + pos.width/2, pos.y + pos.height/2)
     ctx.rotate(pos.rotation)
     ctx.font = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`
-    ctx.fillStyle = getContrastColor()
+    ctx.fillStyle = getContrastColor(backgroundColor)
     ctx.textBaseline = 'middle'
     ctx.textAlign = 'center'
     ctx.fillText(text, 0, 0)
@@ -638,7 +599,7 @@ export default function InstagramPostCreator() {
       ctx.translate(x + dynW / 2 + tremX, y + dynH / 2 + tremY)    // centre pivot
       ctx.rotate(rotation)
       ctx.font         = `bold ${fontSize}px "${SUL_SANS}", sans-serif`
-      ctx.fillStyle    = getContrastColor()
+      ctx.fillStyle    = getContrastColor(backgroundColor)
       ctx.textBaseline = 'middle'
       ctx.textAlign    = 'left'
       ctx.fillText(text, -dynW / 2, 0)                             // draw from left edge
@@ -662,7 +623,7 @@ export default function InstagramPostCreator() {
     ctx.translate(sx + dynSW / 2 + streX, sy + dynSH / 2 + streY)
     ctx.rotate(srot)
     ctx.font         = `${sFontSize}px "${AFFAIRS}", sans-serif`
-    ctx.fillStyle    = getContrastColor()
+    ctx.fillStyle    = getContrastColor(backgroundColor)
     ctx.textBaseline = 'middle'
     ctx.textAlign    = 'left'
     const lx = -dynSW / 2
@@ -1319,59 +1280,44 @@ export default function InstagramPostCreator() {
   }
 
   const updateCursor = (canvas: HTMLCanvasElement, x: number, y: number) => {
-    /* ── GROUP (when multiple items are selected) ── */
     const groupBox = calculateGroupBoundingBox()
-    if (
-      groupBox &&
-      currentFrame === 2 &&
-      isPointInRotatedBox(x, y, getRotatedGroupBoundingBox(groupBox))
-    ) {
-      /* rotation ring around the group */
+    if (groupBox && currentFrame === 2 && isPointInRotatedBox(x, y, getRotatedGroupBoundingBox(groupBox))) {
       if (isPointNearRotationArea(x, y, groupBox)) {
-        canvas.style.cursor =
-          'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16.8\' height=\'16.8\' viewBox=\'0 0 24 24\' fill=\'none\'%3E%3Cg stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M20.49 15a9 9 0 1 1-2.12-9.36L23 10\' stroke=\'%23FFFFFF\' stroke-width=\'4.8\'/%3E%3Cpath d=\'M20.49 15a9 9 0 1 1-2.12-9.36L23 10\' stroke=\'%23000000\' stroke-width=\'2.4\'/%3E%3Cpolyline points=\'23 4 23 10 17 10\' stroke=\'%23FFFFFF\' stroke-width=\'4.8\'/%3E%3Cpolyline points=\'23 4 23 10 17 10\' stroke=\'%23000000\' stroke-width=\'2.4\'/%3E%3C/g%3E%3C/svg%3E") 8 8, auto'
+        canvas.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16.8\' height=\'16.8\' viewBox=\'0 0 24 24\' fill=\'none\'%3E%3Cg stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M20.49 15a9 9 0 1 1-2.12-9.36L23 10\' stroke=\'%23FFFFFF\' stroke-width=\'4.8\'/%3E%3Cpath d=\'M20.49 15a9 9 0 1 1-2.12-9.36L23 10\' stroke=\'%23000000\' stroke-width=\'2.4\'/%3E%3Cpolyline points=\'23 4 23 10 17 10\' stroke=\'%23FFFFFF\' stroke-width=\'4.8\'/%3E%3Cpolyline points=\'23 4 23 10 17 10\' stroke=\'%23000000\' stroke-width=\'2.4\'/%3E%3C/g%3E%3C/svg%3E") 8 8, auto'
         return
       }
-
-      /* resize handles (corners / edges) */
       const handle = getResizeHandle(x, y, groupBox)
       if (handle) {
         canvas.style.cursor = handle
         return
       }
-
-      /* body of the group → move */
       canvas.style.cursor = 'move'
       return
     }
 
-    /* ── SINGLE ELEMENTS ─────────────────────────── */
     const positions = currentFrame === 1
       ? [titlePositionsFrame1[0], titlePositionsFrame1[1], subtitlePositionFrame1]
       : [titlePositionsFrame2[0], titlePositionsFrame2[1], subtitlePositionFrame2]
 
-    for (const pos of positions) {
+    for (let i = 0; i < positions.length; i++) {
+      const pos = positions[i]
       if (isPointInRotatedBox(x, y, getRotatedBoundingBox(pos))) {
         if (currentFrame === 2) {
           if (isPointNearRotationArea(x, y, pos)) {
-            canvas.style.cursor =
-              'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16.8\' height=\'16.8\' viewBox=\'0 0 24 24\' fill=\'none\'%3E%3Cg stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M20.49 15a9 9 0 1 1-2.12-9.36L23 10\' stroke=\'%23FFFFFF\' stroke-width=\'4.8\'/%3E%3Cpath d=\'M20.49 15a9 9 0 1 1-2.12-9.36L23 10\' stroke=\'%23000000\' stroke-width=\'2.4\'/%3E%3Cpolyline points=\'23 4 23 10 17 10\' stroke=\'%23FFFFFF\' stroke-width=\'4.8\'/%3E%3Cpolyline points=\'23 4 23 10 17 10\' stroke=\'%23000000\' stroke-width=\'2.4\'/%3E%3C/g%3E%3C/svg%3E") 8 8, auto'
+            canvas.style.cursor = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16.8\' height=\'16.8\' viewBox=\'0 0 24 24\' fill=\'none\'%3E%3Cg stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M20.49 15a9 9 0 1 1-2.12-9.36L23 10\' stroke=\'%23FFFFFF\' stroke-width=\'4.8\'/%3E%3Cpath d=\'M20.49 15a9 9 0 1 1-2.12-9.36L23 10\' stroke=\'%23000000\' stroke-width=\'2.4\'/%3E%3Cpolyline points=\'23 4 23 10 17 10\' stroke=\'%23FFFFFF\' stroke-width=\'4.8\'/%3E%3Cpolyline points=\'23 4 23 10 17 10\' stroke=\'%23000000\' stroke-width=\'2.4\'/%3E%3C/g%3E%3C/svg%3E") 8 8, auto'
             return
           }
-
           const handle = getResizeHandle(x, y, pos)
           if (handle) {
             canvas.style.cursor = handle
             return
           }
-
           canvas.style.cursor = 'move'
           return
         }
       }
     }
 
-    /* ── otherwise ── */
     canvas.style.cursor = 'default'
   }
 
@@ -1557,7 +1503,13 @@ export default function InstagramPostCreator() {
   }
 
   // ─── UTILITY ────────────────────────────────────────────────────────────────────
-  const getContrastColor = () => '#000000'
+  const getContrastColor = (bgColor: string): string => {
+    const r = parseInt(bgColor.slice(1, 3), 16)
+    const g = parseInt(bgColor.slice(3, 5), 16)
+    const b = parseInt(bgColor.slice(5, 7), 16)
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+    return luminance > 0.5 ? '#000000' : '#FFFFFF'
+  }
 
   const exportVideo = async () => {
     const canvas = canvasRef.current
@@ -1602,78 +1554,62 @@ export default function InstagramPostCreator() {
       <div className="bg-white border border-gray-200 p-4 rounded-lg font-ui">
         {/* widen gap so the new, wider left column sits clear of the frame */}
         <div className="flex space-x-8">
-          {/* ─── LEFT PANEL ────────────────────────────────────────── */}
-          {/* 675 px canvas + 8 px gap + 64 px control-row  = 747 px */}
-          <div ref={panelRef} className="w-[540px] h-[747px] relative pt-0 pr-6">
-            {/*  A. header (stays at the very top) */}
-            <h1 className="text-[17px] font-bold leading-tight mb-4">
+          {/* ─── LEFT PANEL ───────────────────────────────────────── */}
+          {/* 312 px = 8 squares × 32 px  + 7 gaps × 8 px  → allow a little breathing room */}
+          <div className="w-[336px] pt-0 pr-6 space-y-4">
+            <h1 className="text-[15px] font-semibold tracking-wide text-black leading-tight mb-4">
               Cordofonia Instagram<br />Posts Creator Tool
             </h1>
 
-            {/* 1 ─ TITLE in the vertical centre */}
-            <div ref={titleRef} className="absolute left-0 w-full top-1/2 -translate-y-1/2">
-              <FieldGroup step={1} label="Write a title">
-                <Input
-                  value={titles[0]}
-                  onChange={e => setTitles([e.target.value, titles[1]])}
-                  className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
-                />
-                <Input
-                  value={titles[1]}
-                  onChange={e => setTitles([titles[0], e.target.value])}
-                  className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
-                />
-              </FieldGroup>
-            </div>
+            {/* Title fields */}
+            <FieldGroup step={1} label="Write a title">
+              <Input
+                value={titles[0]}
+                onChange={e => setTitles([e.target.value, titles[1]])}
+                className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+              />
+              <Input
+                value={titles[1]}
+                onChange={e => setTitles([titles[0], e.target.value])}
+                className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+              />
+            </FieldGroup>
 
-            {/* 2 ─ INSTRUMENT halfway between #1 and #3 */}
-            <div
-              ref={instrumentRef}
-              className="absolute left-0 w-full"
-              /* when instrumentTop is still null we keep it hidden to
-                 avoid a flash at 0 px */
-              style={
-                instrumentTop === null
-                  ? { visibility: 'hidden' }
-                  : { top: instrumentTop }
-              }
-            >
-              <FieldGroup step={2} label="Write the instrument">
-                <Input
-                  value={subtitle}
-                  onChange={e => setSubtitle(e.target.value)}
-                  className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
-                />
-              </FieldGroup>
-            </div>
+            {/* Instrument */}
+            <FieldGroup step={2} label="Write the instrument">
+              <Input
+                value={subtitle}
+                onChange={e => setSubtitle(e.target.value)}
+                className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+              />
+            </FieldGroup>
 
-            {/* 3 ─ COLOUR PICKER pinned to the card's inner edge */}
-            <div ref={swatchRef} className="absolute left-0 w-full bottom-0">
-              <FieldGroup step={3} label="Pick a color">
-                {/* colour swatch wrapper  ─ pin to the very bottom */}
-                <div className="flex flex-nowrap gap-2 mt-2">
-                  {colorOptions.map(c => (
-                    <button
-                      key={c.value}
-                      onClick={() => setBackgroundColor(c.value)}
-                      aria-label={c.name}
-                      style={{ backgroundColor: c.value }}
-                      className={`
-                        w-8 h-8 rounded-none
-                        ${backgroundColor === c.value
-                          ? 'ring-4 ring-inset ring-black'   /* thicker inner ring */
-                          : 'ring-0'}
-                      `}
-                    />
-                  ))}
-                </div>
-              </FieldGroup>
-            </div>
+            {/* Colors */}
+            <FieldGroup step={3} label="Pick a color">
+              {/* keep all squares on one line */}
+              <div className="flex flex-nowrap gap-2 mt-2">
+                {colorOptions.map(c => (
+                  <button
+                    key={c.value}
+                    onClick={() => setBackgroundColor(c.value)}
+                    aria-label={c.name}
+                    style={{ backgroundColor: c.value }}
+                    className={`
+                      w-8 h-8 rounded-none
+                      ${backgroundColor === c.value
+                        ? 'ring-2 ring-black'
+                        : 'ring-0'}
+                    `}
+                  />
+                ))}
+              </div>
+            </FieldGroup>
+
           </div>
 
           {/* ─── RIGHT PANEL: Canvas & Controls */}
-          {/* right column – same width as the left one */}
-          <div className="w-[540px] flex flex-col">
+          {/* push frame to the right by exactly the width of the colour-picker row */}
+          <div className="w-[540px] flex flex-col ml-[336px]">
             <div
               className="w-[540px] h-[675px] bg-white rounded-none mb-2 relative overflow-hidden"
               style={{ backgroundColor }}
@@ -1696,81 +1632,49 @@ export default function InstagramPostCreator() {
               {/* --- FRAME PAIR (2/4 width) --- */}
               <div
                 className={`
-                  col-span-2 relative flex items-stretch
+                  col-span-2
+                  relative flex items-stretch
                   transition-[gap] duration-300 ease-in-out
-                  ${isGooeyPhase(phase) ? 'gap-0' : 'gap-2'}
+                  ${phase === 'merge' || phase === 'playing' ? 'gap-0' : 'gap-2'}
                 `}
-                style={{ filter: isGooeyPhase(phase) ? 'url(#gooey)' : 'none' }}
               >
-                {/* ——— Frame 1 ——— */}
-                <div className="relative flex-1 overflow-visible">
-                  {/* the button stays a *sharp* rectangle */}
-                  <Button
-                    ref={frame1Ref}
-                    onClick={() => handleFrameChange(1)}
-                    disabled={phase !== 'idle' && phase !== 'paused'}
-                    className={`
-                      w-full h-full flex-1 overflow-hidden  /* same size as before */
-                      rounded-none  
-                      relative z-10                         /* sits above the circle */
-                      transition-colors duration-300
-                      ${isGooeyPhase(phase)
-                        ? 'bg-gray-200 text-transparent'
-                        : currentFrame === 1
-                          ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                          : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
-                        }
-                    `}
-                  >
-                    Frame&nbsp;1
-                  </Button>
+                {/* --- Frame 1 button (forms left half of grey track) --- */}
+                <Button
+                  ref={frame1Ref}
+                  onClick={() => handleFrameChange(1)}
+                  disabled={phase !== 'idle' && phase !== 'paused'}
+                  className={`
+                    flex-1 rounded-none overflow-hidden h-full
+                    transition-colors duration-300
+                    ${phase === 'merge' || phase === 'playing'
+                      ? 'bg-gray-200 text-transparent' // Fade to grey, hide text via color
+                      : currentFrame === 1
+                        ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
+                    }
+                  `}
+                >
+                  Frame 1
+                </Button>
 
-                  {/* gooey helper – has **no** influence on size */}
-                  {isGooeyPhase(phase) && (
-                    <span
-                      className={`
-                        pointer-events-none absolute z-0
-                        right-[-1px]
-                        /* full height of the grey bar (row) */
-                        h-full aspect-square rounded-full ${GOO_BG}
-                      `}
-                      style={{ top: 0 }}   /* centre automatically because height = 100 % */
-                    />
-                  )}
-                </div>
-
-                {/* ——— Frame 2 (mirror) ——— */}
-                <div className="relative flex-1 overflow-visible">
-                  <Button
-                    ref={frame2Ref}
-                    onClick={() => handleFrameChange(2)}
-                    disabled={phase !== 'idle' && phase !== 'paused'}
-                    className={`
-                      w-full h-full flex-1 overflow-hidden rounded-none relative z-10
-                      transition-colors duration-300
-                      ${isGooeyPhase(phase)
-                        ? 'bg-gray-200 text-transparent'
-                        : currentFrame === 2
-                          ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                          : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
-                        }
-                    `}
-                  >
-                    Frame&nbsp;2
-                  </Button>
-
-                  {isGooeyPhase(phase) && (
-                    <span
-                      className={`
-                        pointer-events-none absolute z-0
-                        left-[-1px]
-                        /* full height of the grey bar (row) */
-                        h-full aspect-square rounded-full ${GOO_BG}
-                      `}
-                      style={{ top: 0 }}   /* centre automatically because height = 100 % */
-                    />
-                  )}
-                </div>
+                {/* --- Frame 2 button (forms right half of grey track) --- */}
+                <Button
+                  ref={frame2Ref}
+                  onClick={() => handleFrameChange(2)}
+                  disabled={phase !== 'idle' && phase !== 'paused'}
+                  className={`
+                    flex-1 rounded-none overflow-hidden h-full
+                    transition-colors duration-300
+                    ${phase === 'merge' || phase === 'playing'
+                      ? 'bg-gray-200 text-transparent'
+                      : currentFrame === 2
+                        ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
+                    }
+                  `}
+                >
+                  Frame 2
+                </Button>
                 
                 {/* --- BLACK PROGRESS BAR (on top of the grey track) --- */}
                 <div
@@ -1787,36 +1691,35 @@ export default function InstagramPostCreator() {
               <Button
                 onClick={handlePlayClick}
                 className={`
-                  w-full               /* fill its ¼-column */
                   h-full
                   rounded-full flex items-center justify-center
                   transition-colors duration-300
                   ${phase==='playing'
                     ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
                     : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
-                 `}
-               >
-                 {phase==='playing'
-                   ? <span className="sf-icon text-xl">􀊅</span>
-                   : <span className="sf-icon text-xl">􀊄</span>}
-               </Button>
+                `}
+              >
+                {phase==='playing'
+                  ? <span className="sf-icon text-xl">􀊅</span>
+                  : <span className="sf-icon text-xl">􀊄</span>}
+              </Button>
 
               {/* --- SETTINGS & EXPORT (1/4 width) --- */}
-              <div className="flex gap-2 w-full items-center">
-                   <Button
-                     onClick={() => setSettingsOpen(true)}
-                     className="flex-1 aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center"
-                   >
-                     <span className="sf-icon text-xl">􀌆</span>
-                   </Button>
+              <div className="flex gap-2">
+                  <Button
+                    onClick={() => setSettingsOpen(true)}
+                    className={`flex-1 h-full aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center`}
+                  >
+                    <span className="sf-icon text-xl">􀌆</span>
+                  </Button>
 
-                   <Button
-                     onClick={exportVideo}
-                     className="flex-1 aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center"
-                   >
-                     <span className="sf-icon text-xl">􀈂</span>
-                   </Button>
-               </div>
+                  <Button
+                    onClick={exportVideo}
+                    className={`flex-1 h-full aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center`}
+                  >
+                    <span className="sf-icon text-xl">􀈂</span>
+                  </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -2031,3 +1934,5 @@ export default function InstagramPostCreator() {
     </div>
   )
 }
+
+
