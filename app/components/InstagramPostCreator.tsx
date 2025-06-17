@@ -1710,43 +1710,43 @@ export default function InstagramPostCreator() {
                     onClick={() => handleFrameChange(1)}
                     disabled={phase !== 'idle' && phase !== 'paused'}
                     className={`
-                      relative z-10 flex-1 rounded-none overflow-hidden h-full
+                      w-full h-full flex-1 overflow-hidden  /* same size as before */
+                      rounded-none  
+                      relative z-10                         /* sits above the circle */
                       transition-colors duration-300
-                      ${phase === 'merge' || phase === 'playing'
-                        ? 'bg-gray-200 text-transparent' // Fade to grey, hide text via color
+                      ${isGooeyPhase
+                        ? 'bg-gray-200 text-transparent'
                         : currentFrame === 1
                           ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
                           : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
                         }
                     `}
                   >
-                    Frame 1
+                    Frame&nbsp;1
                   </Button>
 
-                  {/* gooey circle sits *under* the button, flush with its inner edge */}
+                  {/* gooey helper – has **no** influence on size */}
                   {isGooeyPhase && (
                     <span
                       className={`
                         pointer-events-none absolute z-0
-                        top-1/2 -translate-y-1/2   /* vertically centred */
-                        right-[-1px]               /* sits exactly at the inner edge */
-                        h-10 w-10 rounded-full
-                        ${GOO_BG}
+                        top-1/2 -translate-y-1/2 right-[-1px]
+                        h-10 w-10 rounded-full ${GOO_BG}
                       `}
                     />
                   )}
                 </div>
 
-                {/* ——— Frame 2 ——— */}
+                {/* ——— Frame 2 (mirror) ——— */}
                 <div className="relative flex-1 overflow-visible">
                   <Button
                     ref={frame2Ref}
                     onClick={() => handleFrameChange(2)}
                     disabled={phase !== 'idle' && phase !== 'paused'}
                     className={`
-                      relative z-10 flex-1 rounded-none overflow-hidden h-full
+                      w-full h-full flex-1 overflow-hidden rounded-none relative z-10
                       transition-colors duration-300
-                      ${phase === 'merge' || phase === 'playing'
+                      ${isGooeyPhase
                         ? 'bg-gray-200 text-transparent'
                         : currentFrame === 2
                           ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
@@ -1754,16 +1754,15 @@ export default function InstagramPostCreator() {
                         }
                     `}
                   >
-                    Frame 2
+                    Frame&nbsp;2
                   </Button>
+
                   {isGooeyPhase && (
                     <span
                       className={`
                         pointer-events-none absolute z-0
-                        top-1/2 -translate-y-1/2
-                        left-[-1px]               /* mirror side */
-                        h-10 w-10 rounded-full
-                        ${GOO_BG}
+                        top-1/2 -translate-y-1/2 left-[-1px]
+                        h-10 w-10 rounded-full ${GOO_BG}
                       `}
                     />
                   )}
