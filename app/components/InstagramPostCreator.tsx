@@ -376,14 +376,17 @@ export default function InstagramPostCreator() {
       if (
         !panelRef.current ||
         !titleRef.current ||
+        !swatchRef.current ||
         !instrumentRef.current
       ) return
 
-      const panelRect   = panelRef.current.getBoundingClientRect()
-      const titleRect   = titleRef.current.getBoundingClientRect()
+      const panelRect  = panelRef.current.getBoundingClientRect()
+      const titleRect  = titleRef.current.getBoundingClientRect()
+      const swatchRect = swatchRef.current.getBoundingClientRect()
 
-      const midpoint     = (titleRect.bottom + panelRect.bottom) / 2
-      const instHeight   = instrumentRef.current.offsetHeight
+      /* midway between the title block and the colour-picker row */
+      const midpoint   = (titleRect.bottom + swatchRect.top) / 2
+      const instHeight = instrumentRef.current.offsetHeight
       setInstrumentTop(midpoint - panelRect.top - instHeight / 2)
     }
 
@@ -1595,7 +1598,8 @@ export default function InstagramPostCreator() {
         {/* widen gap so the new, wider left column sits clear of the frame */}
         <div className="flex space-x-8">
           {/* ─── LEFT PANEL ────────────────────────────────────────── */}
-          <div ref={panelRef} className="w-[336px] h-[675px] relative pt-0 pr-6">
+          {/* 675 px canvas + 8 px gap + 64 px control-row  = 747 px */}
+          <div ref={panelRef} className="w-[336px] h-[747px] relative pt-0 pr-6">
             {/*  A. header (stays at the very top) */}
             <h1 className="text-[17px] font-bold leading-tight mb-4">
               Cordofonia Instagram<br />Posts Creator Tool
