@@ -22,6 +22,8 @@ const ExportIcon: React.FC<{ className?: string }> = ({ className = '' }) => (
 );
 
 const SUL_SANS = 'SulSans-Bold'
+// ↑ bump this number to raise all your regular text
+const BASE_FONT_SIZE = 16
 const AFFAIRS = 'Affairs-Regular'
 
 const HANDLE_ICON = 10    // visual square – stays the same size
@@ -127,7 +129,7 @@ const FieldGroup: React.FC<{ step: number; label: string; children: React.ReactN
       <span className="text-[11px] font-semibold text-gray-500 mr-1">
         {step}.
       </span>
-      <span className="text-[15px] font-semibold text-gray-700">
+      <span className={`text-[${BASE_FONT_SIZE}px] font-semibold text-gray-700`}>
         {label}
       </span>
     </p>
@@ -1619,12 +1621,12 @@ export default function InstagramPostCreator() {
                   <Input
                     value={titles[0]}
                     onChange={e => setTitles([e.target.value, titles[1]])}
-                    className="h-9 w-full text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                    className={`h-9 w-full text-[${BASE_FONT_SIZE}px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300`}
                   />
                   <Input
                     value={titles[1]}
                     onChange={e => setTitles([titles[0], e.target.value])}
-                    className="h-9 w-full text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                    className={`h-9 w-full text-[${BASE_FONT_SIZE}px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300`}
                   />
                 </FieldGroup>
               </div>
@@ -1641,7 +1643,7 @@ export default function InstagramPostCreator() {
                   <Input
                     value={subtitle}
                     onChange={e => setSubtitle(e.target.value)}
-                    className="h-9 w-full text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                    className={`h-9 w-full text-[${BASE_FONT_SIZE}px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300`}
                   />
                 </FieldGroup>
               </div>
