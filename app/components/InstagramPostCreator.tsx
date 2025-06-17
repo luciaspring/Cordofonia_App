@@ -1600,11 +1600,10 @@ export default function InstagramPostCreator() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-white">
       <div className="bg-white border border-gray-200 p-4 rounded-lg font-ui">
-        {/* widen gap so the new, wider left column sits clear of the frame */}
-        <div className="flex space-x-8">
-          {/* ─── LEFT PANEL ────────────────────────────────────────── */}
-          {/* 675 px canvas + 8 px gap + 64 px control-row  = 747 px */}
-          <div ref={panelRef} className="w-[540px] h-[747px] relative pt-0 pr-6">
+        {/* now: 8px gap */}
+        <div className="flex space-x-2">
+          {/* left panel */}
+          <div className="w-[540px] h-[747px] relative pt-0 pr-6">
             {/*  A. header (stays at the very top) */}
             <h1 className="text-[17px] font-bold leading-tight mb-4">
               Cordofonia Instagram<br />Posts Creator Tool
@@ -1669,8 +1668,7 @@ export default function InstagramPostCreator() {
             </div>
           </div>
 
-          {/* ─── RIGHT PANEL: Canvas & Controls */}
-          {/* right column – same width as the left one */}
+          {/* right panel */}
           <div className="w-[540px] flex flex-col">
             <div
               className="w-[540px] h-[675px] bg-white rounded-none mb-2 relative overflow-hidden"
