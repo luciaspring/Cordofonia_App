@@ -466,19 +466,28 @@ export default function InstagramPostCreator() {
     drawLines(ctx, framelines)
     drawStaticText(ctx, currentFrame)
 
-    if (currentFrame === 2 && selectedTexts.length > 0) {
-      const groupBox = calculateGroupBoundingBox()
-      if (groupBox) {
-        drawGroupBoundingBox(ctx, groupBox)
-      } else {
-        titlePositionsFrame2.forEach((pos, idx) => {
-          if (selectedTexts.includes(`title${idx + 1}` as 'title1' | 'title2')) {
-            drawBoundingBox(ctx, pos)
-          }
-        })
-        if (selectedTexts.includes('subtitle')) {
-          drawBoundingBox(ctx, subtitlePositionFrame2)
+    // Draw bounding boxes for selected texts
+    if (selectedTexts.length > 0) {
+      ctx.font = `bold ${titlePositionsFrame1[0].fontSize}px "${SUL_SANS}", sans-serif`
+      titlePositionsFrame1.forEach((pos, idx) => {
+        if (selectedTexts.includes(`title${idx+1}` as 'title1' | 'title2')) {
+          drawBoundingBox(ctx, pos, [titles[idx]])
         }
+      })
+      if (selectedTexts.includes('subtitle')) {
+        drawBoundingBox(ctx, subtitlePositionFrame1, ['Instrumento:', subtitle])
+      }
+    }
+
+    if (currentFrame === 2 && selectedTexts.length > 0) {
+      ctx.font = `bold ${titlePositionsFrame2[0].fontSize}px "${SUL_SANS}", sans-serif`
+      titlePositionsFrame2.forEach((pos, idx) => {
+        if (selectedTexts.includes(`title${idx+1}` as 'title1' | 'title2')) {
+          drawBoundingBox(ctx, pos, [titles[idx]])
+        }
+      })
+      if (selectedTexts.includes('subtitle')) {
+        drawBoundingBox(ctx, subtitlePositionFrame2, ['Instrumento:', subtitle])
       }
     }
   }
@@ -671,33 +680,31 @@ export default function InstagramPostCreator() {
     ctx.restore()
   }
 
-  const drawBoundingBox = (ctx: CanvasRenderingContext2D, pos: TextPosition) => {
-    const cx = pos.x + pos.width / 2
-    const cy = pos.y + pos.height / 2
+  const drawBoundingBox = (
+    ctx: CanvasRenderingContext2D,
+    pos: TextPosition,
+    linesOfText: string[]
+  ) => {
+    // first measure each line
+    const measurements = linesOfText.map(line => {
+      const m = ctx.measureText(line)
+      const h = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent
+      return { width: m.width, height: h }
+    })
+    // pick the max width, sum the heights + line-gap (8px)
+    const width  = Math.max(...measurements.map(m => m.width))
+    const height = measurements.reduce((sum, m) => sum + m.height, 0) + (measurements.length - 1) * 8
+
+    // now draw around that box
+    const cx = pos.x + width / 2
+    const cy = pos.y + height / 2
     ctx.save()
     ctx.translate(cx, cy)
     ctx.rotate(pos.rotation)
-    const hw = pos.width / 2
-    const hh = pos.height / 2
     ctx.strokeStyle = 'rgba(0, 120, 255, 0.8)'
-    ctx.lineWidth = 2
-    ctx.strokeRect(-hw, -hh, pos.width, pos.height)
-    const handleSize = HANDLE_ICON        // only the icon uses this size
-    const corners = [
-      [-hw, -hh],
-      [hw, -hh],
-      [hw, hh],
-      [-hw, hh]
-    ]
-    corners.forEach(([x, y]) => {
-      ctx.fillStyle = 'white'
-      ctx.strokeStyle = 'rgba(0, 120, 255, 0.8)'
-      ctx.lineWidth = 2
-      ctx.beginPath()
-      ctx.rect(x - handleSize / 2, y - handleSize / 2, handleSize, handleSize)
-      ctx.fill()
-      ctx.stroke()
-    })
+    ctx.lineWidth   = 2
+    ctx.strokeRect(-width/2, -height/2, width, height)
+    // …draw your little corner handles here if you want, using width/height…
     ctx.restore()
   }
 
