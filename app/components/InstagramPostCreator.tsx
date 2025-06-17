@@ -380,10 +380,10 @@ export default function InstagramPostCreator() {
         !instrumentRef.current
       ) return
 
-      const panelTop     = panelRef.current.getBoundingClientRect().top
-      const titleBottom  = titleRef.current.getBoundingClientRect().bottom
-      const swatchTop    = swatchRef.current.getBoundingClientRect().top
-      const midpoint     = (titleBottom + swatchTop) / 2
+      const panelTop      = panelRef.current.getBoundingClientRect().top
+      const titleBottom   = titleRef.current.getBoundingClientRect().bottom
+      const swatchBottom  = swatchRef.current.getBoundingClientRect().bottom
+      const midpoint      = (titleBottom + swatchBottom) / 2           // use *bottom*
       const instHeight   = instrumentRef.current.offsetHeight
 
       setInstrumentTop(midpoint - panelTop - instHeight / 2)
