@@ -1602,14 +1602,14 @@ export default function InstagramPostCreator() {
       <div className="bg-white border border-gray-200 p-4 rounded-lg font-ui">
         {/* now: 8px gap */}
         <div className="flex space-x-2">
-          {/* left panel */}
-          <div className="w-[540px] h-[747px] relative pt-0 pr-6">
+          {/* left panel: add panelRef so we can measure top/bottom */}
+          <div ref={panelRef} className="w-[540px] h-[747px] relative pt-0 pr-6">
             {/*  A. header (stays at the very top) */}
             <h1 className="text-[17px] font-bold leading-tight mb-4">
               Cordofonia Instagram<br />Posts Creator Tool
             </h1>
 
-            {/* 1 ─ TITLE in the vertical centre */}
+            {/* 1 ─ TITLE (already perfect) */}
             <div
               ref={titleRef}
               className="absolute left-0 top-1/2 -translate-y-1/2"
@@ -1630,32 +1630,26 @@ export default function InstagramPostCreator() {
               </div>
             </div>
 
-            {/* 2 ─ Instrument, centered between 1 & 3 */}
+            {/* 2 ─ Instrument (auto-midpoint between #1 & #3) */}
             <div
               ref={instrumentRef}
-              className="absolute left-0 w-[266px] space-y-2"
-              style={{
-                top: instrumentTop != null
-                  ? instrumentTop
-                  : '50%',
-                transform: instrumentTop == null
-                  ? 'translateY(-50%)'
-                  : undefined
-              }}
+              className="absolute left-0"
+              style={{ top: instrumentTop ?? '50%' }}
             >
-              <FieldGroup step={2} label="Write the instrument">
-                <Input
-                  value={subtitle}
-                  onChange={e => setSubtitle(e.target.value)}
-                  className="h-9 w-full text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
-                />
-              </FieldGroup>
+              <div className="w-[266px] space-y-2">
+                <FieldGroup step={2} label="Write the instrument">
+                  <Input
+                    value={subtitle}
+                    onChange={e => setSubtitle(e.target.value)}
+                    className="h-9 w-full text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                  />
+                </FieldGroup>
+              </div>
             </div>
 
-            {/* 3 ─ COLOUR PICKER pinned to the card's inner edge */}
+            {/* 3 ─ COLOUR PICKER (already perfect) */}
             <div ref={swatchRef} className="absolute left-0 w-full bottom-0">
               <FieldGroup step={3} label="Pick a color">
-                {/* colour swatch wrapper  ─ pin to the very bottom */}
                 <div className="flex flex-nowrap gap-2 mt-2">
                   {colorOptions.map(c => (
                     <button
