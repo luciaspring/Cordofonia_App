@@ -207,9 +207,10 @@ export default function InstagramPostCreator() {
 
   const [animationKey, setAnimationKey] = useState(0);
 
-  /* ── 'merge' / 'playing' helper flags ───────────────────────────── */
-  const isGooeyPhase = phase === 'merge' || phase === 'playing'
-  const GOO_BG       = 'bg-gray-200'      // the colour they share while merged
+  /*  put this near your other "const …" declarations  */
+  const GOO_BG = 'bg-gray-200'                   // colour that melts
+  const isGooeyPhase = (p: PlayPhase) =>         // true while buttons touch
+    p === 'merge' || p === 'playing'
 
   // Ref's for animation and mouse tracking
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -1697,10 +1698,9 @@ export default function InstagramPostCreator() {
                 className={`
                   col-span-2 relative flex items-stretch
                   transition-[gap] duration-300 ease-in-out
-                  ${isGooeyPhase ? `gap-0 ${GOO_BG}` : 'gap-2'}
+                  ${isGooeyPhase(phase) ? 'gap-0' : 'gap-2'}
                 `}
-                /*  SVG metaball filter only while merging/playing  */
-                style={isGooeyPhase ? { filter: 'url(#gooey)' } : undefined}
+                style={{ filter: isGooeyPhase(phase) ? 'url(#gooey)' : 'none' }}
               >
                 {/* ——— Frame 1 ——— */}
                 <div className="relative flex-1 overflow-visible">
@@ -1714,7 +1714,7 @@ export default function InstagramPostCreator() {
                       rounded-none  
                       relative z-10                         /* sits above the circle */
                       transition-colors duration-300
-                      ${isGooeyPhase
+                      ${isGooeyPhase(phase)
                         ? 'bg-gray-200 text-transparent'
                         : currentFrame === 1
                           ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
@@ -1726,11 +1726,14 @@ export default function InstagramPostCreator() {
                   </Button>
 
                   {/* gooey helper – has **no** influence on size */}
-                  {isGooeyPhase && (
+                  {isGooeyPhase(phase) && (
                     <span
                       className={`
                         pointer-events-none absolute z-0
-                        top-1/2 -translate-y-1/2 right-[-1px]
+                        top-1/2 -translate-y-1/2
+                        ${/* right edge for F1, left edge for F2 (mirror) */''}
+                        ${/*   use -1 px so it nudges 1 px *into* the other button */''}
+                        right-[-1px]
                         h-10 w-10 rounded-full ${GOO_BG}
                       `}
                     />
@@ -1746,7 +1749,7 @@ export default function InstagramPostCreator() {
                     className={`
                       w-full h-full flex-1 overflow-hidden rounded-none relative z-10
                       transition-colors duration-300
-                      ${isGooeyPhase
+                      ${isGooeyPhase(phase)
                         ? 'bg-gray-200 text-transparent'
                         : currentFrame === 2
                           ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
@@ -1757,11 +1760,14 @@ export default function InstagramPostCreator() {
                     Frame&nbsp;2
                   </Button>
 
-                  {isGooeyPhase && (
+                  {isGooeyPhase(phase) && (
                     <span
                       className={`
                         pointer-events-none absolute z-0
-                        top-1/2 -translate-y-1/2 left-[-1px]
+                        top-1/2 -translate-y-1/2
+                        ${/* right edge for F1, left edge for F2 (mirror) */''}
+                        ${/*   use -1 px so it nudges 1 px *into* the other button */''}
+                        left-[-1px]
                         h-10 w-10 rounded-full ${GOO_BG}
                       `}
                     />
