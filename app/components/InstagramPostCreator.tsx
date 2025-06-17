@@ -376,23 +376,21 @@ export default function InstagramPostCreator() {
       if (
         !panelRef.current ||
         !titleRef.current ||
-        !swatchRef.current ||
         !instrumentRef.current
       ) return
 
-      const panelTop      = panelRef.current.getBoundingClientRect().top
-      const titleBottom   = titleRef.current.getBoundingClientRect().bottom
-      const swatchBottom  = swatchRef.current.getBoundingClientRect().bottom
-      const midpoint      = (titleBottom + swatchBottom) / 2           // use *bottom*
-      const instHeight   = instrumentRef.current.offsetHeight
+      const panelRect   = panelRef.current.getBoundingClientRect()
+      const titleRect   = titleRef.current.getBoundingClientRect()
 
-      setInstrumentTop(midpoint - panelTop - instHeight / 2)
+      const midpoint     = (titleRect.bottom + panelRect.bottom) / 2
+      const instHeight   = instrumentRef.current.offsetHeight
+      setInstrumentTop(midpoint - panelRect.top - instHeight / 2)
     }
 
     recalc()                            // initial paint
     window.addEventListener('resize', recalc)
     return () => window.removeEventListener('resize', recalc)
-  }, [titles, subtitle])                // re-check whenever the title changes
+  }, [titles, subtitle, fontLoaded])    // re-check whenever the title changes
 
   // ─── TEXT DIMENSION UPDATER ──────────────────────────────────────────────────────
   const updateTextDimensions = (ctx: CanvasRenderingContext2D) => {
