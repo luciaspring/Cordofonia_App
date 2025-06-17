@@ -1692,23 +1692,19 @@ export default function InstagramPostCreator() {
                 className={`
                   col-span-2 relative flex items-stretch
                   transition-[gap] duration-300 ease-in-out
-                  ${isGooeyPhase(phase) ? 'gap-0' : 'gap-2'}
+                  ${phase === 'merge' || phase === 'playing' ? 'gap-0' : 'gap-2'}
                 `}
-                style={{ filter: isGooeyPhase(phase) ? 'url(#gooey)' : 'none' }}
               >
                 {/* ——— Frame 1 ——— */}
                 <div className="relative flex-1 overflow-visible">
-                  {/* the button stays a *sharp* rectangle */}
                   <Button
                     ref={frame1Ref}
                     onClick={() => handleFrameChange(1)}
                     disabled={phase !== 'idle' && phase !== 'paused'}
                     className={`
-                      w-full h-full flex-1 overflow-hidden  /* same size as before */
-                      rounded-none  
-                      relative z-10                         /* sits above the circle */
+                      w-full h-full flex-1 overflow-hidden rounded-none relative z-10
                       transition-colors duration-300
-                      ${isGooeyPhase(phase)
+                      ${phase === 'merge' || phase === 'playing'
                         ? 'bg-gray-200 text-transparent'
                         : currentFrame === 1
                           ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
@@ -1718,19 +1714,6 @@ export default function InstagramPostCreator() {
                   >
                     Frame&nbsp;1
                   </Button>
-
-                  {/* gooey helper – has **no** influence on size */}
-                  {isGooeyPhase(phase) && (
-                    <span
-                      className={`
-                        pointer-events-none absolute z-0
-                        right-[-1px]
-                        /* full height of the grey bar (row) */
-                        h-full aspect-square rounded-full ${GOO_BG}
-                      `}
-                      style={{ top: 0 }}   /* centre automatically because height = 100 % */
-                    />
-                  )}
                 </div>
 
                 {/* ——— Frame 2 (mirror) ——— */}
@@ -1742,7 +1725,7 @@ export default function InstagramPostCreator() {
                     className={`
                       w-full h-full flex-1 overflow-hidden rounded-none relative z-10
                       transition-colors duration-300
-                      ${isGooeyPhase(phase)
+                      ${phase === 'merge' || phase === 'playing'
                         ? 'bg-gray-200 text-transparent'
                         : currentFrame === 2
                           ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
@@ -1752,18 +1735,6 @@ export default function InstagramPostCreator() {
                   >
                     Frame&nbsp;2
                   </Button>
-
-                  {isGooeyPhase(phase) && (
-                    <span
-                      className={`
-                        pointer-events-none absolute z-0
-                        left-[-1px]
-                        /* full height of the grey bar (row) */
-                        h-full aspect-square rounded-full ${GOO_BG}
-                      `}
-                      style={{ top: 0 }}   /* centre automatically because height = 100 % */
-                    />
-                  )}
                 </div>
                 
                 {/* --- BLACK PROGRESS BAR (on top of the grey track) --- */}
