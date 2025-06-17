@@ -404,10 +404,11 @@ export default function InstagramPostCreator() {
   const updateTextDimensions = (ctx: CanvasRenderingContext2D) => {
     const measureText = (text: string, fontSize: number) => {
       ctx.font = `bold ${fontSize}px "${SUL_SANS}", sans-serif`
-      const m = ctx.measureText(text)
-      const ascent  = m.actualBoundingBoxAscent  || fontSize * 0.8
-      const descent = m.actualBoundingBoxDescent || fontSize * 0.2
-      return { width: m.width, height: ascent + descent }
+      const metrics = ctx.measureText(text)
+      return {
+        width: metrics.width,
+        height: metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent || fontSize * 0.8
+      }
     }
 
     /* ── TITLES ─────────────────────────────────────────────── */
@@ -466,28 +467,19 @@ export default function InstagramPostCreator() {
     drawLines(ctx, framelines)
     drawStaticText(ctx, currentFrame)
 
-    // Draw bounding boxes for selected texts
-    if (selectedTexts.length > 0) {
-      ctx.font = `bold ${titlePositionsFrame1[0].fontSize}px "${SUL_SANS}", sans-serif`
-      titlePositionsFrame1.forEach((pos, idx) => {
-        if (selectedTexts.includes(`title${idx+1}` as 'title1' | 'title2')) {
-          drawBoundingBox(ctx, pos, [titles[idx]])
-        }
-      })
-      if (selectedTexts.includes('subtitle')) {
-        drawBoundingBox(ctx, subtitlePositionFrame1, ['Instrumento:', subtitle])
-      }
-    }
-
     if (currentFrame === 2 && selectedTexts.length > 0) {
-      ctx.font = `bold ${titlePositionsFrame2[0].fontSize}px "${SUL_SANS}", sans-serif`
-      titlePositionsFrame2.forEach((pos, idx) => {
-        if (selectedTexts.includes(`title${idx+1}` as 'title1' | 'title2')) {
-          drawBoundingBox(ctx, pos, [titles[idx]])
+      const groupBox = calculateGroupBoundingBox()
+      if (groupBox) {
+        drawGroupBoundingBox(ctx, groupBox)
+      } else {
+        titlePositionsFrame2.forEach((pos, idx) => {
+          if (selectedTexts.includes(`title${idx + 1}` as 'title1' | 'title2')) {
+            drawBoundingBox(ctx, pos)
+          }
+        })
+        if (selectedTexts.includes('subtitle')) {
+          drawBoundingBox(ctx, subtitlePositionFrame2)
         }
-      })
-      if (selectedTexts.includes('subtitle')) {
-        drawBoundingBox(ctx, subtitlePositionFrame2, ['Instrumento:', subtitle])
       }
     }
   }
@@ -680,31 +672,33 @@ export default function InstagramPostCreator() {
     ctx.restore()
   }
 
-  const drawBoundingBox = (
-    ctx: CanvasRenderingContext2D,
-    pos: TextPosition,
-    linesOfText: string[]
-  ) => {
-    // first measure each line
-    const measurements = linesOfText.map(line => {
-      const m = ctx.measureText(line)
-      const h = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent
-      return { width: m.width, height: h }
-    })
-    // pick the max width, sum the heights + line-gap (8px)
-    const width  = Math.max(...measurements.map(m => m.width))
-    const height = measurements.reduce((sum, m) => sum + m.height, 0) + (measurements.length - 1) * 8
-
-    // now draw around that box
-    const cx = pos.x + width / 2
-    const cy = pos.y + height / 2
+  const drawBoundingBox = (ctx: CanvasRenderingContext2D, pos: TextPosition) => {
+    const cx = pos.x + pos.width / 2
+    const cy = pos.y + pos.height / 2
     ctx.save()
     ctx.translate(cx, cy)
     ctx.rotate(pos.rotation)
+    const hw = pos.width / 2
+    const hh = pos.height / 2
     ctx.strokeStyle = 'rgba(0, 120, 255, 0.8)'
-    ctx.lineWidth   = 2
-    ctx.strokeRect(-width/2, -height/2, width, height)
-    // …draw your little corner handles here if you want, using width/height…
+    ctx.lineWidth = 2
+    ctx.strokeRect(-hw, -hh, pos.width, pos.height)
+    const handleSize = HANDLE_ICON        // only the icon uses this size
+    const corners = [
+      [-hw, -hh],
+      [hw, -hh],
+      [hw, hh],
+      [-hw, hh]
+    ]
+    corners.forEach(([x, y]) => {
+      ctx.fillStyle = 'white'
+      ctx.strokeStyle = 'rgba(0, 120, 255, 0.8)'
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.rect(x - handleSize / 2, y - handleSize / 2, handleSize, handleSize)
+      ctx.fill()
+      ctx.stroke()
+    })
     ctx.restore()
   }
 
@@ -1708,12 +1702,15 @@ export default function InstagramPostCreator() {
               >
                 {/* ——— Frame 1 ——— */}
                 <div className="relative flex-1 overflow-visible">
+                  {/* the button stays a *sharp* rectangle */}
                   <Button
                     ref={frame1Ref}
                     onClick={() => handleFrameChange(1)}
                     disabled={phase !== 'idle' && phase !== 'paused'}
                     className={`
-                      w-full h-full flex-1 overflow-hidden rounded-none relative z-10
+                      w-full h-full flex-1 overflow-hidden  /* same size as before */
+                      rounded-none  
+                      relative z-10                         /* sits above the circle */
                       transition-colors duration-300
                       ${isGooeyPhase(phase)
                         ? 'bg-gray-200 text-transparent'
@@ -1725,7 +1722,19 @@ export default function InstagramPostCreator() {
                   >
                     Frame&nbsp;1
                   </Button>
-                  {/* metaball blob removed */}
+
+                  {/* gooey helper – has **no** influence on size */}
+                  {isGooeyPhase(phase) && (
+                    <span
+                      className={`
+                        pointer-events-none absolute z-0
+                        right-[-1px]
+                        /* full height of the grey bar (row) */
+                        h-full aspect-square rounded-full ${GOO_BG}
+                      `}
+                      style={{ top: 0 }}   /* centre automatically because height = 100 % */
+                    />
+                  )}
                 </div>
 
                 {/* ——— Frame 2 (mirror) ——— */}
@@ -1747,10 +1756,21 @@ export default function InstagramPostCreator() {
                   >
                     Frame&nbsp;2
                   </Button>
-                  {/* metaball blob removed */}
-                </div>
 
-                {/* --- BLACK PROGRESS BAR (exactly as before) --- */}
+                  {isGooeyPhase(phase) && (
+                    <span
+                      className={`
+                        pointer-events-none absolute z-0
+                        left-[-1px]
+                        /* full height of the grey bar (row) */
+                        h-full aspect-square rounded-full ${GOO_BG}
+                      `}
+                      style={{ top: 0 }}   /* centre automatically because height = 100 % */
+                    />
+                  )}
+                </div>
+                
+                {/* --- BLACK PROGRESS BAR (on top of the grey track) --- */}
                 <div
                   ref={barRef}
                   className="absolute inset-0 bg-black pointer-events-none z-10 transition-opacity duration-150"
@@ -1800,7 +1820,25 @@ export default function InstagramPostCreator() {
         </div>
       </div>
 
-      {/* metaball filter removed */}
+      {/* ─── Gooey filter, once per app ─── */}
+      <svg className="absolute w-0 h-0 pointer-events-none">
+        <defs>
+          <filter id="gooey">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur" />
+            <feColorMatrix
+              in="blur"
+              mode="matrix"
+              values="
+                1 0 0 0 0
+                0 1 0 0 0
+                0 0 1 0 0
+                0 0 0 20 -10"
+              result="goo"
+            />
+            <feBlend in="SourceGraphic" in2="goo" />
+          </filter>
+        </defs>
+      </svg>
 
       {/* ─── MODALS ─────────────────────────────────────────────────────────────── */}
       <Dialog open={positionModalOpen} onOpenChange={setPositionModalOpen}>
