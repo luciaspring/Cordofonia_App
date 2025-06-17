@@ -1597,7 +1597,7 @@ export default function InstagramPostCreator() {
         {/* widen gap so the new, wider left column sits clear of the frame */}
         <div className="flex space-x-8">
           {/* ─── LEFT PANEL ────────────────────────────────────────── */}
-          <div ref={panelRef} className="w-[336px] relative pt-0 pr-6">
+          <div ref={panelRef} className="w-[336px] h-[675px] relative pt-0 pr-6">
             {/*  A. header (stays at the very top) */}
             <h1 className="text-[17px] font-bold leading-tight mb-4">
               Cordofonia Instagram<br />Posts Creator Tool
@@ -1664,8 +1664,121 @@ export default function InstagramPostCreator() {
             </div>
           </div>
 
-          {/* ─── RIGHT PANEL ───────────────────────────────────────── */}
-          {/* ... rest of the component ... */}
+          {/* ─── RIGHT PANEL: Canvas & Controls */}
+          {/* push frame to the right by exactly the width of the colour-picker row */}
+          <div className="w-[540px] flex flex-col ml-[336px]">
+            <div
+              className="w-[540px] h-[675px] bg-white rounded-none mb-2 relative overflow-hidden"
+              style={{ backgroundColor }}
+            >
+              <canvas
+                key={animationKey}
+                ref={canvasRef}
+                width={1080}
+                height={1350}
+                className="absolute inset-0 w-full h-full"
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+              />
+            </div>
+
+            {/* ─── CONTROLS ROW (exactly 540 px wide) ─────────────────────────────── */}
+            <div className={`grid grid-cols-4 w-full gap-2 mx-auto ${ROW_H}`}>
+              {/* --- FRAME PAIR (2/4 width) --- */}
+              <div
+                className={`
+                  col-span-2 relative flex items-stretch
+                  transition-[gap] duration-300 ease-in-out
+                  ${phase === 'merge' || phase === 'playing' ? 'gap-0 bg-gray-200' : 'gap-2'}
+                `}
+              >
+                {/* --- Frame 1 button (forms left half of grey track) --- */}
+                <Button
+                  ref={frame1Ref}
+                  onClick={() => handleFrameChange(1)}
+                  disabled={phase !== 'idle' && phase !== 'paused'}
+                  className={`
+                    flex-1 rounded-none overflow-hidden h-full
+                    transition-colors duration-300
+                    ${phase === 'merge' || phase === 'playing'
+                      ? 'bg-gray-200 text-transparent' // Fade to grey, hide text via color
+                      : currentFrame === 1
+                        ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
+                    }
+                  `}
+                >
+                  Frame 1
+                </Button>
+
+                {/* --- Frame 2 button (forms right half of grey track) --- */}
+                <Button
+                  ref={frame2Ref}
+                  onClick={() => handleFrameChange(2)}
+                  disabled={phase !== 'idle' && phase !== 'paused'}
+                  className={`
+                    flex-1 rounded-none overflow-hidden h-full
+                    transition-colors duration-300
+                    ${phase === 'merge' || phase === 'playing'
+                      ? 'bg-gray-200 text-transparent'
+                      : currentFrame === 2
+                        ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
+                    }
+                  `}
+                >
+                  Frame 2
+                </Button>
+                
+                {/* --- BLACK PROGRESS BAR (on top of the grey track) --- */}
+                <div
+                  ref={barRef}
+                  className="absolute inset-0 bg-black pointer-events-none z-10 transition-opacity duration-150"
+                  style={{
+                    opacity: phase === 'playing' || phase === 'merge' ? 1 : 0,
+                    width: 0
+                  }}
+                />
+              </div>
+
+              {/* --- PLAY / PAUSE OVAL (1/4 width) --- */}
+              <Button
+                onClick={handlePlayClick}
+                className={`
+                  w-full               /* fill its ¼-column */
+                  h-full
+                  rounded-full flex items-center justify-center
+                  transition-colors duration-300
+                  ${phase==='playing'
+                    ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                    : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
+                 `}
+               >
+                 {phase==='playing'
+                   ? <span className="sf-icon text-xl">􀊅</span>
+                   : <span className="sf-icon text-xl">􀊄</span>}
+               </Button>
+
+              {/* --- SETTINGS & EXPORT (1/4 width) --- */}
+              <div className="flex gap-2 w-full items-center">
+                   <Button
+                     onClick={() => setSettingsOpen(true)}
+                     className="flex-1 aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center"
+                   >
+                     <span className="sf-icon text-xl">􀌆</span>
+                   </Button>
+
+                   <Button
+                     onClick={exportVideo}
+                     className="flex-1 aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center"
+                   >
+                     <span className="sf-icon text-xl">􀈂</span>
+                   </Button>
+               </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1690,8 +1803,191 @@ export default function InstagramPostCreator() {
       </svg>
 
       {/* ─── MODALS ─────────────────────────────────────────────────────────────── */}
-      {/* ... existing modals ... */}
+      <Dialog open={positionModalOpen} onOpenChange={setPositionModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Position</DialogTitle>
+          </DialogHeader>
+          {editingPosition && editingBaseFontSize !== null && (
+            <div className="space-y-2">
+              <div>
+                <Label htmlFor="xPos">X Position</Label>
+                <Input
+                  id="xPos"
+                  type="number"
+                  value={editingPosition.x}
+                  onChange={e => setEditingPosition({ ...editingPosition, x: Number(e.target.value) })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="yPos">Y Position</Label>
+                <Input
+                  id="yPos"
+                  type="number"
+                  value={editingPosition.y}
+                  onChange={e => setEditingPosition({ ...editingPosition, y: Number(e.target.value) })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="rotation">Rotation (degrees)</Label>
+                <Input
+                  id="rotation"
+                  type="number"
+                  value={editingPosition.rotation * (180 / Math.PI)}
+                  onChange={e => setEditingPosition({ ...editingPosition, rotation: Number(e.target.value) * (Math.PI / 180) })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="scale">Scale (%)</Label>
+                <Input
+                  id="scale"
+                  type="number"
+                  value={Math.round((editingPosition.fontSize / editingBaseFontSize) * 100)}
+                  onChange={e => {
+                    const scale = Number(e.target.value) / 100
+                    setEditingPosition({
+                      ...editingPosition,
+                      fontSize: editingBaseFontSize * scale
+                    })
+                  }}
+                />
+              </div>
+              <Button onClick={() => updatePosition(editingPosition)}>Update</Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Settings</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <input
+                id="loopToggle"
+                type="checkbox"
+                checked={isLooping}
+                onChange={e => setIsLooping(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 focus:ring-2 focus:ring-blue-500"
+              />
+              <Label htmlFor="loopToggle" className="text-sm text-gray-600">
+                Loop animation
+              </Label>
+            </div>
+
+            <div>
+              <Label htmlFor="thicknessSlider">Line Thickness (max 10)</Label>
+              <Slider
+                id="thicknessSlider"
+                min={1}
+                max={10}
+                step={1}
+                value={[lineThickness]}
+                onValueChange={value => handleSettingsChange('lineThickness', value[0])}
+              />
+            </div>
+            <div>
+              <Label htmlFor="trembleSlider">Trembling Intensity</Label>
+              <Slider
+                id="trembleSlider"
+                min={0}
+                max={10}
+                step={1}
+                value={[tremblingIntensity]}
+                onValueChange={value => handleSettingsChange('tremblingIntensity', value[0])}
+              />
+            </div>
+            <div>
+              <Label htmlFor="baseFpsSlider">Animation Speed (Base FPS: {baseFps})</Label>
+              <Slider
+                id="baseFpsSlider"
+                min={10}
+                max={120}
+                step={1}
+                value={[baseFps]}
+                onValueChange={([v]) => {
+                  const num = Number(v)
+                  if (!isNaN(num)) setBaseFps(num)
+                }}
+              />
+            </div>
+            <div>
+              <Label htmlFor="frameRateSlider">Frame Rate ({MIN_FRAME_RATE}–120)</Label>
+              <Slider
+                id="frameRateSlider"
+                min={MIN_FRAME_RATE}
+                max={120}
+                step={1}
+                value={[frameRate]}
+                onValueChange={([v]) => {
+                  const num = Number(v)
+                  if (!isNaN(num)) {
+                    handleSettingsChange('frameRate', num)
+                  }
+                }}
+              />
+            </div>
+            <div>
+              <Label htmlFor="pauseSlider">Pause Hold (norm)</Label>
+              <Slider
+                id="pauseSlider"
+                min={0}
+                max={0.5}
+                step={0.01}
+                value={[pauseHold]}
+                onValueChange={([v]) => setPauseHold(v)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="easingSlider">Easing Power</Label>
+              <Slider
+                id="easingSlider"
+                min={2}
+                max={10}
+                step={1}
+                value={[easingPower]}
+                onValueChange={([v]) => setEasingPower(v)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="lineEaseSlider">Line Easing Power</Label>
+              <Slider
+                id="lineEaseSlider"
+                min={2}
+                max={10}
+                step={1}
+                value={[lineEasePower]}
+                onValueChange={([v]) => setLineEasePower(v)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="textEaseSlider">Text Easing Power</Label>
+              <Slider
+                id="textEaseSlider"
+                min={2}
+                max={10}
+                step={1}
+                value={[textEasePower]}
+                onValueChange={([v]) => setTextEasePower(v)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="scaleAnchor">Scale Anchor</Label>
+              <Select value={scaleAnchor} onValueChange={setScaleAnchor}>
+                <SelectTrigger id="scaleAnchor" className="w-full">
+                  <SelectValue placeholder="corner/center" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="corner">Corner</SelectItem>
+                  <SelectItem value="center">Center</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
-
