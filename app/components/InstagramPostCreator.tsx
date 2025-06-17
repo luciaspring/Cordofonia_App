@@ -1600,91 +1600,58 @@ export default function InstagramPostCreator() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-white">
       <div className="bg-white border border-gray-200 p-4 rounded-lg font-ui">
-        {/* widen gap so the new, wider left column sits clear of the frame */}
-        <div className="flex space-x-8">
-          {/* ─── LEFT PANEL ────────────────────────────────────────── */}
-          {/* 675 px canvas + 8 px gap + 64 px control-row  = 747 px */}
-          <div ref={panelRef} className="w-[540px] h-[747px] relative pt-0 pr-6">
-            {/*  A. header (stays at the very top) */}
-            <h1 className="text-[17px] font-bold leading-tight mb-4">
-              Cordofonia Instagram<br />Posts Creator Tool
-            </h1>
-
-            {/* 1 ─ TITLE in the vertical centre */}
-            <div
-              ref={titleRef}
-              className="absolute left-0 w-full top-1/2 -translate-y-1/2"
-            >
-              {/* ⬇️  limit the whole stack to 270 px (½ × 540) */}
-              <div className="space-y-2 w-[270px]">
-                <FieldGroup step={1} label="Write a title">
-                  <Input
-                    value={titles[0]}
-                    onChange={e => setTitles([e.target.value, titles[1]])}
-                    /* keep height etc. — just make it fill the 270-px column */
-                    className="h-9 w-full text-[15px] bg-gray-200 rounded-none
-                               focus:ring-0 focus:border-gray-300"
-                  />
-                  <Input
-                    value={titles[1]}
-                    onChange={e => setTitles([titles[0], e.target.value])}
-                    className="h-9 w-full text-[15px] bg-gray-200 rounded-none
-                               focus:ring-0 focus:border-gray-300"
-                  />
-                </FieldGroup>
-              </div>
-            </div>
-
-            {/* 2 ─ INSTRUMENT halfway between #1 and #3 */}
-            <div
-              ref={instrumentRef}
-              className="absolute left-0 w-full"
-              /* when instrumentTop is still null we keep it hidden to
-                 avoid a flash at 0 px */
-              style={
-                instrumentTop === null
-                  ? { visibility: 'hidden' }
-                  : { top: instrumentTop }
-              }
-            >
-              <FieldGroup step={2} label="Write the instrument">
-                <Input
-                  value={subtitle}
-                  onChange={e => setSubtitle(e.target.value)}
-                  className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
-                />
-              </FieldGroup>
-            </div>
-
-            {/* 3 ─ COLOUR PICKER pinned to the card's inner edge */}
-            <div ref={swatchRef} className="absolute left-0 w-full bottom-0">
-              <FieldGroup step={3} label="Pick a color">
-                {/* colour swatch wrapper  ─ pin to the very bottom */}
-                <div className="flex flex-nowrap gap-2 mt-2">
-                  {colorOptions.map(c => (
-                    <button
-                      key={c.value}
-                      onClick={() => setBackgroundColor(c.value)}
-                      aria-label={c.name}
-                      style={{ backgroundColor: c.value }}
-                      className={`
-                        w-8 h-8 rounded-none
-                        ${backgroundColor === c.value
-                          ? 'ring-4 ring-inset ring-black'   /* thicker inner ring */
-                          : 'ring-0'}
-                      `}
-                    />
-                  ))}
-                </div>
-              </FieldGroup>
-            </div>
+        {/* 4-column grid, each 1fr wide, 8px gutters */}
+        <div className="grid grid-cols-4 gap-2">
+          {/* 1/4: "Write a title" */}
+          <div className="col-span-1 relative pt-0 pr-6" ref={panelRef}>
+            <FieldGroup step={1} label="Write a title">
+              <Input
+                value={titles[0]}
+                onChange={e => setTitles([e.target.value, titles[1]])}
+                className="h-9 w-full text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+              />
+              <Input
+                value={titles[1]}
+                onChange={e => setTitles([titles[0], e.target.value])}
+                className="h-9 w-full text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+              />
+            </FieldGroup>
           </div>
 
-          {/* ─── RIGHT PANEL: Canvas & Controls */}
-          {/* right column – same width as the left one */}
-          <div className="w-[540px] flex flex-col">
+          {/* 1/4: "Write the instrument" */}
+          <div className="col-span-1 relative" ref={instrumentRef}>
+            <FieldGroup step={2} label="Write the instrument">
+              <Input
+                value={subtitle}
+                onChange={e => setSubtitle(e.target.value)}
+                className="h-9 w-full text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+              />
+            </FieldGroup>
+          </div>
+
+          {/* 1/4: "Pick a color" */}
+          <div className="col-span-1 relative" ref={swatchRef}>
+            <FieldGroup step={3} label="Pick a color">
+              <div className="flex flex-nowrap gap-2 mt-2">
+                {colorOptions.map(c => (
+                  <button
+                    key={c.value}
+                    onClick={() => setBackgroundColor(c.value)}
+                    aria-label={c.name}
+                    style={{ backgroundColor: c.value }}
+                    className={
+                      `w-8 h-8 rounded-none ${backgroundColor === c.value ? 'ring-4 ring-inset ring-black' : 'ring-0'}`
+                    }
+                  />
+                ))}
+              </div>
+            </FieldGroup>
+          </div>
+
+          {/* 1/4: Canvas & Controls */}
+          <div className="col-span-1 flex flex-col">
             <div
-              className="w-[540px] h-[675px] bg-white rounded-none mb-2 relative overflow-hidden"
+              className="w-full h-[675px] bg-white rounded-none mb-2 relative overflow-hidden"
               style={{ backgroundColor }}
             >
               <canvas
@@ -1700,7 +1667,7 @@ export default function InstagramPostCreator() {
               />
             </div>
 
-            {/* ─── CONTROLS ROW (exactly 540 px wide) ─────────────────────────────── */}
+            {/* ─── CONTROLS ROW ─────────────────────────────── */}
             <div className={`grid grid-cols-4 w-full gap-2 mx-auto ${ROW_H}`}>
               {/* --- FRAME PAIR (2/4 width) --- */}
               <div
@@ -1713,74 +1680,42 @@ export default function InstagramPostCreator() {
               >
                 {/* ——— Frame 1 ——— */}
                 <div className="relative flex-1 overflow-visible">
-                  {/* the button stays a *sharp* rectangle */}
                   <Button
                     ref={frame1Ref}
                     onClick={() => handleFrameChange(1)}
                     disabled={phase !== 'idle' && phase !== 'paused'}
-                    className={`
-                      w-full h-full flex-1 overflow-hidden  /* same size as before */
-                      rounded-none  
-                      relative z-10                         /* sits above the circle */
-                      transition-colors duration-300
-                      ${isGooeyPhase(phase)
-                        ? 'bg-gray-200 text-transparent'
-                        : currentFrame === 1
-                          ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                          : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
-                        }
-                    `}
+                    className={
+                      `w-full h-full flex-1 overflow-hidden rounded-none relative z-10 transition-colors duration-300 ${isGooeyPhase(phase) ? 'bg-gray-200 text-transparent' : currentFrame === 1 ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black' : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}`
+                    }
                   >
                     Frame&nbsp;1
                   </Button>
-
-                  {/* gooey helper – has **no** influence on size */}
                   {isGooeyPhase(phase) && (
                     <span
-                      className={`
-                        pointer-events-none absolute z-0
-                        right-[-1px]
-                        /* full height of the grey bar (row) */
-                        h-full aspect-square rounded-full ${GOO_BG}
-                      `}
-                      style={{ top: 0 }}   /* centre automatically because height = 100 % */
+                      className={`pointer-events-none absolute z-0 right-[-1px] h-full aspect-square rounded-full ${GOO_BG}`}
+                      style={{ top: 0 }}
                     />
                   )}
                 </div>
-
                 {/* ——— Frame 2 (mirror) ——— */}
                 <div className="relative flex-1 overflow-visible">
                   <Button
                     ref={frame2Ref}
                     onClick={() => handleFrameChange(2)}
                     disabled={phase !== 'idle' && phase !== 'paused'}
-                    className={`
-                      w-full h-full flex-1 overflow-hidden rounded-none relative z-10
-                      transition-colors duration-300
-                      ${isGooeyPhase(phase)
-                        ? 'bg-gray-200 text-transparent'
-                        : currentFrame === 2
-                          ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                          : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
-                        }
-                    `}
+                    className={
+                      `w-full h-full flex-1 overflow-hidden rounded-none relative z-10 transition-colors duration-300 ${isGooeyPhase(phase) ? 'bg-gray-200 text-transparent' : currentFrame === 2 ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black' : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}`
+                    }
                   >
                     Frame&nbsp;2
                   </Button>
-
                   {isGooeyPhase(phase) && (
                     <span
-                      className={`
-                        pointer-events-none absolute z-0
-                        left-[-1px]
-                        /* full height of the grey bar (row) */
-                        h-full aspect-square rounded-full ${GOO_BG}
-                      `}
-                      style={{ top: 0 }}   /* centre automatically because height = 100 % */
+                      className={`pointer-events-none absolute z-0 left-[-1px] h-full aspect-square rounded-full ${GOO_BG}`}
+                      style={{ top: 0 }}
                     />
                   )}
                 </div>
-                
                 {/* --- BLACK PROGRESS BAR (on top of the grey track) --- */}
                 <div
                   ref={barRef}
@@ -1791,41 +1726,30 @@ export default function InstagramPostCreator() {
                   }}
                 />
               </div>
-
               {/* --- PLAY / PAUSE OVAL (1/4 width) --- */}
               <Button
                 onClick={handlePlayClick}
-                className={`
-                  w-full               /* fill its ¼-column */
-                  h-full
-                  rounded-full flex items-center justify-center
-                  transition-colors duration-300
-                  ${phase==='playing'
-                    ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                    : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
-                 `}
-               >
-                 {phase==='playing'
-                   ? <span className="sf-icon text-xl">􀊅</span>
-                   : <span className="sf-icon text-xl">􀊄</span>}
-               </Button>
-
+                className={`w-full h-full rounded-full flex items-center justify-center transition-colors duration-300 ${phase==='playing' ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black' : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}`}
+              >
+                {phase==='playing'
+                  ? <span className="sf-icon text-xl">􀊅</span>
+                  : <span className="sf-icon text-xl">􀊄</span>}
+              </Button>
               {/* --- SETTINGS & EXPORT (1/4 width) --- */}
               <div className="flex gap-2 w-full items-center">
-                   <Button
-                     onClick={() => setSettingsOpen(true)}
-                     className="flex-1 aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center"
-                   >
-                     <span className="sf-icon text-xl">􀌆</span>
-                   </Button>
-
-                   <Button
-                     onClick={exportVideo}
-                     className="flex-1 aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center"
-                   >
-                     <span className="sf-icon text-xl">􀈂</span>
-                   </Button>
-               </div>
+                <Button
+                  onClick={() => setSettingsOpen(true)}
+                  className="flex-1 aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center"
+                >
+                  <span className="sf-icon text-xl">􀌆</span>
+                </Button>
+                <Button
+                  onClick={exportVideo}
+                  className="flex-1 aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center"
+                >
+                  <span className="sf-icon text-xl">􀈂</span>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
