@@ -1630,10 +1630,10 @@ export default function InstagramPostCreator() {
               </div>
             </div>
 
-            {/* 2 ─ INSTRUMENT, positioned via instrumentTop */}
+            {/* 2 ─ INSTRUMENT between Step 1 & 3 */}
             <div
               ref={instrumentRef}
-              className="absolute left-0 w-[266px] space-y-2"
+              className="absolute left-[266px] w-[266px] space-y-2"
               style={{
                 top: instrumentTop != null
                   ? instrumentTop
