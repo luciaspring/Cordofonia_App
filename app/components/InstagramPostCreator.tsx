@@ -1612,7 +1612,7 @@ export default function InstagramPostCreator() {
             {/* 1 ─ TITLE (already perfect) */}
             <div
               ref={titleRef}
-              className="absolute left-0 top-1/2 -translate-y-1/2"
+              className="absolute left-0 top-1/2"
             >
               <div className="w-[266px] space-y-2">
                 <FieldGroup step={1} label="Write a title">
