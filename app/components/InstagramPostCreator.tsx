@@ -119,11 +119,11 @@ export const defaultSubtitlePosition: TextPosition = {
 // ─── COMPONENT ───────────────────────────────────────────────────────────────────
 
 /* ─── Small wrapper to reuse identical spacing & label strip ─── */
-const FieldGroup: React.FC<{ step: number; label: string; children: React.ReactNode }> = ({
-  step,
-  label,
-  children,
-}) => (
+const FieldGroup: React.FC<{
+  step: number
+  label: string
+  children: React.ReactNode
+}> = ({ step, label, children }) => (
   <div className="space-y-2">
     <p className="mb-0 tracking-wide">
       <span className="text-[11px] font-semibold text-gray-500 mr-1">
@@ -135,7 +135,7 @@ const FieldGroup: React.FC<{ step: number; label: string; children: React.ReactN
     </p>
     {children}
   </div>
-);
+)
 
 export default function InstagramPostCreator() {
   // ─── STATE HOOKS ────────────────────────────────────────────────────────────────
