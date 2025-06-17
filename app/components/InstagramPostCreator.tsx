@@ -1698,6 +1698,7 @@ export default function InstagramPostCreator() {
                   transition-[gap] duration-300 ease-in-out
                   ${isGooeyPhase(phase) ? 'gap-0' : 'gap-2'}
                 `}
+                style={{ filter: isGooeyPhase(phase) ? 'url(#gooey)' : 'none' }}
               >
                 {/* ——— Frame 1 ——— */}
                 <div className="relative flex-1 overflow-visible">
@@ -1718,6 +1719,7 @@ export default function InstagramPostCreator() {
                   >
                     Frame&nbsp;1
                   </Button>
+                  {/* metaball blob removed */}
                 </div>
 
                 {/* ——— Frame 2 (mirror) ——— */}
@@ -1739,7 +1741,18 @@ export default function InstagramPostCreator() {
                   >
                     Frame&nbsp;2
                   </Button>
+                  {/* metaball blob removed */}
                 </div>
+
+                {/* --- BLACK PROGRESS BAR (exactly as before) --- */}
+                <div
+                  ref={barRef}
+                  className="absolute inset-0 bg-black pointer-events-none z-10 transition-opacity duration-150"
+                  style={{
+                    opacity: phase === 'playing' || phase === 'merge' ? 1 : 0,
+                    width: 0
+                  }}
+                />
               </div>
 
               {/* --- PLAY / PAUSE OVAL (1/4 width) --- */}
@@ -1780,6 +1793,8 @@ export default function InstagramPostCreator() {
           </div>
         </div>
       </div>
+
+      {/* metaball filter removed */}
 
       {/* ─── MODALS ─────────────────────────────────────────────────────────────── */}
       <Dialog open={positionModalOpen} onOpenChange={setPositionModalOpen}>
