@@ -207,6 +207,11 @@ export default function InstagramPostCreator() {
 
   const [animationKey, setAnimationKey] = useState(0);
 
+  /*  put this near your other "const …" declarations  */
+  const GOO_BG = 'bg-gray-200'                   // colour that melts
+  const isGooeyPhase = (p: PlayPhase) =>         // true while buttons touch
+    p === 'merge' || p === 'playing'
+
   // Ref's for animation and mouse tracking
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<number | null>(null)
@@ -1606,19 +1611,28 @@ export default function InstagramPostCreator() {
             </h1>
 
             {/* 1 ─ TITLE in the vertical centre */}
-            <div ref={titleRef} className="absolute left-0 w-full top-1/2 -translate-y-1/2">
-              <FieldGroup step={1} label="Write a title">
-                <Input
-                  value={titles[0]}
-                  onChange={e => setTitles([e.target.value, titles[1]])}
-                  className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
-                />
-                <Input
-                  value={titles[1]}
-                  onChange={e => setTitles([titles[0], e.target.value])}
-                  className="h-9 text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
-                />
-              </FieldGroup>
+            <div
+              ref={titleRef}
+              className="absolute left-0 w-full top-1/2 -translate-y-1/2"
+            >
+              {/* ⬇️  limit the whole stack to 270 px (½ × 540) */}
+              <div className="space-y-2 w-[270px]">
+                <FieldGroup step={1} label="Write a title">
+                  <Input
+                    value={titles[0]}
+                    onChange={e => setTitles([e.target.value, titles[1]])}
+                    /* keep height etc. — just make it fill the 270-px column */
+                    className="h-9 w-full text-[15px] bg-gray-200 rounded-none
+                               focus:ring-0 focus:border-gray-300"
+                  />
+                  <Input
+                    value={titles[1]}
+                    onChange={e => setTitles([titles[0], e.target.value])}
+                    className="h-9 w-full text-[15px] bg-gray-200 rounded-none
+                               focus:ring-0 focus:border-gray-300"
+                  />
+                </FieldGroup>
+              </div>
             </div>
 
             {/* 2 ─ INSTRUMENT halfway between #1 and #3 */}
@@ -1693,46 +1707,79 @@ export default function InstagramPostCreator() {
                 className={`
                   col-span-2 relative flex items-stretch
                   transition-[gap] duration-300 ease-in-out
-                  ${phase === 'merge' || phase === 'playing' ? 'gap-0 bg-gray-200' : 'gap-2'}
+                  ${isGooeyPhase(phase) ? 'gap-0' : 'gap-2'}
                 `}
+                style={{ filter: isGooeyPhase(phase) ? 'url(#gooey)' : 'none' }}
               >
-                {/* --- Frame 1 button (forms left half of grey track) --- */}
-                <Button
-                  ref={frame1Ref}
-                  onClick={() => handleFrameChange(1)}
-                  disabled={phase !== 'idle' && phase !== 'paused'}
-                  className={`
-                    flex-1 rounded-none overflow-hidden h-full
-                    transition-colors duration-300
-                    ${phase === 'merge' || phase === 'playing'
-                      ? 'bg-gray-200 text-transparent' // Fade to grey, hide text via color
-                      : currentFrame === 1
-                        ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
-                    }
-                  `}
-                >
-                  Frame 1
-                </Button>
+                {/* ——— Frame 1 ——— */}
+                <div className="relative flex-1 overflow-visible">
+                  {/* the button stays a *sharp* rectangle */}
+                  <Button
+                    ref={frame1Ref}
+                    onClick={() => handleFrameChange(1)}
+                    disabled={phase !== 'idle' && phase !== 'paused'}
+                    className={`
+                      w-full h-full flex-1 overflow-hidden  /* same size as before */
+                      rounded-none  
+                      relative z-10                         /* sits above the circle */
+                      transition-colors duration-300
+                      ${isGooeyPhase(phase)
+                        ? 'bg-gray-200 text-transparent'
+                        : currentFrame === 1
+                          ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                          : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
+                        }
+                    `}
+                  >
+                    Frame&nbsp;1
+                  </Button>
 
-                {/* --- Frame 2 button (forms right half of grey track) --- */}
-                <Button
-                  ref={frame2Ref}
-                  onClick={() => handleFrameChange(2)}
-                  disabled={phase !== 'idle' && phase !== 'paused'}
-                  className={`
-                    flex-1 rounded-none overflow-hidden h-full
-                    transition-colors duration-300
-                    ${phase === 'merge' || phase === 'playing'
-                      ? 'bg-gray-200 text-transparent'
-                      : currentFrame === 2
-                        ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
-                    }
-                  `}
-                >
-                  Frame 2
-                </Button>
+                  {/* gooey helper – has **no** influence on size */}
+                  {isGooeyPhase(phase) && (
+                    <span
+                      className={`
+                        pointer-events-none absolute z-0
+                        right-[-1px]
+                        /* full height of the grey bar (row) */
+                        h-full aspect-square rounded-full ${GOO_BG}
+                      `}
+                      style={{ top: 0 }}   /* centre automatically because height = 100 % */
+                    />
+                  )}
+                </div>
+
+                {/* ——— Frame 2 (mirror) ——— */}
+                <div className="relative flex-1 overflow-visible">
+                  <Button
+                    ref={frame2Ref}
+                    onClick={() => handleFrameChange(2)}
+                    disabled={phase !== 'idle' && phase !== 'paused'}
+                    className={`
+                      w-full h-full flex-1 overflow-hidden rounded-none relative z-10
+                      transition-colors duration-300
+                      ${isGooeyPhase(phase)
+                        ? 'bg-gray-200 text-transparent'
+                        : currentFrame === 2
+                          ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                          : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
+                        }
+                    `}
+                  >
+                    Frame&nbsp;2
+                  </Button>
+
+                  {isGooeyPhase(phase) && (
+                    <span
+                      className={`
+                        pointer-events-none absolute z-0
+                        left-[-1px]
+                        /* full height of the grey bar (row) */
+                        h-full aspect-square rounded-full ${GOO_BG}
+                      `}
+                      style={{ top: 0 }}   /* centre automatically because height = 100 % */
+                    />
+                  )}
+                </div>
                 
                 {/* --- BLACK PROGRESS BAR (on top of the grey track) --- */}
                 <div
