@@ -1,7 +1,7 @@
 // app/components/InstagramPostCreator.tsx
 'use client'
 
-import React, { useState, useRef, useEffect, useLayoutEffect } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -256,12 +256,6 @@ export default function InstagramPostCreator() {
   const SQUARE_W   = 'w-20'       // 80 px square (settings/export)
   const FRAME_W    = 'w-1/2'      // each frame btn takes half of its flex box
 
-  const [instrumentTop, setInstrumentTop] = useState(0)      // absolute px value we'll compute
-  const panelRef = useRef<HTMLDivElement>(null)
-  const titleRef = useRef<HTMLDivElement>(null)
-  const instrumentRef = useRef<HTMLDivElement>(null)
-  const swatchRef = useRef<HTMLDivElement>(null)
-
   // ─── EFFECT HOOKS ───────────────────────────────────────────────────────────────
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -366,27 +360,6 @@ export default function InstagramPostCreator() {
       setBarW(0)
     }
   }, [isPlaying])
-
-  // ── keep block #2 centred between #1 and #3 on first paint & on resize ──
-  useLayoutEffect(() => {
-    const recalc = () => {
-      if (!titleRef.current || !swatchRef.current || !instrumentRef.current) return;
-
-      const titleRect   = titleRef.current.getBoundingClientRect();
-      const swatchRect  = swatchRef.current.getBoundingClientRect();
-
-      const halfway     = (titleRect.bottom + swatchRect.top) / 2;
-      const newTopPX    = halfway
-                        - titleRef.current.offsetParent!.getBoundingClientRect().top
-                        - instrumentRef.current.offsetHeight / 2;
-
-      setInstrumentTop(newTopPX);
-    };
-
-    recalc();                    // initial layout
-    window.addEventListener('resize', recalc);
-    return () => window.removeEventListener('resize', recalc);
-  }, []);                        // run once; recalc itself fires on resize
 
   // ─── TEXT DIMENSION UPDATER ──────────────────────────────────────────────────────
   const updateTextDimensions = (ctx: CanvasRenderingContext2D) => {
@@ -1591,14 +1564,14 @@ export default function InstagramPostCreator() {
         {/* widen gap so the new, wider left column sits clear of the frame */}
         <div className="flex space-x-8">
           {/* ─── LEFT PANEL ────────────────────────────────────────── */}
-          <div ref={panelRef} className="w-[336px] relative h-full pt-0 pr-6">
+          <div className="w-[336px] h-[675px] relative pt-0 pr-6">
             {/*  A. header (stays at the very top) */}
             <h1 className="text-[17px] font-bold leading-tight mb-4">
               Cordofonia Instagram<br />Posts Creator Tool
             </h1>
 
-            {/* #1 — centred on the panel */}
-            <div ref={titleRef} className="absolute inset-x-0 top-1/2 -translate-y-1/2">
+            {/* 1 ─ TITLE in the vertical centre */}
+            <div className="absolute left-0 w-full top-1/2 -translate-y-1/2">
               <FieldGroup step={1} label="Write a title">
                 <Input
                   value={titles[0]}
@@ -1613,12 +1586,8 @@ export default function InstagramPostCreator() {
               </FieldGroup>
             </div>
 
-            {/* #2 — we give it the computed `top` once we have it */}
-            <div
-              ref={instrumentRef}
-              className="absolute inset-x-0"
-              style={{ top: `${instrumentTop}px` }}
-            >
+            {/* 2 ─ INSTRUMENT halfway between #1 and #3 */}
+            <div className="absolute left-0 w-full top-[75%] -translate-y-1/2">
               <FieldGroup step={2} label="Write the instrument">
                 <Input
                   value={subtitle}
@@ -1628,9 +1597,10 @@ export default function InstagramPostCreator() {
               </FieldGroup>
             </div>
 
-            {/* #3 — swatches hugging the bottom */}
-            <div ref={swatchRef} className="absolute inset-x-0 bottom-4">
+            {/* 3 ─ COLOUR PICKER pinned to the card's inner edge */}
+            <div className="absolute left-0 w-full bottom-4">
               <FieldGroup step={3} label="Pick a color">
+                {/* colour swatch wrapper  ─ pin to the very bottom */}
                 <div className="flex flex-nowrap gap-2 mt-2">
                   {colorOptions.map(c => (
                     <button
@@ -1978,5 +1948,4 @@ export default function InstagramPostCreator() {
     </div>
   )
 }
-
 
