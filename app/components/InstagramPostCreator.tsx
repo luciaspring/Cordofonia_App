@@ -207,6 +207,10 @@ export default function InstagramPostCreator() {
 
   const [animationKey, setAnimationKey] = useState(0);
 
+  /* ── 'merge' / 'playing' helper flags ───────────────────────────── */
+  const isGooeyPhase = phase === 'merge' || phase === 'playing'
+  const GOO_BG       = 'bg-gray-200'      // the colour they share while merged
+
   // Ref's for animation and mouse tracking
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<number | null>(null)
@@ -1693,46 +1697,63 @@ export default function InstagramPostCreator() {
                 className={`
                   col-span-2 relative flex items-stretch
                   transition-[gap] duration-300 ease-in-out
-                  ${phase === 'merge' || phase === 'playing' ? 'gap-0 bg-gray-200' : 'gap-2'}
+                  ${isGooeyPhase ? `gap-0 ${GOO_BG}` : 'gap-2'}
                 `}
+                /*  SVG metaball filter only while merging/playing  */
+                style={isGooeyPhase ? { filter: 'url(#gooey)' } : undefined}
               >
-                {/* --- Frame 1 button (forms left half of grey track) --- */}
-                <Button
-                  ref={frame1Ref}
-                  onClick={() => handleFrameChange(1)}
-                  disabled={phase !== 'idle' && phase !== 'paused'}
-                  className={`
-                    flex-1 rounded-none overflow-hidden h-full
-                    transition-colors duration-300
-                    ${phase === 'merge' || phase === 'playing'
-                      ? 'bg-gray-200 text-transparent' // Fade to grey, hide text via color
-                      : currentFrame === 1
-                        ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
-                    }
-                  `}
-                >
-                  Frame 1
-                </Button>
+                {/* --- Frame 1 button + metaball stub --- */}
+                <div className="relative flex-1">
+                  <Button
+                    ref={frame1Ref}
+                    onClick={() => handleFrameChange(1)}
+                    disabled={phase !== 'idle' && phase !== 'paused'}
+                    className={`
+                      flex-1 rounded-none overflow-hidden h-full
+                      transition-colors duration-300
+                      ${phase === 'merge' || phase === 'playing'
+                        ? 'bg-gray-200 text-transparent' // Fade to grey, hide text via color
+                        : currentFrame === 1
+                          ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                          : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
+                      }
+                    `}
+                  >
+                    Frame 1
+                  </Button>
+                  {/* Gooey stub: a tiny capsule that protrudes 4 px into the gap */}
+                  {isGooeyPhase && (
+                    <span
+                      className={`pointer-events-none absolute top-0 right-[-4px] h-full w-6 ${GOO_BG} rounded-full`}
+                    />
+                  )}
+                </div>
 
-                {/* --- Frame 2 button (forms right half of grey track) --- */}
-                <Button
-                  ref={frame2Ref}
-                  onClick={() => handleFrameChange(2)}
-                  disabled={phase !== 'idle' && phase !== 'paused'}
-                  className={`
-                    flex-1 rounded-none overflow-hidden h-full
-                    transition-colors duration-300
-                    ${phase === 'merge' || phase === 'playing'
-                      ? 'bg-gray-200 text-transparent'
-                      : currentFrame === 2
-                        ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
-                    }
-                  `}
-                >
-                  Frame 2
-                </Button>
+                {/* --- Frame 2 button + metaball stub --- */}
+                <div className="relative flex-1">
+                  <Button
+                    ref={frame2Ref}
+                    onClick={() => handleFrameChange(2)}
+                    disabled={phase !== 'idle' && phase !== 'paused'}
+                    className={`
+                      flex-1 rounded-none overflow-hidden h-full
+                      transition-colors duration-300
+                      ${phase === 'merge' || phase === 'playing'
+                        ? 'bg-gray-200 text-transparent'
+                        : currentFrame === 2
+                          ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                          : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
+                        }
+                    `}
+                  >
+                    Frame 2
+                  </Button>
+                  {isGooeyPhase && (
+                    <span
+                      className={`pointer-events-none absolute top-0 left-[-4px] h-full w-6 ${GOO_BG} rounded-full`}
+                    />
+                  )}
+                </div>
                 
                 {/* --- BLACK PROGRESS BAR (on top of the grey track) --- */}
                 <div
