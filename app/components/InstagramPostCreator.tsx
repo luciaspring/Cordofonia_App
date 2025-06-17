@@ -1600,74 +1600,56 @@ export default function InstagramPostCreator() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-white">
       <div className="bg-white border border-gray-200 p-4 rounded-lg font-ui">
+        {/* ─── make your main wrapper a 4-col grid with 8px gutters ─── */}
         <div className="grid grid-cols-4 gap-2">
-          {/* ─── LEFT HALF (steps 1,2,3) ─── */}
-          <div className="col-span-2">
-            <div ref={panelRef} className="h-[747px] relative pt-0 pr-6">
-              {/*  A. header (stays at the very top) */}
-              <h1 className="text-[17px] font-bold leading-tight mb-4">
-                Cordofonia Instagram<br />Posts Creator Tool
-              </h1>
+          {/* ─── FIRST COLUMN: steps 1, 2 & 3 ─── */}
+          <div className="col-span-1 space-y-6">
+            <FieldGroup step={1} label="Write a title">
+              <Input
+                value={titles[0]}
+                onChange={e => setTitles([e.target.value, titles[1]])}
+                className="h-9 w-full text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+              />
+              <Input
+                value={titles[1]}
+                onChange={e => setTitles([titles[0], e.target.value])}
+                className="h-9 w-full text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+              />
+            </FieldGroup>
 
-              {/* 1 ─ TITLE */}
-              <div ref={titleRef} className="absolute left-0 w-full top-1/2 -translate-y-1/2">
-                <div className="flex space-x-2">
-                  {/* ─── Title block (266px) ─── */}
-                  <div className="w-[266px] space-y-2">
-                    <FieldGroup step={1} label="Write a title">
-                      <Input
-                        value={titles[0]}
-                        onChange={e => setTitles([e.target.value, titles[1]])}
-                        className="h-9 w-full text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
-                      />
-                      <Input
-                        value={titles[1]}
-                        onChange={e => setTitles([titles[0], e.target.value])}
-                        className="h-9 w-full text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
-                      />
-                    </FieldGroup>
-                  </div>
+            <FieldGroup step={2} label="Write the instrument">
+              <Input
+                value={subtitle}
+                onChange={e => setSubtitle(e.target.value)}
+                className="h-9 w-full text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+              />
+            </FieldGroup>
 
-                  {/* ─── Instrument block (266px) ─── */}
-                  <div className="w-[266px] space-y-2">
-                    <FieldGroup step={2} label="Write the instrument">
-                      <Input
-                        value={subtitle}
-                        onChange={e => setSubtitle(e.target.value)}
-                        className="h-9 w-full text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
-                      />
-                    </FieldGroup>
-                  </div>
-                </div>
+            <FieldGroup step={3} label="Pick a color">
+              <div className="flex flex-nowrap gap-2 mt-2">
+                {colorOptions.map(c => (
+                  <button
+                    key={c.value}
+                    onClick={() => setBackgroundColor(c.value)}
+                    aria-label={c.name}
+                    style={{ backgroundColor: c.value }}
+                    className={`
+                      w-8 h-8 rounded-none
+                      ${backgroundColor === c.value
+                        ? 'ring-4 ring-inset ring-black'   /* thicker inner ring */
+                        : 'ring-0'}
+                    `}
+                  />
+                ))}
               </div>
-
-              {/* 3 ─ COLOUR PICKER */}
-              <div ref={swatchRef} className="absolute left-0 w-full bottom-0">
-                <FieldGroup step={3} label="Pick a color">
-                  {/* colour swatch wrapper  ─ pin to the very bottom */}
-                  <div className="flex flex-nowrap gap-2 mt-2">
-                    {colorOptions.map(c => (
-                      <button
-                        key={c.value}
-                        onClick={() => setBackgroundColor(c.value)}
-                        aria-label={c.name}
-                        style={{ backgroundColor: c.value }}
-                        className={`
-                          w-8 h-8 rounded-none
-                          ${backgroundColor === c.value
-                            ? 'ring-4 ring-inset ring-black'   /* thicker inner ring */
-                            : 'ring-0'}
-                        `}
-                      />
-                    ))}
-                  </div>
-                </FieldGroup>
-              </div>
-            </div>
+            </FieldGroup>
           </div>
 
-          {/* ─── RIGHT HALF (canvas + controls) ─── */}
-          <div className="col-span-2 flex flex-col">
+          {/* ─── SECOND COLUMN: just a blank spacer ─── */}
+          <div className="col-span-1" />
+
+          {/* ─── THIRD COLUMN: canvas preview ─── */}
+          <div className="col-span-1 flex flex-col">
             <div
               className="w-full h-[675px] bg-white rounded-none mb-2 relative overflow-hidden"
               style={{ backgroundColor }}
@@ -1684,133 +1666,113 @@ export default function InstagramPostCreator() {
                 onMouseLeave={handleMouseUp}
               />
             </div>
+          </div>
 
-            {/* ─── CONTROLS ROW ─────────────────────────────── */}
-            <div className={`grid grid-cols-4 w-full gap-2 mx-auto ${ROW_H}`}>
-              {/* --- FRAME PAIR (2/4 width) --- */}
-              <div
-                className={`
-                  col-span-2 relative flex items-stretch
-                  transition-[gap] duration-300 ease-in-out
-                  ${isGooeyPhase(phase) ? 'gap-0' : 'gap-2'}
-                `}
-                style={{ filter: isGooeyPhase(phase) ? 'url(#gooey)' : 'none' }}
-              >
-                {/* ——— Frame 1 ——— */}
-                <div className="relative flex-1 overflow-visible">
-                  {/* the button stays a *sharp* rectangle */}
-                  <Button
-                    ref={frame1Ref}
-                    onClick={() => handleFrameChange(1)}
-                    disabled={phase !== 'idle' && phase !== 'paused'}
+          {/* ─── FOURTH COLUMN: controls row ─── */}
+          <div className="col-span-1 flex items-center justify-end space-x-2">
+            {/* --- FRAME PAIR --- */}
+            <div
+              className={`
+                relative flex items-stretch
+                transition-[gap] duration-300 ease-in-out
+                ${isGooeyPhase(phase) ? 'gap-0' : 'gap-2'}
+              `}
+              style={{ filter: isGooeyPhase(phase) ? 'url(#gooey)' : 'none' }}
+            >
+              {/* ——— Frame 1 ——— */}
+              <div className="relative flex-1 overflow-visible">
+                <Button
+                  ref={frame1Ref}
+                  onClick={() => handleFrameChange(1)}
+                  disabled={phase !== 'idle' && phase !== 'paused'}
+                  className={`
+                    w-full h-full flex-1 overflow-hidden rounded-none relative z-10
+                    transition-colors duration-300
+                    ${isGooeyPhase(phase)
+                      ? 'bg-gray-200 text-transparent'
+                      : currentFrame === 1
+                        ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
+                      }
+                  `}
+                >
+                  Frame&nbsp;1
+                </Button>
+                {isGooeyPhase(phase) && (
+                  <span
                     className={`
-                      w-full h-full flex-1 overflow-hidden  /* same size as before */
-                      rounded-none  
-                      relative z-10                         /* sits above the circle */
-                      transition-colors duration-300
-                      ${isGooeyPhase(phase)
-                        ? 'bg-gray-200 text-transparent'
-                        : currentFrame === 1
-                          ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                          : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
-                        }
+                      pointer-events-none absolute z-0
+                      right-[-1px]
+                      h-full aspect-square rounded-full ${GOO_BG}
                     `}
-                  >
-                    Frame&nbsp;1
-                  </Button>
-
-                  {/* gooey helper – has **no** influence on size */}
-                  {isGooeyPhase(phase) && (
-                    <span
-                      className={`
-                        pointer-events-none absolute z-0
-                        right-[-1px]
-                        /* full height of the grey bar (row) */
-                        h-full aspect-square rounded-full ${GOO_BG}
-                      `}
-                      style={{ top: 0 }}   /* centre automatically because height = 100 % */
-                    />
-                  )}
-                </div>
-
-                {/* ——— Frame 2 (mirror) ——— */}
-                <div className="relative flex-1 overflow-visible">
-                  <Button
-                    ref={frame2Ref}
-                    onClick={() => handleFrameChange(2)}
-                    disabled={phase !== 'idle' && phase !== 'paused'}
-                    className={`
-                      w-full h-full flex-1 overflow-hidden rounded-none relative z-10
-                      transition-colors duration-300
-                      ${isGooeyPhase(phase)
-                        ? 'bg-gray-200 text-transparent'
-                        : currentFrame === 2
-                          ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                          : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
-                        }
-                    `}
-                  >
-                    Frame&nbsp;2
-                  </Button>
-
-                  {isGooeyPhase(phase) && (
-                    <span
-                      className={`
-                        pointer-events-none absolute z-0
-                        left-[-1px]
-                        /* full height of the grey bar (row) */
-                        h-full aspect-square rounded-full ${GOO_BG}
-                      `}
-                      style={{ top: 0 }}   /* centre automatically because height = 100 % */
-                    />
-                  )}
-                </div>
-                
-                {/* --- BLACK PROGRESS BAR (on top of the grey track) --- */}
-                <div
-                  ref={barRef}
-                  className="absolute inset-0 bg-black pointer-events-none z-10 transition-opacity duration-150"
-                  style={{
-                    opacity: phase === 'playing' || phase === 'merge' ? 1 : 0,
-                    width: 0
-                  }}
-                />
+                    style={{ top: 0 }}
+                  />
+                )}
               </div>
 
-              {/* --- PLAY / PAUSE OVAL (1/4 width) --- */}
+              {/* ——— Frame 2 (mirror) ——— */}
+              <div className="relative flex-1 overflow-visible">
+                <Button
+                  ref={frame2Ref}
+                  onClick={() => handleFrameChange(2)}
+                  disabled={phase !== 'idle' && phase !== 'paused'}
+                  className={`
+                    w-full h-full flex-1 overflow-hidden rounded-none relative z-10
+                    transition-colors duration-300
+                    ${isGooeyPhase(phase)
+                      ? 'bg-gray-200 text-transparent'
+                      : currentFrame === 2
+                        ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                        : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
+                      }
+                  `}
+                >
+                  Frame&nbsp;2
+                </Button>
+                {isGooeyPhase(phase) && (
+                  <span
+                    className={`
+                      pointer-events-none absolute z-0
+                      left-[-1px]
+                      h-full aspect-square rounded-full ${GOO_BG}
+                    `}
+                    style={{ top: 0 }}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* --- PLAY / PAUSE OVAL --- */}
+            <Button
+              onClick={handlePlayClick}
+              className={`
+                w-full h-full rounded-full flex items-center justify-center
+                transition-colors duration-300
+                ${phase==='playing'
+                  ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
+                  : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
+              `}
+            >
+              {phase==='playing'
+                ? <span className="sf-icon text-xl">􀊅</span>
+                : <span className="sf-icon text-xl">􀊄</span>}
+            </Button>
+
+            {/* --- SETTINGS & EXPORT --- */}
+            <div className="flex gap-2">
               <Button
-                onClick={handlePlayClick}
-                className={`
-                  w-full               /* fill its ¼-column */
-                  h-full
-                  rounded-full flex items-center justify-center
-                  transition-colors duration-300
-                  ${phase==='playing'
-                    ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
-                    : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'}
-                 `}
-               >
-                 {phase==='playing'
-                   ? <span className="sf-icon text-xl">􀊅</span>
-                   : <span className="sf-icon text-xl">􀊄</span>}
-               </Button>
+                onClick={() => setSettingsOpen(true)}
+                className="aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center"
+              >
+                <span className="sf-icon text-xl">􀌆</span>
+              </Button>
 
-              {/* --- SETTINGS & EXPORT (1/4 width) --- */}
-              <div className="flex gap-2 w-full items-center">
-                   <Button
-                     onClick={() => setSettingsOpen(true)}
-                     className="flex-1 aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center"
-                   >
-                     <span className="sf-icon text-xl">􀌆</span>
-                   </Button>
-
-                   <Button
-                     onClick={exportVideo}
-                     className="flex-1 aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center"
-                   >
-                     <span className="sf-icon text-xl">􀈂</span>
-                   </Button>
-               </div>
+              <Button
+                onClick={exportVideo}
+                className="aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center"
+              >
+                <span className="sf-icon text-xl">􀈂</span>
+              </Button>
             </div>
           </div>
         </div>
