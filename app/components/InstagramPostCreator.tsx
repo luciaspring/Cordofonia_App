@@ -261,7 +261,9 @@ export default function InstagramPostCreator() {
   const titleRef      = useRef<HTMLDivElement>(null)
   const swatchRef     = useRef<HTMLDivElement>(null)
   const instrumentRef = useRef<HTMLDivElement>(null)
-  const [instrumentTop, setInstrumentTop] = useState(0)   // px offset we'll compute
+  /* dynamic top-offset for block #2 — start as null so it's hidden until we
+     have real measurements */
+  const [instrumentTop, setInstrumentTop] = useState<number | null>(null)
 
   // ─── EFFECT HOOKS ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -390,7 +392,7 @@ export default function InstagramPostCreator() {
     recalc()                            // initial paint
     window.addEventListener('resize', recalc)
     return () => window.removeEventListener('resize', recalc)
-  }, [titles, subtitle])                // re-check when block #1 text changes
+  }, [titles, subtitle])                // re-check whenever the title changes
 
   // ─── TEXT DIMENSION UPDATER ──────────────────────────────────────────────────────
   const updateTextDimensions = (ctx: CanvasRenderingContext2D) => {
@@ -1621,7 +1623,13 @@ export default function InstagramPostCreator() {
             <div
               ref={instrumentRef}
               className="absolute left-0 w-full"
-              style={{ top: `${instrumentTop}px` }}
+              /* when instrumentTop is still null we keep it hidden to
+                 avoid a flash at 0 px */
+              style={
+                instrumentTop === null
+                  ? { visibility: 'hidden' }
+                  : { top: instrumentTop }
+              }
             >
               <FieldGroup step={2} label="Write the instrument">
                 <Input
