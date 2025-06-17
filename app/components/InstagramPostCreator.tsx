@@ -1702,41 +1702,49 @@ export default function InstagramPostCreator() {
                 /*  SVG metaball filter only while merging/playing  */
                 style={isGooeyPhase ? { filter: 'url(#gooey)' } : undefined}
               >
-                {/* --- Frame 1 button + metaball stub --- */}
-                <div className="relative flex-1">
+                {/* ——— Frame 1 ——— */}
+                <div className="relative flex-1 overflow-visible">
+                  {/* the button stays a *sharp* rectangle */}
                   <Button
                     ref={frame1Ref}
                     onClick={() => handleFrameChange(1)}
                     disabled={phase !== 'idle' && phase !== 'paused'}
                     className={`
-                      flex-1 rounded-none overflow-hidden h-full
+                      relative z-10 flex-1 rounded-none overflow-hidden h-full
                       transition-colors duration-300
                       ${phase === 'merge' || phase === 'playing'
                         ? 'bg-gray-200 text-transparent' // Fade to grey, hide text via color
                         : currentFrame === 1
                           ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
                           : 'bg-gray-200 text-black hover:bg-[#9E9E9E] hover:text-black'
-                      }
+                        }
                     `}
                   >
                     Frame 1
                   </Button>
-                  {/* Gooey stub: a tiny capsule that protrudes 4 px into the gap */}
+
+                  {/* gooey circle sits *under* the button, flush with its inner edge */}
                   {isGooeyPhase && (
                     <span
-                      className={`pointer-events-none absolute top-0 right-[-4px] h-full w-6 ${GOO_BG} rounded-full`}
+                      className={`
+                        pointer-events-none absolute z-0
+                        top-1/2 -translate-y-1/2   /* vertically centred */
+                        right-[-1px]               /* sits exactly at the inner edge */
+                        h-10 w-10 rounded-full
+                        ${GOO_BG}
+                      `}
                     />
                   )}
                 </div>
 
-                {/* --- Frame 2 button + metaball stub --- */}
-                <div className="relative flex-1">
+                {/* ——— Frame 2 ——— */}
+                <div className="relative flex-1 overflow-visible">
                   <Button
                     ref={frame2Ref}
                     onClick={() => handleFrameChange(2)}
                     disabled={phase !== 'idle' && phase !== 'paused'}
                     className={`
-                      flex-1 rounded-none overflow-hidden h-full
+                      relative z-10 flex-1 rounded-none overflow-hidden h-full
                       transition-colors duration-300
                       ${phase === 'merge' || phase === 'playing'
                         ? 'bg-gray-200 text-transparent'
@@ -1750,7 +1758,13 @@ export default function InstagramPostCreator() {
                   </Button>
                   {isGooeyPhase && (
                     <span
-                      className={`pointer-events-none absolute top-0 left-[-4px] h-full w-6 ${GOO_BG} rounded-full`}
+                      className={`
+                        pointer-events-none absolute z-0
+                        top-1/2 -translate-y-1/2
+                        left-[-1px]               /* mirror side */
+                        h-10 w-10 rounded-full
+                        ${GOO_BG}
+                      `}
                     />
                   )}
                 </div>
