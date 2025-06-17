@@ -1614,7 +1614,7 @@ export default function InstagramPostCreator() {
               ref={titleRef}
               className="absolute left-0 top-1/2 -translate-y-1/2"
             >
-              {/* ─── Title block (266px) ─── */}
+              {/* title block only */}
               <div className="w-[266px] space-y-2">
                 <FieldGroup step={1} label="Write a title">
                   <Input
@@ -1631,24 +1631,22 @@ export default function InstagramPostCreator() {
               </div>
             </div>
 
-            {/* 2 ─ INSTRUMENT: absolute at instrumentTop */}
+            {/* 2 ─ INSTRUMENT, positioned midway via instrumentTop */}
             <div
               ref={instrumentRef}
-              className="absolute left-0"
+              className="absolute left-0 w-[266px] space-y-2"
               style={{
                 top: instrumentTop != null ? instrumentTop : '50%',
                 transform: instrumentTop == null ? 'translateY(-50%)' : undefined
               }}
             >
-              <div className="w-[266px] space-y-2">
-                <FieldGroup step={2} label="Write the instrument">
-                  <Input
-                    value={subtitle}
-                    onChange={e => setSubtitle(e.target.value)}
-                    className="h-9 w-full text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
-                  />
-                </FieldGroup>
-              </div>
+              <FieldGroup step={2} label="Write the instrument">
+                <Input
+                  value={subtitle}
+                  onChange={e => setSubtitle(e.target.value)}
+                  className="h-9 w-full text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                />
+              </FieldGroup>
             </div>
 
             {/* 3 ─ COLOUR PICKER pinned to the card's inner edge */}
