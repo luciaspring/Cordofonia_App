@@ -1600,76 +1600,78 @@ export default function InstagramPostCreator() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-white">
       <div className="bg-white border border-gray-200 p-4 rounded-lg font-ui">
-        <div className="grid grid-cols-4 gap-2">
-          {/* ─── LEFT HALF (steps 1,2,3) ─── */}
-          <div className="col-span-2">
-            <div ref={panelRef} className="h-[747px] relative pt-0 pr-6">
-              {/*  A. header (stays at the very top) */}
-              <h1 className="text-[17px] font-bold leading-tight mb-4">
-                Cordofonia Instagram<br />Posts Creator Tool
-              </h1>
+        {/* now: 8px gap */}
+        <div className="flex space-x-2">
+          {/* left panel */}
+          <div className="w-[540px] h-[747px] relative pt-0 pr-6">
+            {/*  A. header (stays at the very top) */}
+            <h1 className="text-[17px] font-bold leading-tight mb-4">
+              Cordofonia Instagram<br />Posts Creator Tool
+            </h1>
 
-              {/* 1 ─ TITLE */}
-              <div ref={titleRef} className="absolute left-0 w-full top-1/2 -translate-y-1/2">
-                <div className="flex space-x-2">
-                  {/* ─── Title block (266px) ─── */}
-                  <div className="w-[266px] space-y-2">
-                    <FieldGroup step={1} label="Write a title">
-                      <Input
-                        value={titles[0]}
-                        onChange={e => setTitles([e.target.value, titles[1]])}
-                        className="h-9 w-full text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
-                      />
-                      <Input
-                        value={titles[1]}
-                        onChange={e => setTitles([titles[0], e.target.value])}
-                        className="h-9 w-full text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
-                      />
-                    </FieldGroup>
-                  </div>
+            {/* 1 ─ TITLE in the vertical centre */}
+            <div
+              ref={titleRef}
+              className="absolute left-0 top-1/2 -translate-y-1/2"
+            >
+              <div className="flex space-x-2">
+                {/* ─── Title block (266px) ─── */}
+                <div className="w-[266px] space-y-2">
+                  <FieldGroup step={1} label="Write a title">
+                    <Input
+                      value={titles[0]}
+                      onChange={e => setTitles([e.target.value, titles[1]])}
+                      className="h-9 w-full text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                    />
+                    <Input
+                      value={titles[1]}
+                      onChange={e => setTitles([titles[0], e.target.value])}
+                      className="h-9 w-full text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                    />
+                  </FieldGroup>
+                </div>
 
-                  {/* ─── Instrument block (266px) ─── */}
-                  <div className="w-[266px] space-y-2">
-                    <FieldGroup step={2} label="Write the instrument">
-                      <Input
-                        value={subtitle}
-                        onChange={e => setSubtitle(e.target.value)}
-                        className="h-9 w-full text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
-                      />
-                    </FieldGroup>
-                  </div>
+                {/* ─── Instrument block (266px) ─── */}
+                <div className="w-[266px] space-y-2">
+                  <FieldGroup step={2} label="Write the instrument">
+                    <Input
+                      value={subtitle}
+                      onChange={e => setSubtitle(e.target.value)}
+                      className="h-9 w-full text-[15px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                    />
+                  </FieldGroup>
                 </div>
               </div>
+            </div>
 
-              {/* 3 ─ COLOUR PICKER */}
-              <div ref={swatchRef} className="absolute left-0 w-full bottom-0">
-                <FieldGroup step={3} label="Pick a color">
-                  {/* colour swatch wrapper  ─ pin to the very bottom */}
-                  <div className="flex flex-nowrap gap-2 mt-2">
-                    {colorOptions.map(c => (
-                      <button
-                        key={c.value}
-                        onClick={() => setBackgroundColor(c.value)}
-                        aria-label={c.name}
-                        style={{ backgroundColor: c.value }}
-                        className={`
-                          w-8 h-8 rounded-none
-                          ${backgroundColor === c.value
-                            ? 'ring-4 ring-inset ring-black'   /* thicker inner ring */
-                            : 'ring-0'}
-                        `}
-                      />
-                    ))}
-                  </div>
-                </FieldGroup>
-              </div>
+            {/* 3 ─ COLOUR PICKER pinned to the card's inner edge */}
+            <div ref={swatchRef} className="absolute left-0 w-full bottom-0">
+              <FieldGroup step={3} label="Pick a color">
+                {/* colour swatch wrapper  ─ pin to the very bottom */}
+                <div className="flex flex-nowrap gap-2 mt-2">
+                  {colorOptions.map(c => (
+                    <button
+                      key={c.value}
+                      onClick={() => setBackgroundColor(c.value)}
+                      aria-label={c.name}
+                      style={{ backgroundColor: c.value }}
+                      className={`
+                        w-8 h-8 rounded-none
+                        ${backgroundColor === c.value
+                          ? 'ring-4 ring-inset ring-black'   /* thicker inner ring */
+                          : 'ring-0'}
+                      `}
+                    />
+                  ))}
+                </div>
+              </FieldGroup>
             </div>
           </div>
 
-          {/* ─── RIGHT HALF (canvas + controls) ─── */}
-          <div className="col-span-2 flex flex-col">
+          {/* right panel */}
+          <div className="w-[540px] flex flex-col">
             <div
-              className="w-full h-[675px] bg-white rounded-none mb-2 relative overflow-hidden"
+              className="w-[540px] h-[675px] bg-white rounded-none mb-2 relative overflow-hidden"
               style={{ backgroundColor }}
             >
               <canvas
@@ -1685,7 +1687,7 @@ export default function InstagramPostCreator() {
               />
             </div>
 
-            {/* ─── CONTROLS ROW ─────────────────────────────── */}
+            {/* ─── CONTROLS ROW (exactly 540 px wide) ─────────────────────────────── */}
             <div className={`grid grid-cols-4 w-full gap-2 mx-auto ${ROW_H}`}>
               {/* --- FRAME PAIR (2/4 width) --- */}
               <div
@@ -2024,4 +2026,4 @@ export default function InstagramPostCreator() {
       </Dialog>
     </div>
   )
-} 
+}
