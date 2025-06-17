@@ -256,7 +256,7 @@ export default function InstagramPostCreator() {
   const SQUARE_W   = 'w-20'       // 80 px square (settings/export)
   const FRAME_W    = 'w-1/2'      // each frame btn takes half of its flex box
 
-  const [instrumentTop, setInstrumentTop] = useState<number | null>(null)
+  const [instrumentTop, setInstrumentTop] = useState(0)      // absolute px value we'll compute
   const panelRef = useRef<HTMLDivElement>(null)
   const titleRef = useRef<HTMLDivElement>(null)
   const instrumentRef = useRef<HTMLDivElement>(null)
@@ -367,24 +367,26 @@ export default function InstagramPostCreator() {
     }
   }, [isPlaying])
 
+  // ── keep block #2 centred between #1 and #3 on first paint & on resize ──
   useLayoutEffect(() => {
-    const placeInstrument = () => {
-      if (!panelRef.current || !titleRef.current || !swatchRef.current || !instrumentRef.current) return;
+    const recalc = () => {
+      if (!titleRef.current || !swatchRef.current || !instrumentRef.current) return;
 
-      const panel   = panelRef.current.getBoundingClientRect();
-      const title   = titleRef.current.getBoundingClientRect();
-      const swatch  = swatchRef.current.getBoundingClientRect();
+      const titleRect   = titleRef.current.getBoundingClientRect();
+      const swatchRect  = swatchRef.current.getBoundingClientRect();
 
-      const mid     = (title.bottom + swatch.top) / 2;        // exact half-way point
-      const newTop  = mid - panel.top - instrumentRef.current.offsetHeight / 2;
+      const halfway     = (titleRect.bottom + swatchRect.top) / 2;
+      const newTopPX    = halfway
+                        - titleRef.current.offsetParent!.getBoundingClientRect().top
+                        - instrumentRef.current.offsetHeight / 2;
 
-      setInstrumentTop(newTop);
+      setInstrumentTop(newTopPX);
     };
 
-    placeInstrument();
-    window.addEventListener('resize', placeInstrument);
-    return () => window.removeEventListener('resize', placeInstrument);
-  }, [titles, subtitle]);   // recompute whenever those two re-render
+    recalc();                    // initial layout
+    window.addEventListener('resize', recalc);
+    return () => window.removeEventListener('resize', recalc);
+  }, []);                        // run once; recalc itself fires on resize
 
   // ─── TEXT DIMENSION UPDATER ──────────────────────────────────────────────────────
   const updateTextDimensions = (ctx: CanvasRenderingContext2D) => {
@@ -1615,7 +1617,7 @@ export default function InstagramPostCreator() {
             <div
               ref={instrumentRef}
               className="absolute inset-x-0"
-              style={instrumentTop !== null ? { top: instrumentTop } : { visibility: 'hidden' }}
+              style={{ top: `${instrumentTop}px` }}
             >
               <FieldGroup step={2} label="Write the instrument">
                 <Input
