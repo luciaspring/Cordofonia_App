@@ -1730,12 +1730,11 @@ export default function InstagramPostCreator() {
                     <span
                       className={`
                         pointer-events-none absolute z-0
-                        top-1/2 -translate-y-1/2
-                        ${/* right edge for F1, left edge for F2 (mirror) */''}
-                        ${/*   use -1 px so it nudges 1 px *into* the other button */''}
                         right-[-1px]
-                        h-10 w-10 rounded-full ${GOO_BG}
+                        /* full height of the grey bar (row) */
+                        h-full aspect-square rounded-full ${GOO_BG}
                       `}
+                      style={{ top: 0 }}   /* centre automatically because height = 100 % */
                     />
                   )}
                 </div>
@@ -1764,12 +1763,11 @@ export default function InstagramPostCreator() {
                     <span
                       className={`
                         pointer-events-none absolute z-0
-                        top-1/2 -translate-y-1/2
-                        ${/* right edge for F1, left edge for F2 (mirror) */''}
-                        ${/*   use -1 px so it nudges 1 px *into* the other button */''}
                         left-[-1px]
-                        h-10 w-10 rounded-full ${GOO_BG}
+                        /* full height of the grey bar (row) */
+                        h-full aspect-square rounded-full ${GOO_BG}
                       `}
+                      style={{ top: 0 }}   /* centre automatically because height = 100 % */
                     />
                   )}
                 </div>
