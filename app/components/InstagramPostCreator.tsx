@@ -170,7 +170,7 @@ export default function InstagramPostCreator() {
   ])
 
   const [subtitlePositionFrame1, setSubtitlePositionFrame1] = 
-    useState<TextPosition>({ x: M, y: 840, width: 1000, height: 60, rotation: 0, fontSize: 48 })
+    useState<TextPosition>({ x: M, y: 840, width: 1000, height: 30, rotation: 0, fontSize: 24 })
 
   // ─── FRAME 2 defaults (identical) ───────────────────────────────────
   const [titlePositionsFrame2, setTitlePositionsFrame2] = useState<TextPosition[]>([
@@ -179,7 +179,7 @@ export default function InstagramPostCreator() {
   ])
 
   const [subtitlePositionFrame2, setSubtitlePositionFrame2] = 
-    useState<TextPosition>({ x: M, y: 840, width: 1000, height: 60, rotation: 0, fontSize: 48 })
+    useState<TextPosition>({ x: M, y: 840, width: 1000, height: 30, rotation: 0, fontSize: 24 })
 
   const [selectedTexts, setSelectedTexts] = useState<('title1' | 'title2' | 'subtitle')[]>([])
   const [resizeHandle, setResizeHandle] = useState<string | null>(null)
