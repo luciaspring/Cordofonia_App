@@ -404,13 +404,18 @@ export default function InstagramPostCreator() {
 
   // ─── TEXT DIMENSION UPDATER ──────────────────────────────────────────────────────
   const updateTextDimensions = (ctx: CanvasRenderingContext2D) => {
-    const measureText = (text: string, fontSize: number, fontFamily: string = SUL_SANS, isBold = true) => {
-      ctx.font = `${isBold ? 'bold ' : ''}${fontSize}px "${fontFamily}", sans-serif`;
-      const m = ctx.measureText(text);
+    const measureText = (txt: string, fs: number, ff = SUL_SANS, bold = true) => {
+      ctx.font = `${bold ? 'bold ' : ''}${fs}px "${ff}", sans-serif`;
+      const m = ctx.measureText(txt);
+
+      /*  ▸ key numbers we need  */
+      const ascent = m.actualBoundingBoxAscent ?? fs * 0.90;   // ← WAS 0.80
+      const descent = m.actualBoundingBoxDescent ?? fs * 0.10;
+
       return {
         width: m.width,
-        height: (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent) || fontSize,
-        ascent: m.actualBoundingBoxAscent || fontSize * 0.8,   // added
+        height: ascent + descent,
+        ascent,         // <- keep so we can align
       };
     };
 
@@ -439,22 +444,18 @@ export default function InstagramPostCreator() {
     const lineHeight = subtitlePositionFrame2.fontSize;
     const subtitleHeight = lineHeight * 2 + lineGap;
 
-    /* NEW — use the real ascent, not ½ line-height */
-    const yTop = subtitlePositionFrame2.y - instrM.ascent;     // ← this is the only change
-
-    setSubtitlePositionFrame1(prev => ({
-      ...prev,
-      y: yTop,
+    /* right after you compute instrM / valM in updateTextDimensions */
+    setSubtitlePositionFrame1(p => ({
+      ...p,
+      y: p.y - instrM.ascent,          // baseline → very top
       width: subtitleWidth,
       height: subtitleHeight,
-      aspectRatio: subtitleWidth / subtitleHeight
     }));
-    setSubtitlePositionFrame2(prev => ({
-      ...prev,
-      y: yTop,
+    setSubtitlePositionFrame2(p => ({
+      ...p,
+      y: p.y - instrM.ascent,          // baseline → very top
       width: subtitleWidth,
       height: subtitleHeight,
-      aspectRatio: subtitleWidth / subtitleHeight
     }));
   }
 
