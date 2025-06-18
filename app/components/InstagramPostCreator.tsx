@@ -129,7 +129,7 @@ const FieldGroup: React.FC<{
       <span className="text-[11px] font-semibold text-gray-500 mr-1">
         {step}.
       </span>
-      <span className="text-[15px] font-semibold text-gray-700">
+      <span className="font-semibold text-gray-700">
         {label}
       </span>
     </p>
@@ -1601,7 +1601,7 @@ export default function InstagramPostCreator() {
   console.log('RENDER', { phase, isPlaying, titles, subtitle });
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-white">
-      <div className="bg-white border border-gray-200 p-4 rounded-lg font-ui">
+      <div className="bg-white border border-gray-200 p-4 rounded-lg font-ui text-[17px]">
         {/* now: 8px gap */}
         <div className="flex space-x-2">
           {/* left panel: add panelRef so we can measure top/bottom */}
@@ -1621,12 +1621,12 @@ export default function InstagramPostCreator() {
                   <Input
                     value={titles[0]}
                     onChange={e => setTitles([e.target.value, titles[1]])}
-                    className={`h-9 w-full text-[${BASE_FONT_SIZE}px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300`}
+                    className="h-9 w-full bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300 text-inherit"
                   />
                   <Input
                     value={titles[1]}
                     onChange={e => setTitles([titles[0], e.target.value])}
-                    className={`h-9 w-full text-[${BASE_FONT_SIZE}px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300`}
+                    className="h-9 w-full bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300 text-inherit"
                   />
                 </FieldGroup>
               </div>
@@ -1643,7 +1643,7 @@ export default function InstagramPostCreator() {
                   <Input
                     value={subtitle}
                     onChange={e => setSubtitle(e.target.value)}
-                    className={`h-9 w-full text-[${BASE_FONT_SIZE}px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300`}
+                    className="h-9 w-full bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300 text-inherit"
                   />
                 </FieldGroup>
               </div>
