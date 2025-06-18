@@ -438,14 +438,19 @@ export default function InstagramPostCreator() {
     const lineHeight = subtitlePositionFrame2.fontSize;
     const subtitleHeight = lineHeight * 2 + lineGap;
 
+    /* NEW: shift existing y up by half a line so y denotes TOP, not baseline */
+    const yTop = subtitlePositionFrame2.y - lineHeight / 2;
+
     setSubtitlePositionFrame1(prev => ({
       ...prev,
+      y: yTop,
       width: subtitleWidth,
       height: subtitleHeight,
       aspectRatio: subtitleWidth / subtitleHeight
     }));
     setSubtitlePositionFrame2(prev => ({
       ...prev,
+      y: yTop,
       width: subtitleWidth,
       height: subtitleHeight,
       aspectRatio: subtitleWidth / subtitleHeight
