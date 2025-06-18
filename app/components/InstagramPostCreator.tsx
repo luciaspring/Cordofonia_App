@@ -1631,7 +1631,7 @@ export default function InstagramPostCreator() {
                     onChange={e => setTitles([e.target.value, titles[1]])}
                     className="
                       h-9 w-full
-                      bg-gray-200 text-[17px]
+                      bg-[#E5E5E5] text-[17px]
                       rounded-none
                       border border-transparent
                       focus:bg-[#9E9E9E]
@@ -1645,7 +1645,7 @@ export default function InstagramPostCreator() {
                     onChange={e => setTitles([titles[0], e.target.value])}
                     className="
                       h-9 w-full
-                      bg-gray-200 text-[17px]
+                      bg-[#E5E5E5] text-[17px]
                       rounded-none
                       border border-transparent
                       focus:bg-[#9E9E9E]
@@ -1671,7 +1671,7 @@ export default function InstagramPostCreator() {
                     onChange={e => setSubtitle(e.target.value)}
                     className="
                       h-9 w-full
-                      bg-gray-200 text-[17px]
+                      bg-[#E5E5E5] text-[17px]
                       rounded-none
                       border border-transparent
                       focus:bg-[#9E9E9E]
@@ -1685,7 +1685,7 @@ export default function InstagramPostCreator() {
             </div>
 
             {/* 3 ─ COLOUR PICKER (already perfect) */}
-            <div ref={swatchRef} className="absolute left-0 w-full bottom-0">
+            <div ref={swatchRef} className="absolute left-0 w-full bottom-0 bg-[#E5E5E5]">
               <FieldGroup step={3} label="Pick a color">
                 <div className="flex flex-nowrap gap-2 mt-2">
                   {colorOptions.map(c => (
@@ -1814,14 +1814,14 @@ export default function InstagramPostCreator() {
               <div className="flex gap-2 w-full items-center">
                    <Button
                      onClick={() => setSettingsOpen(true)}
-                     className="flex-1 aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center text-inherit"
+                     className="flex-1 aspect-square bg-[#E5E5E5] text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center text-inherit"
                    >
                      <span className="sf-icon text-xl">􀌆</span>
                    </Button>
 
                    <Button
                      onClick={exportVideo}
-                     className="flex-1 aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center text-inherit"
+                     className="flex-1 aspect-square bg-[#E5E5E5] text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center text-inherit"
                    >
                      <span className="sf-icon text-xl">􀈂</span>
                    </Button>
