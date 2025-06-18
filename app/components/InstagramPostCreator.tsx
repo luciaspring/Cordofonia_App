@@ -404,50 +404,51 @@ export default function InstagramPostCreator() {
 
   // ─── TEXT DIMENSION UPDATER ──────────────────────────────────────────────────────
   const updateTextDimensions = (ctx: CanvasRenderingContext2D) => {
-    const measureText = (text: string, fontSize: number) => {
-      ctx.font = `bold ${fontSize}px "${SUL_SANS}", sans-serif`
-      const metrics = ctx.measureText(text)
+    const measureText = (text: string, fontSize: number, fontFamily: string = SUL_SANS, isBold = true) => {
+      ctx.font = `${isBold ? 'bold ' : ''}${fontSize}px "${fontFamily}", sans-serif`;
+      const m = ctx.measureText(text);
       return {
-        width: metrics.width,
-        height: metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent || fontSize * 0.8
-      }
-    }
+        width: m.width,
+        height: (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent) || fontSize
+      };
+    };
 
-    /* ── TITLES ─────────────────────────────────────────────── */
+    // ── TITLES ───────────────────────────────────────────────
     setTitlePositionsFrame1(prev =>
       prev.map((pos, i) => {
-        const { width, height } = measureText(titles[i], pos.fontSize)
+        const { width, height } = measureText(titles[i], pos.fontSize, SUL_SANS, true)
         return { ...pos, width, height }
       })
     )
 
     setTitlePositionsFrame2(prev =>
       prev.map((pos, i) => {
-        const { width, height } = measureText(titles[i], pos.fontSize)
+        const { width, height } = measureText(titles[i], pos.fontSize, SUL_SANS, true)
         return { ...pos, width, height }
       })
     )
 
-    // Remove title width updates to keep fixed widths
-    const instrText = 'Instrumento:'
-    const instrMetrics = measureText(instrText, subtitlePositionFrame2.fontSize)
-    const subMetrics = measureText(subtitle, subtitlePositionFrame2.fontSize)
+    // ── SUBTITLE ───────────────────────────────────────────────
+    const instr = 'Instrumento:';
+    const instrMetrics = measureText(instr, subtitlePositionFrame2.fontSize, AFFAIRS, false);
+    const valueMetrics = measureText(subtitle, subtitlePositionFrame2.fontSize, AFFAIRS, false);
+    const lineGap = 8;
 
-    const subW = Math.max(instrMetrics.width, subMetrics.width)
-    const subH = instrMetrics.height + 8 + subMetrics.height
+    const subtitleWidth  = Math.max(instrMetrics.width, valueMetrics.width);
+    const subtitleHeight = instrMetrics.height + lineGap + valueMetrics.height;
 
     setSubtitlePositionFrame1(prev => ({
       ...prev,
-      width: subW,
-      height: subH,
-      aspectRatio: subW / subH
-    }))
+      width: subtitleWidth,
+      height: subtitleHeight,
+      aspectRatio: subtitleWidth / subtitleHeight
+    }));
     setSubtitlePositionFrame2(prev => ({
       ...prev,
-      width: subW,
-      height: subH,
-      aspectRatio: subW / subH
-    }))
+      width: subtitleWidth,
+      height: subtitleHeight,
+      aspectRatio: subtitleWidth / subtitleHeight
+    }));
   }
 
   // ─── DRAWING ROUTINES ────────────────────────────────────────────────────────────
