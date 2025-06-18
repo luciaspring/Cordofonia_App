@@ -1624,11 +1624,13 @@ export default function InstagramPostCreator() {
                     onChange={e => setTitles([e.target.value, titles[1]])}
                     className="
                       h-9 w-full
-                      text-[17px]
-                      bg-gray-200 rounded-none
-                      border-0
+                      bg-gray-200 text-[17px]
+                      rounded-none
+                      border border-transparent
                       focus:bg-[#9E9E9E]
-                      focus:ring-0 focus:border-0 focus:outline-none
+                      focus:border-transparent
+                      focus:ring-0 focus:outline-none
+                      focus-visible:ring-0 focus-visible:outline-none
                     "
                   />
                   <Input
@@ -1636,11 +1638,13 @@ export default function InstagramPostCreator() {
                     onChange={e => setTitles([titles[0], e.target.value])}
                     className="
                       h-9 w-full
-                      text-[17px]
-                      bg-gray-200 rounded-none
-                      border-0
+                      bg-gray-200 text-[17px]
+                      rounded-none
+                      border border-transparent
                       focus:bg-[#9E9E9E]
-                      focus:ring-0 focus:border-0 focus:outline-none
+                      focus:border-transparent
+                      focus:ring-0 focus:outline-none
+                      focus-visible:ring-0 focus-visible:outline-none
                     "
                   />
                 </FieldGroup>
@@ -1660,11 +1664,13 @@ export default function InstagramPostCreator() {
                     onChange={e => setSubtitle(e.target.value)}
                     className="
                       h-9 w-full
-                      text-[17px]
-                      bg-gray-200 rounded-none
-                      border-0
+                      bg-gray-200 text-[17px]
+                      rounded-none
+                      border border-transparent
                       focus:bg-[#9E9E9E]
-                      focus:ring-0 focus:border-0 focus:outline-none
+                      focus:border-transparent
+                      focus:ring-0 focus:outline-none
+                      focus-visible:ring-0 focus-visible:outline-none
                     "
                   />
                 </FieldGroup>
