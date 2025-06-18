@@ -126,10 +126,10 @@ const FieldGroup: React.FC<{
 }> = ({ step, label, children }) => (
   <div className="space-y-1">
     <p className="tracking-wide">
-      <span className="text-[11px] font-semibold text-gray-500 mr-1">
+      <span className="text-[11px] font-semibold text-[#7F7F7F] mr-1">
         {step}.
       </span>
-      <span className="text-[15px] font-semibold text-gray-700">
+      <span className="text-[15px] font-semibold text-[#7F7F7F]">
         {label}
       </span>
     </p>
