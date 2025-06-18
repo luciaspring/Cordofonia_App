@@ -409,7 +409,8 @@ export default function InstagramPostCreator() {
       const m = ctx.measureText(text);
       return {
         width: m.width,
-        height: (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent) || fontSize
+        height: (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent) || fontSize,
+        ascent: m.actualBoundingBoxAscent || fontSize * 0.8,   // added
       };
     };
 
@@ -430,16 +431,16 @@ export default function InstagramPostCreator() {
 
     // ── SUBTITLE ───────────────────────────────────────────────
     const instr = 'Instrumento:';
-    const instrMetrics = measureText(instr, subtitlePositionFrame2.fontSize, AFFAIRS, false);
-    const valueMetrics = measureText(subtitle, subtitlePositionFrame2.fontSize, AFFAIRS, false);
-    const lineGap = 8;
+    const instrM = measureText(instr, subtitlePositionFrame2.fontSize, AFFAIRS, false);  // now returns ascent too
+    const valM = measureText(subtitle, subtitlePositionFrame2.fontSize, AFFAIRS, false);
 
-    const subtitleWidth  = Math.max(instrMetrics.width, valueMetrics.width);
+    const lineGap = 8;
+    const subtitleWidth = Math.max(instrM.width, valM.width);
     const lineHeight = subtitlePositionFrame2.fontSize;
     const subtitleHeight = lineHeight * 2 + lineGap;
 
-    /* NEW: shift existing y up by half a line so y denotes TOP, not baseline */
-    const yTop = subtitlePositionFrame2.y - lineHeight / 2;
+    /* NEW — use the real ascent, not ½ line-height */
+    const yTop = subtitlePositionFrame2.y - instrM.ascent;     // ← this is the only change
 
     setSubtitlePositionFrame1(prev => ({
       ...prev,
