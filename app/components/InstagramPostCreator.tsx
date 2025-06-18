@@ -125,11 +125,11 @@ const FieldGroup: React.FC<{
   children: React.ReactNode
 }> = ({ step, label, children }) => (
   <div className="space-y-1">
-    <p className="tracking-wide">
+    <p className="mb-1 tracking-wide">
       <span className="text-[11px] font-semibold text-gray-500 mr-1">
         {step}.
       </span>
-      <span className="font-semibold text-gray-700">
+      <span className="text-[15px] font-semibold text-gray-700">
         {label}
       </span>
     </p>
