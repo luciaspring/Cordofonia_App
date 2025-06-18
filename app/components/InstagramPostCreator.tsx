@@ -435,7 +435,8 @@ export default function InstagramPostCreator() {
     const lineGap = 8;
 
     const subtitleWidth  = Math.max(instrMetrics.width, valueMetrics.width);
-    const subtitleHeight = instrMetrics.height + lineGap + valueMetrics.height;
+    const lineHeight = subtitlePositionFrame2.fontSize;
+    const subtitleHeight = lineHeight * 2 + lineGap;
 
     setSubtitlePositionFrame1(prev => ({
       ...prev,
@@ -2033,4 +2034,4 @@ export default function InstagramPostCreator() {
       </Dialog>
     </div>
   )
-}
+} 
