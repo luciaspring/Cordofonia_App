@@ -529,7 +529,7 @@ export default function InstagramPostCreator() {
     ctx.rotate(subPos.rotation);
     ctx.font         = `${subPos.fontSize}px "${AFFAIRS}", sans-serif`;
     ctx.fillStyle    = getContrastColor();
-    ctx.textBaseline = 'middle';
+    ctx.textBaseline = 'top';              // was 'middle'
     ctx.textAlign    = 'left';
 
     const lx = -subPos.width  / 2;
@@ -677,19 +677,19 @@ export default function InstagramPostCreator() {
     const dynSW     = sub1.width + (sub2.width - sub1.width) * scaleT
     const dynSH     = sub1.height + (sub2.height - sub1.height) * scaleT
 
-    ctx.save()
+    ctx.save();
     // fixed font-based centering for subtitle
-    ctx.translate(sx + dynSW / 2 + streX, sy + dynSH / 2 + streY)
-    ctx.rotate(srot)
-    ctx.font         = `${sFontSize}px "${AFFAIRS}", sans-serif`
-    ctx.fillStyle    = getContrastColor()
-    ctx.textBaseline = 'middle'
-    ctx.textAlign    = 'left'
-    const lx = -dynSW / 2
-    const ty = -dynSH / 2
-    ctx.fillText('Instrumento:', lx, ty)
-    ctx.fillText(subtitle, lx, ty + sFontSize + 8)
-    ctx.restore()
+    ctx.translate(sx + dynSW / 2 + streX, sy + dynSH / 2 + streY);
+    ctx.rotate(srot);
+    ctx.font         = `${sFontSize}px "${AFFAIRS}", sans-serif`;
+    ctx.fillStyle    = getContrastColor();
+    ctx.textBaseline = 'top';              // was 'middle'
+    ctx.textAlign    = 'left';
+    const lx = -dynSW / 2;
+    const ty = -dynSH / 2;
+    ctx.fillText('Instrumento:', lx, ty);
+    ctx.fillText(subtitle, lx, ty + sFontSize + 8);
+    ctx.restore();
   }
 
   const drawBoundingBox = (ctx: CanvasRenderingContext2D, pos: TextPosition) => {
