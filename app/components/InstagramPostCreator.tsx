@@ -1710,6 +1710,7 @@ export default function InstagramPostCreator() {
                     className={`
                       w-full h-full flex-1 overflow-hidden rounded-none relative z-10
                       transition-colors duration-300
+                      text-inherit
                       ${phase === 'merge' || phase === 'playing'
                         ? 'bg-gray-200 text-transparent'
                         : currentFrame === 1
@@ -1731,6 +1732,7 @@ export default function InstagramPostCreator() {
                     className={`
                       w-full h-full flex-1 overflow-hidden rounded-none relative z-10
                       transition-colors duration-300
+                      text-inherit
                       ${phase === 'merge' || phase === 'playing'
                         ? 'bg-gray-200 text-transparent'
                         : currentFrame === 2
@@ -1758,9 +1760,10 @@ export default function InstagramPostCreator() {
               <Button
                 onClick={handlePlayClick}
                 className={`
-                  w-full               /* fill its ¼-column */
+                  w-full
                   h-full
                   rounded-full flex items-center justify-center
+                  text-inherit
                   transition-colors duration-300
                   ${phase==='playing'
                     ? 'bg-black text-white hover:bg-[#9E9E9E] hover:text-black'
@@ -1776,14 +1779,14 @@ export default function InstagramPostCreator() {
               <div className="flex gap-2 w-full items-center">
                    <Button
                      onClick={() => setSettingsOpen(true)}
-                     className="flex-1 aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center"
+                     className="flex-1 aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center text-inherit"
                    >
                      <span className="sf-icon text-xl">􀌆</span>
                    </Button>
 
                    <Button
                      onClick={exportVideo}
-                     className="flex-1 aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center"
+                     className="flex-1 aspect-square bg-gray-200 text-black hover:bg-[#9E9E9E] rounded-none flex items-center justify-center text-inherit"
                    >
                      <span className="sf-icon text-xl">􀈂</span>
                    </Button>
