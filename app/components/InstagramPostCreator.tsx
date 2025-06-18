@@ -489,44 +489,46 @@ export default function InstagramPostCreator() {
 
   // ─── STATIC TEXT DRAW WITH TREMBLING ─────────────────────────────────────────────
   const drawStaticText = (ctx: CanvasRenderingContext2D, frame: number) => {
-    const positions = frame === 1 ? titlePositionsFrame1 : titlePositionsFrame2
-    const subPos = frame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
+    const positions = frame === 1 ? titlePositionsFrame1 : titlePositionsFrame2;
+    const subPos = frame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2;
 
     positions.forEach((pos, idx) => {
-      const tremX = (Math.random() - 0.5) * tremblingIntensity
-      const tremY = (Math.random() - 0.5) * tremblingIntensity
-      ctx.save()
+      const tremX = (Math.random() - 0.5) * tremblingIntensity;
+      const tremY = (Math.random() - 0.5) * tremblingIntensity;
+      ctx.save();
       // fixed font-based centering
-      const cx = pos.x + pos.width / 2
-      const cy = pos.y + pos.fontSize / 2
-      ctx.translate(cx + tremX, cy + tremY)                         // centre pivot
-      ctx.rotate(pos.rotation)
-      ctx.font         = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`
-      ctx.fillStyle    = getContrastColor()
-      ctx.textBaseline = 'middle'
-      ctx.textAlign    = 'left'
-      ctx.fillText(titles[idx], -pos.width / 2, 0)                  // shift left by ½ W
-      ctx.restore()
-    })
+      const cx = pos.x + pos.width / 2;
+      const cy = pos.y + pos.fontSize / 2;
+      ctx.translate(cx + tremX, cy + tremY); // centre pivot
+      ctx.rotate(pos.rotation);
+      ctx.font = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`;
+      ctx.fillStyle = getContrastColor();
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'left';
+      ctx.fillText(titles[idx], -pos.width / 2, 0); // shift left by ½ W
+      ctx.restore();
+    });
 
-    const tremXsub = (Math.random() - 0.5) * tremblingIntensity
-    const tremYsub = (Math.random() - 0.5) * tremblingIntensity
+    // subtitle
+    const tremXsub = (Math.random() - 0.5) * tremblingIntensity;
+    const tremYsub = (Math.random() - 0.5) * tremblingIntensity;
 
-    ctx.save()
-    // fixed font-based centering for subtitle
-    const scx = subPos.x + subPos.width / 2
-    const scy = subPos.y + subPos.fontSize / 2
-    ctx.translate(scx + tremXsub, scy + tremYsub)
-    ctx.rotate(subPos.rotation)
-    ctx.font         = `${subPos.fontSize}px "${AFFAIRS}", sans-serif`
-    ctx.fillStyle    = getContrastColor()
-    ctx.textBaseline = 'middle'
-    ctx.textAlign    = 'left'
-    const lx = -subPos.width / 2
-    const ty = -subPos.height / 2
-    ctx.fillText('Instrumento:', lx, ty)
-    ctx.fillText(subtitle, lx, ty + subPos.fontSize + 8)
-    ctx.restore()
+    ctx.save();
+    // use height here, not fontSize
+    const scx = subPos.x + subPos.width  / 2;
+    const scy = subPos.y + subPos.height / 2;
+    ctx.translate(scx + tremXsub, scy + tremYsub);
+    ctx.rotate(subPos.rotation);
+    ctx.font         = `${subPos.fontSize}px "${AFFAIRS}", sans-serif`;
+    ctx.fillStyle    = getContrastColor();
+    ctx.textBaseline = 'middle';
+    ctx.textAlign    = 'left';
+
+    const lx = -subPos.width  / 2;
+    const ty = -subPos.height / 2;
+    ctx.fillText('Instrumento:', lx, ty);
+    ctx.fillText(subtitle,      lx, ty + subPos.fontSize + 8);
+    ctx.restore();
   }
 
   const drawRotatedText = (ctx: CanvasRenderingContext2D, pos: TextPosition, text: string) => {
