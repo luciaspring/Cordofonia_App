@@ -1601,6 +1601,7 @@ export default function InstagramPostCreator() {
   console.log('RENDER', { phase, isPlaying, titles, subtitle });
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-white">
+      {/* set a 17px base font-size here; the "1. 2. 3." spans still override to 11px */}
       <div className="bg-white border border-gray-200 p-4 rounded-lg font-ui text-[17px]">
         {/* now: 8px gap */}
         <div className="flex space-x-2">
@@ -1710,7 +1711,7 @@ export default function InstagramPostCreator() {
                     className={`
                       w-full h-full flex-1 overflow-hidden rounded-none relative z-10
                       transition-colors duration-300
-                      text-inherit
+                      text-[17px]
                       ${phase === 'merge' || phase === 'playing'
                         ? 'bg-gray-200 text-transparent'
                         : currentFrame === 1
@@ -1732,7 +1733,7 @@ export default function InstagramPostCreator() {
                     className={`
                       w-full h-full flex-1 overflow-hidden rounded-none relative z-10
                       transition-colors duration-300
-                      text-inherit
+                      text-[17px]
                       ${phase === 'merge' || phase === 'playing'
                         ? 'bg-gray-200 text-transparent'
                         : currentFrame === 2
