@@ -497,8 +497,10 @@ export default function InstagramPostCreator() {
       ctx.save()
       // fixed font-based centering
       const cx = pos.x + pos.width / 2
-      // split the difference between the old (height/2) and new (fontSize/2) centers:
-      const cy = pos.y + (pos.height + pos.fontSize) / 4
+      ctx.font = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`
+      const { actualBoundingBoxAscent, actualBoundingBoxDescent } = ctx.measureText(titles[idx])
+      const height = actualBoundingBoxAscent + actualBoundingBoxDescent
+      const cy = pos.y + height / 2
       ctx.translate(cx + tremX, cy + tremY)                         // centre pivot
       ctx.rotate(pos.rotation)
       ctx.font         = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`
@@ -515,8 +517,10 @@ export default function InstagramPostCreator() {
     ctx.save()
     // fixed font-based centering for subtitle
     const scx = subPos.x + subPos.width / 2
-    // split the difference between the old (height/2) and new (fontSize/2) centers:
-    const scy = subPos.y + (subPos.height + subPos.fontSize) / 4
+    ctx.font = `${subPos.fontSize}px "${AFFAIRS}", sans-serif`
+    const { actualBoundingBoxAscent: subAscent, actualBoundingBoxDescent: subDescent } = ctx.measureText('Instrumento:')
+    const subHeight = subAscent + subDescent
+    const scy = subPos.y + subHeight / 2
     ctx.translate(scx + tremXsub, scy + tremYsub)
     ctx.rotate(subPos.rotation)
     ctx.font         = `${subPos.fontSize}px "${AFFAIRS}", sans-serif`
@@ -534,8 +538,10 @@ export default function InstagramPostCreator() {
     ctx.save()
     // fixed font-based centering
     const cx = pos.x + pos.width/2
-    // split the difference between the old (height/2) and new (fontSize/2) centers:
-    const cy = pos.y + (pos.height + pos.fontSize) / 4
+    ctx.font = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`
+    const { actualBoundingBoxAscent, actualBoundingBoxDescent } = ctx.measureText(text)
+    const height = actualBoundingBoxAscent + actualBoundingBoxDescent
+    const cy = pos.y + height / 2
     ctx.translate(cx, cy)
     ctx.rotate(pos.rotation)
     ctx.font = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`
@@ -646,7 +652,10 @@ export default function InstagramPostCreator() {
       // 4) DRAW from left edge
       ctx.save()
       // fixed font-based centering
-      ctx.translate(x + dynW / 2 + tremX, y + (dynH + fontSize) / 4 + tremY)    // centre pivot
+      ctx.font = `bold ${fontSize}px "${SUL_SANS}", sans-serif`
+      const { actualBoundingBoxAscent, actualBoundingBoxDescent } = ctx.measureText(text)
+      const height = actualBoundingBoxAscent + actualBoundingBoxDescent
+      ctx.translate(x + dynW / 2 + tremX, y + height / 2 + tremY)    // centre pivot
       ctx.rotate(rotation)
       ctx.font         = `bold ${fontSize}px "${SUL_SANS}", sans-serif`
       ctx.fillStyle    = getContrastColor()
@@ -671,7 +680,10 @@ export default function InstagramPostCreator() {
 
     ctx.save()
     // fixed font-based centering for subtitle
-    ctx.translate(sx + dynSW / 2 + streX, sy + (dynSH + sFontSize) / 4 + streY)
+    ctx.font = `${sFontSize}px "${AFFAIRS}", sans-serif`
+    const { actualBoundingBoxAscent: subAscent, actualBoundingBoxDescent: subDescent } = ctx.measureText('Instrumento:')
+    const subHeight = subAscent + subDescent
+    ctx.translate(sx + dynSW / 2 + streX, sy + subHeight / 2 + streY)
     ctx.rotate(srot)
     ctx.font         = `${sFontSize}px "${AFFAIRS}", sans-serif`
     ctx.fillStyle    = getContrastColor()
