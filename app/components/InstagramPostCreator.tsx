@@ -1602,7 +1602,7 @@ export default function InstagramPostCreator() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-white">
       {/* set a 17px base font-size here; the "1. 2. 3." spans still override to 11px */}
-      <div className="bg-white border border-gray-200 p-4 rounded-2xl font-ui text-[17px]">
+      <div className="bg-white border-2 border-gray-200 p-4 rounded-2xl font-ui text-[17px]">
         {/* now: 8px gap */}
         <div className="flex space-x-2">
           {/* left panel: add panelRef so we can measure top/bottom */}
