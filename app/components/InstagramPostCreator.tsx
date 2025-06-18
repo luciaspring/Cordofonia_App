@@ -139,7 +139,7 @@ const FieldGroup: React.FC<{
 
 export default function InstagramPostCreator() {
   // ─── STATE HOOKS ────────────────────────────────────────────────────────────────
-  const [titles, setTitles] = useState<string[]>(['John', 'Doe'])
+  const [titles, setTitles] = useState<string[]>(['Mbye', 'Ebrima'])
   const [subtitle, setSubtitle] = useState('Kora')
   const [backgroundColor, setBackgroundColor] = useState('#E0B0FF')
   const [currentFrame, setCurrentFrame] = useState(1)
