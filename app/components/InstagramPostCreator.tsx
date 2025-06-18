@@ -1685,7 +1685,7 @@ export default function InstagramPostCreator() {
             </div>
 
             {/* 3 ─ COLOUR PICKER (already perfect) */}
-            <div ref={swatchRef} className="absolute left-0 w-full bottom-0 bg-[#E5E5E5]">
+            <div ref={swatchRef} className="absolute left-0 w-full bottom-0">
               <FieldGroup step={3} label="Pick a color">
                 <div className="flex flex-nowrap gap-2 mt-2">
                   {colorOptions.map(c => (
