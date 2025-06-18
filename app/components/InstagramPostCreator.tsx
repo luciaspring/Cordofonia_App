@@ -1622,12 +1622,12 @@ export default function InstagramPostCreator() {
                   <Input
                     value={titles[0]}
                     onChange={e => setTitles([e.target.value, titles[1]])}
-                    className="h-9 w-full text-[17px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                    className="h-9 w-full text-[17px] bg-gray-200 rounded-none focus:bg-[#9E9E9E] focus:ring-0 focus:border-0"
                   />
                   <Input
                     value={titles[1]}
                     onChange={e => setTitles([titles[0], e.target.value])}
-                    className="h-9 w-full text-[17px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                    className="h-9 w-full text-[17px] bg-gray-200 rounded-none focus:bg-[#9E9E9E] focus:ring-0 focus:border-0"
                   />
                 </FieldGroup>
               </div>
@@ -1644,7 +1644,7 @@ export default function InstagramPostCreator() {
                   <Input
                     value={subtitle}
                     onChange={e => setSubtitle(e.target.value)}
-                    className="h-9 w-full text-[17px] bg-gray-200 rounded-none focus:ring-0 focus:border-gray-300"
+                    className="h-9 w-full text-[17px] bg-gray-200 rounded-none focus:bg-[#9E9E9E] focus:ring-0 focus:border-0"
                   />
                 </FieldGroup>
               </div>
