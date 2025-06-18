@@ -1617,7 +1617,7 @@ export default function InstagramPostCreator() {
               ref={titleRef}
               className="absolute left-0 top-1/2"
             >
-              <div className="w-[266px] space-y-1">
+              <div className="w-[266px] space-y-0.5">
                 <FieldGroup step={1} label="Write a title">
                   <Input
                     value={titles[0]}
