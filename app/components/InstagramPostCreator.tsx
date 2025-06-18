@@ -535,7 +535,7 @@ export default function InstagramPostCreator() {
     ctx.save()
     // fixed font-based centering
     const cx = pos.x + pos.width/2
-    const cy = pos.y + pos.fontSize/2
+    const cy = pos.y + pos.height/2
     ctx.translate(cx, cy)
     ctx.rotate(pos.rotation)
     ctx.font = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`
@@ -646,7 +646,7 @@ export default function InstagramPostCreator() {
       // 4) DRAW from left edge
       ctx.save()
       // fixed font-based centering
-      ctx.translate(x + dynW / 2 + tremX, y + fontSize / 2 + tremY)    // centre pivot
+      ctx.translate(x + dynW / 2 + tremX, y + dynH / 2 + tremY)    // centre pivot
       ctx.rotate(rotation)
       ctx.font         = `bold ${fontSize}px "${SUL_SANS}", sans-serif`
       ctx.fillStyle    = getContrastColor()
@@ -671,7 +671,7 @@ export default function InstagramPostCreator() {
 
     ctx.save()
     // fixed font-based centering for subtitle
-    ctx.translate(sx + dynSW / 2 + streX, sy + sFontSize / 2 + streY)
+    ctx.translate(sx + dynSW / 2 + streX, sy + dynSH / 2 + streY)
     ctx.rotate(srot)
     ctx.font         = `${sFontSize}px "${AFFAIRS}", sans-serif`
     ctx.fillStyle    = getContrastColor()
