@@ -426,24 +426,12 @@ export default function InstagramPostCreator() {
     };
 
     // ── TITLES ───────────────────────────────────────────────
-    const baselineY = (r: number) => M + ROW_H * (r + 1);
-
-    /* 1 ─ Titles, rows 3 & 4 (baseline rows 4 & 5) */
     setTitlePositionsFrame1(prev =>
       prev.map((pos, i) => {
-        const { width, height, ascent } =
-          measureText(titles[i], pos.fontSize, SUL_SANS, true);
-
-        /* line i sits on baseline row 3+i  →  4th/5th visible row */
-        const base = baselineY(3 + i);
-        return {
-          ...pos,
-          y: base - ascent,   // top of box = baseline – ascent
-          width,
-          height,
-        };
+        const { width, height } = measureText(titles[i], pos.fontSize, SUL_SANS, true)
+        return { ...pos, width, height }
       })
-    );
+    )
 
     setTitlePositionsFrame2(prev =>
       prev.map((pos, i) => {
@@ -454,30 +442,26 @@ export default function InstagramPostCreator() {
 
     // ── SUBTITLE ───────────────────────────────────────────────
     const instr = 'Instrumento:';
-    const instrM = measureText(instr, subtitlePositionFrame1.fontSize, AFFAIRS, false);  // now returns ascent too
-    const valM = measureText(subtitle, subtitlePositionFrame1.fontSize, AFFAIRS, false);
+    const instrM = measureText(instr, subtitlePositionFrame2.fontSize, AFFAIRS, false);  // now returns ascent too
+    const valM = measureText(subtitle, subtitlePositionFrame2.fontSize, AFFAIRS, false);
 
     const lineGap = 8;
     const subtitleWidth = Math.max(instrM.width, valM.width);
-    const lineHeight = subtitlePositionFrame1.fontSize;
+    const lineHeight = subtitlePositionFrame2.fontSize;
     const subtitleHeight = lineHeight * 2 + lineGap;
-
-    const subBase = baselineY(5);                   // baseline of 6-th row
-    const subHeight = instrM.height + 8 + valM.height;
-    const subWidth  = Math.max(instrM.width, valM.width);
 
     /* right after you compute instrM / valM in updateTextDimensions */
     setSubtitlePositionFrame1(p => ({
       ...p,
-      y: subBase - instrM.ascent,
-      width: subWidth,
-      height: subHeight,
+      y: p.y - instrM.ascent,          // baseline → very top
+      width: subtitleWidth,
+      height: subtitleHeight,
     }));
     setSubtitlePositionFrame2(p => ({
       ...p,
-      y: subBase - instrM.ascent,
-      width: subWidth,
-      height: subHeight,
+      y: p.y - instrM.ascent,          // baseline → very top
+      width: subtitleWidth,
+      height: subtitleHeight,
     }));
   }
 
@@ -2097,4 +2081,4 @@ export default function InstagramPostCreator() {
       </Dialog>
     </div>
   )
-} 
+}
