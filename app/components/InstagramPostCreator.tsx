@@ -72,11 +72,45 @@ interface RigidBoundingBox {
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
-const M = 32      // inner margin (px)
-// 8-row layout helper
-const ROWS        = 8
-const ROW_HEIGHT  = (1350 - M * 2) / ROWS          // canvas.height is 1350
-const rowY        = (r: number) => M + ROW_HEIGHT * r   // top-edge of row r
+const M = 32      // side/top margin
+const CANVAS_H = 1350
+const GRID_ROWS = 8
+const ROW_H = (CANVAS_H - 2 * M) / GRID_ROWS      // 1350 → 8 rows
+
+/* helper: baseline Y of a given 1-based row number */
+const baselineY = (row: number) => M + ROW_H * row
+
+/* ----- GRID-SNAPPED DEFAULTS ------------------------------------ */
+const TITLE_FS = 180         // font-size for Mbye / Ebrima
+const SUB_FS   = 32          // font-size for "Instrumento: / Kora"
+
+export const defaultTitlePositions: TextPosition[] = [
+  {                       // baseline on row 4  → top = baseline − fontSize
+    x: M,
+    y: baselineY(4) - TITLE_FS,
+    width: 1000,
+    height: TITLE_FS,
+    rotation: 0,
+    fontSize: TITLE_FS
+  },
+  {                       // baseline on row 5
+    x: M,
+    y: baselineY(5) - TITLE_FS,
+    width: 1000,
+    height: TITLE_FS,
+    rotation: 0,
+    fontSize: TITLE_FS
+  }
+]
+
+export const defaultSubtitlePosition: TextPosition = {
+  x: M,
+  y: baselineY(6) - SUB_FS,          // "Instrumento:" baseline on row 6
+  width: 1000,
+  height: SUB_FS * 2 + 8,            // two lines + 8 px gap you already use
+  rotation: 0,
+  fontSize: SUB_FS
+}
 
 const colorOptions = [
   { name: 'Light Pink', value: '#F6A69B' },
@@ -1632,8 +1666,8 @@ export default function InstagramPostCreator() {
     ctx.strokeRect(M + 0.5, M + 0.5, ctx.canvas.width - M*2, ctx.canvas.height - M*2)
 
     // horizontal rows
-    for (let i = 1; i < ROWS; i++) {
-      const y = rowY(i) + 0.5
+    for (let i = 1; i < GRID_ROWS; i++) {
+      const y = baselineY(i) + 0.5
       ctx.beginPath()
       ctx.moveTo(M, y)
       ctx.lineTo(ctx.canvas.width - M, y)
