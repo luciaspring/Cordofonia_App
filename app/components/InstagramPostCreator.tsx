@@ -326,15 +326,22 @@ export default function InstagramPostCreator() {
 
     /* ---------- Frame 1 ---------- */
     setTitlePositionsFrame1(prev => {
-      const out  = [...prev];
-      const t2   = out[1];                               // "Ebrima"
-      const ctx  = document.createElement('canvas').getContext('2d')!;
-      ctx.font   = `bold ${t2.fontSize}px "${SUL_SANS}", sans-serif`;
-      const asc  = ctx.measureText(titles[1]).actualBoundingBoxAscent
-                 ?? t2.fontSize * 0.9;                   // fallback
-      const baseline = rowY(4) + ROW_HEIGHT;             // bottom of row-5
-      out[1] = { ...t2, y: baseline - asc };
-      return out;
+      // mede "Ebrima" (index 1)
+      const { width, height, ascent } =
+        measureText(titles[1], prev[1].fontSize, SUL_SANS, true);
+
+      // baseline da 5.ª fila (index 4, zero-based)
+      const baseline5 = rowY(4) + ROW_HEIGHT;
+
+      return [
+        prev[0],                           // Mbye intacto
+        {                                  // só mudamos Y (+ width/height actualizados)
+          ...prev[1],
+          width,
+          height,
+          y: baseline5 - ascent            // topo = baseline – ascent
+        }
+      ];
     });
 
     /* mirror to Frame 2 if you copy positions */
@@ -446,21 +453,6 @@ export default function InstagramPostCreator() {
 
   // ─── TEXT DIMENSION UPDATER ──────────────────────────────────────────────────────
   const updateTextDimensions = (ctx: CanvasRenderingContext2D) => {
-    const measureText = (txt: string, fs: number, ff = SUL_SANS, bold = true) => {
-      ctx.font = `${bold ? 'bold ' : ''}${fs}px "${ff}", sans-serif`;
-      const m = ctx.measureText(txt);
-
-      /*  ▸ key numbers we need  */
-      const ascent = m.actualBoundingBoxAscent ?? fs * 0.90;   // ← WAS 0.80
-      const descent = m.actualBoundingBoxDescent ?? fs * 0.10;
-
-      return {
-        width: m.width,
-        height: ascent + descent,
-        ascent,         // <- keep so we can align
-      };
-    };
-
     // ── TITLES ───────────────────────────────────────────────
     setTitlePositionsFrame1(prev =>
       prev.map((pos, i) => {
@@ -1718,6 +1710,29 @@ export default function InstagramPostCreator() {
     if (!fontLoaded) return;
     setSubtitlePositionFrame1(p => ({ ...p, y: rowY(5) }));   // row 6
   }, [fontLoaded]);
+
+  // Helper to measure text metrics
+  const measureText = (
+    txt: string,
+    fs: number,
+    ff = SUL_SANS,
+    bold = true
+  ): { width: number; height: number; ascent: number; descent: number } => {
+    // Create a temporary canvas for measurement
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return { width: 0, height: 0, ascent: 0, descent: 0 };
+    ctx.font = `${bold ? 'bold ' : ''}${fs}px "${ff}", sans-serif`;
+    const m = ctx.measureText(txt);
+    const ascent = m.actualBoundingBoxAscent ?? fs * 0.90;
+    const descent = m.actualBoundingBoxDescent ?? fs * 0.10;
+    return {
+      width: m.width,
+      height: ascent + descent,
+      ascent,
+      descent,
+    };
+  };
 
   // ─── JSX ────────────────────────────────────────────────────────────────────────
   console.log('RENDER', { phase, isPlaying, titles, subtitle });
