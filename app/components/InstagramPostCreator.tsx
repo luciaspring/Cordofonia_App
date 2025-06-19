@@ -436,55 +436,47 @@ export default function InstagramPostCreator() {
 
   // ─── TEXT DIMENSION UPDATER ──────────────────────────────────────────────────────
   const updateTextDimensions = (ctx: CanvasRenderingContext2D) => {
-    const measureText = (txt: string, fs: number, ff = SUL_SANS, bold = true) => {
+    // Helper to measure text metrics
+    const measureText = (
+      txt: string,
+      fs: number,
+      ff = SUL_SANS,
+      bold = true
+    ): { width: number; height: number; ascent: number; descent: number } => {
+      // Create a temporary canvas for measurement
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return { width: 0, height: 0, ascent: 0, descent: 0 };
       ctx.font = `${bold ? 'bold ' : ''}${fs}px "${ff}", sans-serif`;
       const m = ctx.measureText(txt);
-
-      /*  ▸ key numbers we need  */
-      const ascent = m.actualBoundingBoxAscent ?? fs * 0.90;   // ← WAS 0.80
+      const ascent = m.actualBoundingBoxAscent ?? fs * 0.90;
       const descent = m.actualBoundingBoxDescent ?? fs * 0.10;
-
       return {
         width: m.width,
         height: ascent + descent,
-        ascent,         // <- keep so we can align
+        ascent,
+        descent,
       };
     };
 
     // ── TITLES ───────────────────────────────────────────────
     setTitlePositionsFrame1(prev =>
       prev.map((pos, i) => {
-        const { width, height, ascent } = measureText(titles[i], pos.fontSize, SUL_SANS, true)
-        const m = ctx.measureText(titles[i]);
-        const descent = m.actualBoundingBoxDescent ?? pos.fontSize * 0.10;
-
-        const origRow = Math.round((pos.y - M) / ROW_HEIGHT)   // 0-based index
-        // ➊ bottom grid-line for this row
-        const baseline = rowY(origRow + 1);          // bottom edge of the row
-        // ➋ distance from block-top to baseline when we use textBaseline='middle'
-        const offset   = height - descent;           // = height/2 + (height/2 – descent)
-        // ➌ top-left y so that baseline lands on the grid-line
-        const newY     = baseline - offset;
-
-        return { ...pos, width, height, y: newY }
+        const m = measureText(titles[i], pos.fontSize, SUL_SANS, true);
+        // • Mbye (i === 0): keep its saved Y untouched
+        // • Ebrima (i === 1): baseline → bottom-of-row-5
+        const yFixed = i === 1
+          ? rowY(5) - m.ascent      // baseline = bottom of row 5
+          : pos.y;                  // leave as-is
+        return { ...pos, width: m.width, height: m.height, y: yFixed };
       })
     )
 
     setTitlePositionsFrame2(prev =>
       prev.map((pos, i) => {
-        const { width, height, ascent } = measureText(titles[i], pos.fontSize, SUL_SANS, true)
-        const m = ctx.measureText(titles[i]);
-        const descent = m.actualBoundingBoxDescent ?? pos.fontSize * 0.10;
-
-        const origRow = Math.round((pos.y - M) / ROW_HEIGHT)
-        // ➊ bottom grid-line for this row
-        const baseline = rowY(origRow + 1);          // bottom edge of the row
-        // ➋ distance from block-top to baseline when we use textBaseline='middle'
-        const offset   = height - descent;           // = height/2 + (height/2 – descent)
-        // ➌ top-left y so that baseline lands on the grid-line
-        const newY     = baseline - offset;
-
-        return { ...pos, width, height, y: newY }
+        const m = measureText(titles[i], pos.fontSize, SUL_SANS, true);
+        const yFixed = i === 1 ? rowY(5) - m.ascent : pos.y;
+        return { ...pos, width: m.width, height: m.height, y: yFixed };
       })
     )
 
