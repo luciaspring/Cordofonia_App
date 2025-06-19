@@ -141,6 +141,29 @@ const FieldGroup: React.FC<{
   </div>
 )
 
+// Helper to measure text metrics
+const measureText = (
+  txt: string,
+  fs: number,
+  ff = SUL_SANS,
+  bold = true
+): { width: number; height: number; ascent: number; descent: number } => {
+  // Create a temporary canvas for measurement
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return { width: 0, height: 0, ascent: 0, descent: 0 };
+  ctx.font = `${bold ? 'bold ' : ''}${fs}px "${ff}", sans-serif`;
+  const m = ctx.measureText(txt);
+  const ascent = m.actualBoundingBoxAscent ?? fs * 0.90;
+  const descent = m.actualBoundingBoxDescent ?? fs * 0.10;
+  return {
+    width: m.width,
+    height: ascent + descent,
+    ascent,
+    descent,
+  };
+};
+
 export default function InstagramPostCreator() {
   // ─── STATE HOOKS ────────────────────────────────────────────────────────────────
   const [titles, setTitles] = useState<string[]>(['Mbye', 'Ebrima'])
@@ -328,8 +351,13 @@ export default function InstagramPostCreator() {
     setTitlePositionsFrame1(prev =>
       prev.map((pos, i) => {
         const m = measureText(titles[i], pos.fontSize, SUL_SANS, true);
-        /* leave "Mbye" unchanged — only nudge the 2nd line */
-        const yFixed = i === 1 ? (rowY(5) - m.ascent) : pos.y;
+
+        // • Mbye (i === 0): keep its saved Y untouched
+        // • Ebrima (i === 1): baseline → bottom-of-row-5
+        const yFixed = i === 1
+          ? rowY(5) - m.ascent      // baseline = bottom of row 5
+          : pos.y;                  // leave as-is
+
         return { ...pos, width: m.width, height: m.height, y: yFixed };
       })
     );
@@ -338,20 +366,11 @@ export default function InstagramPostCreator() {
     setTitlePositionsFrame2(prev =>
       prev.map((pos, i) => {
         const m = measureText(titles[i], pos.fontSize, SUL_SANS, true);
-        const yFixed = i === 1 ? (rowY(5) - m.ascent) : pos.y;
+        const yFixed = i === 1 ? rowY(5) - m.ascent : pos.y;
         return { ...pos, width: m.width, height: m.height, y: yFixed };
       })
     );
   }, [fontLoaded]);
-
-  // Recalculate text dimensions only when the source text or fonts change.
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !fontLoaded) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    updateTextDimensions(ctx);
-  }, [titles, subtitle, fontLoaded]);
 
   // Redraw the static canvas whenever its contents change (but only when not playing).
   useEffect(() => {
@@ -1696,29 +1715,6 @@ export default function InstagramPostCreator() {
     if (!fontLoaded) return;
     setSubtitlePositionFrame1(p => ({ ...p, y: rowY(5) }));   // row 6
   }, [fontLoaded]);
-
-  // Helper to measure text metrics
-  const measureText = (
-    txt: string,
-    fs: number,
-    ff = SUL_SANS,
-    bold = true
-  ): { width: number; height: number; ascent: number; descent: number } => {
-    // Create a temporary canvas for measurement
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return { width: 0, height: 0, ascent: 0, descent: 0 };
-    ctx.font = `${bold ? 'bold ' : ''}${fs}px "${ff}", sans-serif`;
-    const m = ctx.measureText(txt);
-    const ascent = m.actualBoundingBoxAscent ?? fs * 0.90;
-    const descent = m.actualBoundingBoxDescent ?? fs * 0.10;
-    return {
-      width: m.width,
-      height: ascent + descent,
-      ascent,
-      descent,
-    };
-  };
 
   // ─── JSX ────────────────────────────────────────────────────────────────────────
   console.log('RENDER', { phase, isPlaying, titles, subtitle });
