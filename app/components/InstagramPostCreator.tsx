@@ -321,26 +321,24 @@ export default function InstagramPostCreator() {
   useEffect(() => {
     if (!fontLoaded) return;
 
-    /* helper: baseline of row 5 (0-based index => rowY(4) is top of row 5) */
-    const baselineRow5 = rowY(4) + ROW_HEIGHT;
+    /* helper — "baseline" = bottom ruling of row 5 (rows are 0-based) */
+    const baselineRow5 = rowY(5);   // already includes the inner margin M
 
-    /* second title line is index 1 */
-    setTitlePositionsFrame1(prev =>
-      prev.map((pos, i) => {
-        if (i !== 1) return pos;            // don't touch "Mbye"
-        const ascent = pos.fontSize * 0.9;  // SulSans ascent ≈90 %
-        return { ...pos, y: baselineRow5 - ascent };
-      })
-    );
+    /* run this once right after fonts have loaded */
+    setTitlePositionsFrame1(p => {
+      const next = [...p];
+      const e = next[1];                    // index 1 = "Ebrima"
+      next[1] = { ...e, y: baselineRow5 - e.height };   // bottom-align
+      return next;
+    });
 
-    /* mirror the same snap for Frame 2 (first-time initialisation only) */
-    setTitlePositionsFrame2(prev =>
-      prev.map((pos, i) => {
-        if (i !== 1) return pos;
-        const ascent = pos.fontSize * 0.9;
-        return { ...pos, y: baselineRow5 - ascent };
-      })
-    );
+    /* mirror the same for frame 2 if you initialise it from frame 1 */
+    setTitlePositionsFrame2(p => {
+      const next = [...p];
+      const e = next[1];
+      next[1] = { ...e, y: baselineRow5 - e.height };
+      return next;
+    });
   }, [fontLoaded]);
 
   // Recalculate text dimensions only when the source text or fonts change.
