@@ -325,8 +325,8 @@ export default function InstagramPostCreator() {
     const bottomOfRow = (n: number) => rowY(n) + ROW_HEIGHT;
 
     /* ---------- Frame 1 ---------- */
-    setTitlePositionsFrame1(p => {
-      const out  = [...p];
+    setTitlePositionsFrame1(prev => {
+      const out  = [...prev];
       const t2   = out[1];                               // "Ebrima"
       const ctx  = document.createElement('canvas').getContext('2d')!;
       ctx.font   = `bold ${t2.fontSize}px "${SUL_SANS}", sans-serif`;
