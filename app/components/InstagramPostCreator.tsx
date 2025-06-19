@@ -326,35 +326,31 @@ export default function InstagramPostCreator() {
 
     /* ---------- Frame 1 ---------- */
     setTitlePositionsFrame1(prev => {
-      // mede "Ebrima" (index 1)
-      const { width, height, ascent } =
-        measureText(titles[1], prev[1].fontSize, SUL_SANS, true);
+      const [mbye, ebrima] = prev;
 
-      // baseline da 5.ª fila (index 4, zero-based)
-      const baseline5 = rowY(4) + ROW_HEIGHT;
+      // Mbye → baseline da 4ª faixa  (= bottom da faixa 3 → index 4)
+      const m    = measureText(titles[0], mbye.fontSize, SUL_SANS, true);
+      const mbas = baselineOf(4);        // <- 4, não 3
+      const mPos = { ...mbye, ...m, y: mbas };
 
-      return [
-        prev[0],                           // Mbye intacto
-        {                                  // só mudamos Y (+ width/height actualizados)
-          ...prev[1],
-          width,
-          height,
-          y: baseline5 - ascent            // topo = baseline – ascent
-        }
-      ];
+      // Ebrima → baseline da 5ª faixa  (= index 5)
+      const e    = measureText(titles[1], ebrima.fontSize, SUL_SANS, true);
+      const ebas = baselineOf(5);
+      const ePos = { ...ebrima, ...e, y: ebas };
+
+      return [mPos, ePos];
     });
 
     /* mirror to Frame 2 if you copy positions */
     setTitlePositionsFrame2(p => {
-      const out = [...p];
-      const t2  = out[1];
-      const ctx = document.createElement('canvas').getContext('2d')!;
-      ctx.font  = `bold ${t2.fontSize}px "${SUL_SANS}", sans-serif`;
-      const asc = ctx.measureText(titles[1]).actualBoundingBoxAscent
-                ?? t2.fontSize * 0.9;
-      const baseline = rowY(4) + ROW_HEIGHT;             // bottom of row-5
-      out[1] = { ...t2, y: baseline - asc };
-      return out;
+      const [mbye, ebrima] = p;
+      const m    = measureText(titles[0], mbye.fontSize, SUL_SANS, true);
+      const mbas = baselineOf(4);
+      const mPos = { ...mbye, ...m, y: mbas };
+      const e    = measureText(titles[1], ebrima.fontSize, SUL_SANS, true);
+      const ebas = baselineOf(5);
+      const ePos = { ...ebrima, ...e, y: ebas };
+      return [mPos, ePos];
     });
   }, [fontLoaded]);          // ⬅ runs once
 
@@ -565,16 +561,15 @@ export default function InstagramPostCreator() {
       const tremX = (Math.random() - 0.5) * tremblingIntensity;
       const tremY = (Math.random() - 0.5) * tremblingIntensity;
       ctx.save();
-      // fixed font-based centering
-      const cx = pos.x + pos.width / 2;
-      const cy = pos.y + pos.height / 2;          // ← same logic as the animation
-      ctx.translate(cx + tremX, cy + tremY); // centre pivot
+      ctx.font         = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`;
+      ctx.fillStyle    = getContrastColor();
+      ctx.textAlign    = 'left';
+      ctx.textBaseline = 'alphabetic';          // <- baseline real
+      const x = pos.x + tremX;                  // left edge
+      const y = pos.y + tremY;                  // pos.y É baseline
+      ctx.translate(x, y);
       ctx.rotate(pos.rotation);
-      ctx.font = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`;
-      ctx.fillStyle = getContrastColor();
-      ctx.textBaseline = 'alphabetic';
-      ctx.textAlign = 'left';
-      ctx.fillText(titles[idx], -pos.width / 2, 0); // shift left by ½ W
+      ctx.fillText(titles[idx], 0, 0);            // (0,0) é baseline
       ctx.restore();
     });
 
@@ -1733,6 +1728,9 @@ export default function InstagramPostCreator() {
       descent,
     };
   };
+
+  // Helper for baseline of a row
+  const baselineOf = (r: number) => rowY(r) + ROW_HEIGHT;
 
   // ─── JSX ────────────────────────────────────────────────────────────────────────
   console.log('RENDER', { phase, isPlaying, titles, subtitle });
