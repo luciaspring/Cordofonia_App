@@ -464,19 +464,19 @@ export default function InstagramPostCreator() {
     // ── TITLES ───────────────────────────────────────────────
     setTitlePositionsFrame1(prev =>
       prev.map((pos, i) => {
-        const { width, height, ascent } = measureText(titles[i], pos.fontSize, SUL_SANS, true)
-        const m = ctx.measureText(titles[i]);
-        const descent = m.actualBoundingBoxDescent ?? pos.fontSize * 0.10;
+        const { width, height, ascent } =
+          measureText(titles[i], pos.fontSize, SUL_SANS, true)
 
-        const origRow = Math.round((pos.y - M) / ROW_HEIGHT)   // 0-based index
-        // ➊ bottom grid-line for this row
-        const baseline = rowY(origRow + 1);          // bottom edge of the row
-        // ➋ distance from block-top to baseline when we use textBaseline='middle'
-        const offset   = height - descent;           // = height/2 + (height/2 – descent)
-        // ➌ top-left y so that baseline lands on the grid-line
-        const newY     = baseline - offset;
+        /* Mbye (i===0) já está certo – não mexe */
+        if (i === 0) {
+          return { ...pos, width, height }        // mantém y original
+        }
 
-        return { ...pos, width, height, y: newY }
+        /* Ebrima – baseline na parte de baixo da fila-5  */
+        const baseline = rowY(4) + ROW_HEIGHT     // linha 5 (0-based)
+        const y = baseline - ascent               // novo topo do bloco
+
+        return { ...pos, width, height, y }
       })
     )
 
