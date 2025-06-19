@@ -458,29 +458,50 @@ export default function InstagramPostCreator() {
 
   // ─── TEXT DIMENSION UPDATER ──────────────────────────────────────────────────────
   const updateTextDimensions = (ctx: CanvasRenderingContext2D) => {
+    const measureText = (txt: string, fs: number, ff = SUL_SANS, bold = true) => {
+      ctx.font = `${bold ? 'bold ' : ''}${fs}px "${ff}", sans-serif`;
+      const m = ctx.measureText(txt);
+      const ascent = m.actualBoundingBoxAscent ?? fs * 0.90;
+      const descent = m.actualBoundingBoxDescent ?? fs * 0.10;
+      return {
+        width: m.width,
+        height: ascent + descent,
+        ascent,
+      };
+    };
+
+    const snapBaselineToRow = (top: number, h: number) => {
+      /* Which row line is the current baseline sitting on?   */
+      const baselineY   = top + h / 2;                 // baseline = centre of box
+      const rowIdx      = Math.round((baselineY - M) / ROW_HEIGHT);
+      const wantedBase  = rowY(rowIdx + 1);            // bottom edge of that row
+      return wantedBase - h / 2;                       // new top so baseline sits there
+    };
+
     // ── TITLES ───────────────────────────────────────────────
     setTitlePositionsFrame1(prev =>
       prev.map((pos, i) => {
-        const { width, height, ascent } = measureText(titles[i], pos.fontSize, SUL_SANS, true)
+        const { width, height } =
+          measureText(titles[i], pos.fontSize, SUL_SANS, true);
 
-        /* NEW: row-by-row snap ↓↓↓ */
-        const origRow = Math.round((pos.y - M) / ROW_HEIGHT)   // 0-based index
-        const newY    = rowY(origRow + 1)                      // drop one row
+        /* only snap if it's still exactly on a grid-row */
+        const onGrid = Math.abs((pos.y - M) % ROW_HEIGHT) < 0.1;
+        const newY   = onGrid ? snapBaselineToRow(pos.y, height) : pos.y;
 
-        return { ...pos, width, height, y: newY }
+        return { ...pos, width, height, y: newY };
       })
-    )
+    );
 
+    // ── TITLES FRAME 2 ─────────────────────────────────────--
     setTitlePositionsFrame2(prev =>
       prev.map((pos, i) => {
-        const { width, height, ascent } = measureText(titles[i], pos.fontSize, SUL_SANS, true)
-
-        const origRow = Math.round((pos.y - M) / ROW_HEIGHT)
-        const newY    = rowY(origRow + 1)
-
-        return { ...pos, width, height, y: newY }
+        const { width, height } =
+          measureText(titles[i], pos.fontSize, SUL_SANS, true);
+        const onGrid = Math.abs((pos.y - M) % ROW_HEIGHT) < 0.1;
+        const newY   = onGrid ? snapBaselineToRow(pos.y, height) : pos.y;
+        return { ...pos, width, height, y: newY };
       })
-    )
+    );
 
     // ── SUBTITLE ───────────────────────────────────────────────
     const instr = 'Instrumento:';
