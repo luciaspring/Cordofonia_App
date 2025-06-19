@@ -315,6 +315,33 @@ export default function InstagramPostCreator() {
     return () => { cancelled = true }
   }, [])
 
+  useEffect(() => {
+    if (!fontLoaded) return;
+
+    /* helper: baseline = bottom of row r (0-based) */
+    const baselineOf = (r: number) => rowY(r) + ROW_HEIGHT;
+
+    /* 1 ───── snap Frame-1 titles (rows 3 & 4) */
+    setTitlePositionsFrame1(prev =>
+      prev.map((pos, i) => {
+        const fs = pos.fontSize;
+        const ascent = fs * 0.9;             // SulSans ascent ≈ 90 % of size
+        const base   = baselineOf(3 + i);    // rows 3 & 4 (so baselines 4 & 5)
+        return { ...pos, y: base - ascent };
+      })
+    );
+
+    /* 2 ───── snap Frame-1 subtitle (row 5 baseline) */
+    setSubtitlePositionFrame1(prev => {
+      const fs = prev.fontSize;
+      const ascent = fs * 0.8;               // Affairs ascent ≈ 80 %
+      const base   = baselineOf(5);          // baseline of 6-th row
+      return { ...prev, y: base - ascent };
+    });
+
+    /* nothing changes for Frame-2: users can still drag / resize / rotate */
+  }, [fontLoaded]);
+
   // Recalculate text dimensions only when the source text or fonts change.
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -428,10 +455,19 @@ export default function InstagramPostCreator() {
     // ── TITLES ───────────────────────────────────────────────
     setTitlePositionsFrame1(prev =>
       prev.map((pos, i) => {
-        const { width, height } = measureText(titles[i], pos.fontSize, SUL_SANS, true)
-        return { ...pos, width, height }
+        const { width, height, ascent } =
+          measureText(titles[i], pos.fontSize, SUL_SANS, true);
+
+        /* line i sits on baseline row 3+i  →  4th/5th visible row */
+        const base = rowY(3 + i);
+        return {
+          ...pos,
+          y: base - ascent,   // top of box = baseline – ascent
+          width,
+          height,
+        };
       })
-    )
+    );
 
     setTitlePositionsFrame2(prev =>
       prev.map((pos, i) => {
@@ -442,26 +478,30 @@ export default function InstagramPostCreator() {
 
     // ── SUBTITLE ───────────────────────────────────────────────
     const instr = 'Instrumento:';
-    const instrM = measureText(instr, subtitlePositionFrame2.fontSize, AFFAIRS, false);  // now returns ascent too
-    const valM = measureText(subtitle, subtitlePositionFrame2.fontSize, AFFAIRS, false);
+    const instrM = measureText(instr, subtitlePositionFrame1.fontSize, AFFAIRS, false);  // now returns ascent too
+    const valM = measureText(subtitle, subtitlePositionFrame1.fontSize, AFFAIRS, false);
 
     const lineGap = 8;
     const subtitleWidth = Math.max(instrM.width, valM.width);
-    const lineHeight = subtitlePositionFrame2.fontSize;
+    const lineHeight = subtitlePositionFrame1.fontSize;
     const subtitleHeight = lineHeight * 2 + lineGap;
+
+    const subBase = rowY(5);                   // baseline of 6-th row
+    const subHeight = instrM.height + 8 + valM.height;
+    const subWidth  = Math.max(instrM.width, valM.width);
 
     /* right after you compute instrM / valM in updateTextDimensions */
     setSubtitlePositionFrame1(p => ({
       ...p,
-      y: p.y - instrM.ascent,          // baseline → very top
-      width: subtitleWidth,
-      height: subtitleHeight,
+      y: subBase - instrM.ascent,
+      width: subWidth,
+      height: subHeight,
     }));
     setSubtitlePositionFrame2(p => ({
       ...p,
-      y: p.y - instrM.ascent,          // baseline → very top
-      width: subtitleWidth,
-      height: subtitleHeight,
+      y: subBase - instrM.ascent,
+      width: subWidth,
+      height: subHeight,
     }));
   }
 
@@ -1641,6 +1681,12 @@ export default function InstagramPostCreator() {
     }
     ctx.restore()
   }
+
+  // One-time baseline snap for Frame-1 subtitle after font load
+  useEffect(() => {
+    if (!fontLoaded) return;
+    setSubtitlePositionFrame1(p => ({ ...p, y: rowY(5) }));   // row 6
+  }, [fontLoaded]);
 
   // ─── JSX ────────────────────────────────────────────────────────────────────────
   console.log('RENDER', { phase, isPlaying, titles, subtitle });
