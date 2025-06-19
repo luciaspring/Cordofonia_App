@@ -481,7 +481,9 @@ export default function InstagramPostCreator() {
 
         /* NEW: row-by-row snap ↓↓↓ */
         const origRow = Math.round((pos.y - M) / ROW_HEIGHT)   // 0-based index
-        const newY    = rowY(origRow + 1)                      // drop one row
+        // baseline should be the *bottom* of the row we're in
+        const baseline = rowY(origRow + 1);     // bottom edge of the row
+        const newY     = baseline - height / 2; // y so baseline = baseline line
 
         return { ...pos, width, height, y: newY }
       })
@@ -492,7 +494,9 @@ export default function InstagramPostCreator() {
         const { width, height, ascent } = measureText(titles[i], pos.fontSize, SUL_SANS, true)
 
         const origRow = Math.round((pos.y - M) / ROW_HEIGHT)
-        const newY    = rowY(origRow + 1)
+        // baseline should be the *bottom* of the row we're in
+        const baseline = rowY(origRow + 1);     // bottom edge of the row
+        const newY     = baseline - height / 2; // y so baseline = baseline line
 
         return { ...pos, width, height, y: newY }
       })
