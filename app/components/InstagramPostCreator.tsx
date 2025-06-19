@@ -321,25 +321,34 @@ export default function InstagramPostCreator() {
   useEffect(() => {
     if (!fontLoaded) return;
 
-    /* helper — "baseline" = bottom ruling of row 5 (rows are 0-based) */
-    const baselineRow5 = rowY(5);   // already includes the inner margin M
+    /* helper: return baseline of any row */
+    const baseline = (row: number) => rowY(row);    // bottom line of that row
 
-    /* run this once right after fonts have loaded */
-    setTitlePositionsFrame1(p => {
-      const next = [...p];
-      const e = next[1];                    // index 1 = "Ebrima"
-      next[1] = { ...e, y: baselineRow5 - e.height };   // bottom-align
-      return next;
+    /* ---------------- Frame 1 ---------------- */
+    setTitlePositionsFrame1(prev => {
+      const out = [...prev];
+      const ePos = out[1];                          // 2nd line = "Ebrima"
+      const tmp   = document.createElement('canvas').getContext('2d')!;
+      tmp.font    = `bold ${ePos.fontSize}px "${SUL_SANS}", sans-serif`;
+      const asc   = tmp.measureText(titles[1]).actualBoundingBoxAscent
+                  ?? ePos.fontSize * 0.9;           // SulSans ≈90 % ascent
+      out[1] = { ...ePos, y: baseline(5) - asc };   // baseline on row-5 rule
+      return out;
     });
 
-    /* mirror the same for frame 2 if you initialise it from frame 1 */
-    setTitlePositionsFrame2(p => {
-      const next = [...p];
-      const e = next[1];
-      next[1] = { ...e, y: baselineRow5 - e.height };
-      return next;
+    /* ---------------- Frame 2  (if you mirror F1) ---------------- */
+    setTitlePositionsFrame2(prev => {
+      const out = [...prev];
+      const ePos = out[1];
+      const tmp  = document.createElement('canvas').getContext('2d')!;
+      tmp.font   = `bold ${ePos.fontSize}px "${SUL_SANS}", sans-serif`;
+      const asc  = tmp.measureText(titles[1]).actualBoundingBoxAscent
+                 ?? ePos.fontSize * 0.9;
+      out[1] = { ...ePos, y: baseline(5) - asc };
+      return out;
     });
-  }, [fontLoaded]);
+
+  }, [fontLoaded]);   // ← runs once
 
   // Recalculate text dimensions only when the source text or fonts change.
   useEffect(() => {
@@ -2148,4 +2157,4 @@ export default function InstagramPostCreator() {
       </Dialog>
     </div>
   )
-} 
+}
