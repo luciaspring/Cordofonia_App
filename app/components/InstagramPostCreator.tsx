@@ -332,26 +332,28 @@ export default function InstagramPostCreator() {
     };
 
     /* 1 ───── snap Frame-1 titles (rows 3 & 4) */
+    const baselineRow5 = rowY(4) + ROW_HEIGHT;   // rowY(4) = top of row 5
     setTitlePositionsFrame1(prev =>
       prev.map((pos, i) => {
-        const fs      = pos.fontSize;
-        const ascent  = fs * 0.9;                      // SulSans ascent
-        const shouldSnap =
-          i === 1 &&                                   // ← **only the 2nd word**
-          Math.abs((pos.y - M) % ROW_HEIGHT) < 0.1;    // same tolerance
-
-        return shouldSnap
-          ? { ...pos, y: rowY(5) - ascent }            // baseline = bottom of row 5
-          : pos;                                       // "Mbye" unchanged
+        if (i !== 1) return pos;                // leave "Mbye" untouched
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return pos;
+        ctx.font = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`;
+        const ascent = ctx.measureText(titles[1]).actualBoundingBoxAscent ?? pos.fontSize * 0.9;
+        return { ...pos, y: baselineRow5 - ascent };
       })
     );
 
     setTitlePositionsFrame2(prev =>
       prev.map((pos, i) => {
-        const fs      = pos.fontSize;
-        const ascent  = fs * 0.9;
-        const shouldSnap = i === 1;
-        return shouldSnap ? { ...pos, y: rowY(5) - ascent } : pos;
+        if (i !== 1) return pos;
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return pos;
+        ctx.font = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`;
+        const ascent = ctx.measureText(titles[1]).actualBoundingBoxAscent ?? pos.fontSize * 0.9;
+        return { ...pos, y: baselineRow5 - ascent };
       })
     );
 
