@@ -72,7 +72,7 @@ interface RigidBoundingBox {
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
-const M = 16      // inner margin (px)
+const M = 32      // inner margin (px)
 // 8-row layout helper
 const ROWS        = 8
 const ROW_HEIGHT  = (1350 - M * 2) / ROWS          // canvas.height is 1350
