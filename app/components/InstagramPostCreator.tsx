@@ -334,20 +334,16 @@ export default function InstagramPostCreator() {
     /* 1 ───── snap Frame-1 titles (rows 3 & 4) */
     setTitlePositionsFrame1(prev =>
       prev.map((pos, i) => {
-        const { width, height, descent } = measureText(titles[i], pos.fontSize, SUL_SANS, true);
+        const fs = pos.fontSize;
+        const ascent = fs * 0.9;             // SulSans ascent ≈ 90 % of size
+        const base   = baselineOf(3 + i);    // rows 3 & 4 (so baselines 4 & 5)
 
-        /* which grid-line should be the baseline?                 *
-         *  i = 0  → row 4 (index 3)  → baseline rowY(4)           *
-         *  i = 1  → row 5 (index 4)  → baseline rowY(5)           */
-        const baselineRow = 3 + i;         // 0-based row index of baseline
-        const baseline    = rowY(baselineRow + 1);    // bottom of that row
+        // Only auto-snap while the user hasn't moved it manually
+        const shouldSnap =
+          Math.abs((pos.y - M) % ROW_HEIGHT) < 0.1; // tolerance
 
-        /* offset from pos.top to that baseline when using         *
-         * textBaseline='middle'  →  height/2 + descent            */
-        const offset = height / 2 + descent;
-        const newY   = baseline - offset;
-
-        return { ...pos, width, height, y: newY };
+        const y = shouldSnap ? snapDownOneRow(pos.y, ascent) : pos.y;
+        return { ...pos, width: 1000, height: 200, y };
       })
     );
 
@@ -463,6 +459,21 @@ export default function InstagramPostCreator() {
 
   // ─── TEXT DIMENSION UPDATER ──────────────────────────────────────────────────────
   const updateTextDimensions = (ctx: CanvasRenderingContext2D) => {
+    const measureText = (txt: string, fs: number, ff = SUL_SANS, bold = true) => {
+      ctx.font = `${bold ? 'bold ' : ''}${fs}px "${ff}", sans-serif`;
+      const m = ctx.measureText(txt);
+
+      /*  ▸ key numbers we need  */
+      const ascent = m.actualBoundingBoxAscent ?? fs * 0.90;   // ← WAS 0.80
+      const descent = m.actualBoundingBoxDescent ?? fs * 0.10;
+
+      return {
+        width: m.width,
+        height: ascent + descent,
+        ascent,         // <- keep so we can align
+      };
+    };
+
     // ── TITLES ───────────────────────────────────────────────
     setTitlePositionsFrame1(prev =>
       prev.map((pos, i) => {
@@ -1721,29 +1732,6 @@ export default function InstagramPostCreator() {
     setSubtitlePositionFrame1(p => ({ ...p, y: rowY(5) }));   // row 6
   }, [fontLoaded]);
 
-  // Helper to measure text metrics
-  const measureText = (
-    txt: string,
-    fs: number,
-    ff = SUL_SANS,
-    bold = true
-  ): { width: number; height: number; ascent: number; descent: number } => {
-    // Create a temporary canvas for measurement
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return { width: 0, height: 0, ascent: 0, descent: 0 };
-    ctx.font = `${bold ? 'bold ' : ''}${fs}px "${ff}", sans-serif`;
-    const m = ctx.measureText(txt);
-    const ascent = m.actualBoundingBoxAscent ?? fs * 0.90;
-    const descent = m.actualBoundingBoxDescent ?? fs * 0.10;
-    return {
-      width: m.width,
-      height: ascent + descent,
-      ascent,
-      descent,
-    };
-  };
-
   // ─── JSX ────────────────────────────────────────────────────────────────────────
   console.log('RENDER', { phase, isPlaying, titles, subtitle });
   return (
@@ -2183,4 +2171,4 @@ export default function InstagramPostCreator() {
       </Dialog>
     </div>
   )
-}
+} 
