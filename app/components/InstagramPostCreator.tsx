@@ -70,9 +70,13 @@ interface RigidBoundingBox {
   centerY: number
 }
 
-// ─── CONSTANTS ───────────────────────────────────────────────────────────────────
+// ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
 const M = 16      // inner margin (px)
+// 8-row layout helper
+const ROWS        = 8
+const ROW_HEIGHT  = (1350 - M * 2) / ROWS          // canvas.height is 1350
+const rowY        = (r: number) => M + ROW_HEIGHT * r   // top-edge of row r
 
 const colorOptions = [
   { name: 'Light Pink', value: '#F6A69B' },
@@ -103,13 +107,13 @@ const Ws = 720         // subtitle block width
 
 // Default positions for 1080 x 1350 layout
 export const defaultTitlePositions: TextPosition[] = [
-  { x: M, y: 400, width: 1000, height: 200, rotation: 0, fontSize: 180 },
-  { x: M, y: 610, width: 1000, height: 200, rotation: 0, fontSize: 180 }  // 400 + 200 + 10 gap
+  { x: M, y: rowY(3), width: 1000, height: 200, rotation: 0, fontSize: 180 }, // row 4
+  { x: M, y: rowY(4), width: 1000, height: 200, rotation: 0, fontSize: 180 }  // row 5
 ]
 
 export const defaultSubtitlePosition: TextPosition = {
   x: M,
-  y: 840,
+  y: rowY(5),                                 // row 6
   width: 1000,
   height: 60,
   rotation: 0,
@@ -208,6 +212,8 @@ export default function InstagramPostCreator() {
   } | null>(null)
 
   const [animationKey, setAnimationKey] = useState(0);
+
+  const [showGuides, setShowGuides] = useState(false)
 
   /*  put this near your other "const …" declarations  */
   const GOO_BG = 'bg-[#E5E5E5]'                   // colour that melts
@@ -468,6 +474,7 @@ export default function InstagramPostCreator() {
 
     ctx.fillStyle = backgroundColor
     ctx.fillRect(0, 0, canvas.width, canvas.height)
+    if (showGuides) drawGuides(ctx)        // ← overlay guides
 
     if (isPlaying) {
       drawAnimatedContent(ctx, progress)
@@ -1615,6 +1622,26 @@ export default function InstagramPostCreator() {
     }, fullCycleMs + 200)      // +200 ms safety margin
   }
 
+  // ─── GUIDE DRAWER ───────────────────────────────────────────────────────────
+  const drawGuides = (ctx: CanvasRenderingContext2D) => {
+    ctx.save()
+    ctx.strokeStyle = 'rgba(0,0,0,0.6)'
+    ctx.lineWidth   = 1
+
+    // outer margin box
+    ctx.strokeRect(M + 0.5, M + 0.5, ctx.canvas.width - M*2, ctx.canvas.height - M*2)
+
+    // horizontal rows
+    for (let i = 1; i < ROWS; i++) {
+      const y = rowY(i) + 0.5
+      ctx.beginPath()
+      ctx.moveTo(M, y)
+      ctx.lineTo(ctx.canvas.width - M, y)
+      ctx.stroke()
+    }
+    ctx.restore()
+  }
+
   // ─── JSX ────────────────────────────────────────────────────────────────────────
   console.log('RENDER', { phase, isPlaying, titles, subtitle });
   return (
@@ -2035,6 +2062,19 @@ export default function InstagramPostCreator() {
                   <SelectItem value="center">Center</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            {/* show / hide guides */}
+            <div className="flex items-center space-x-2">
+              <input
+                id="guideToggle"
+                type="checkbox"
+                checked={showGuides}
+                onChange={e => setShowGuides(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 focus:ring-2 focus:ring-blue-500"
+              />
+              <Label htmlFor="guideToggle" className="text-sm text-gray-600">
+                Show 8-row guide
+              </Label>
             </div>
           </div>
         </DialogContent>
