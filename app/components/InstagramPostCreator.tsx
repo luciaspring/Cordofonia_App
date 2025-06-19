@@ -327,29 +327,27 @@ export default function InstagramPostCreator() {
     /* ---------- Frame 1 ---------- */
     setTitlePositionsFrame1(prev => {
       const [mbye, ebrima] = prev;
-
-      // Mbye → baseline da 4ª faixa  (= bottom da faixa 3 → index 4)
-      const m    = measureText(titles[0], mbye.fontSize, SUL_SANS, true);
-      const mbas = baselineOf(4);        // <- 4, não 3
-      const mPos = { ...mbye, ...m, y: mbas };
-
-      // Ebrima → baseline da 5ª faixa  (= index 5)
-      const e    = measureText(titles[1], ebrima.fontSize, SUL_SANS, true);
-      const ebas = baselineOf(5);
-      const ePos = { ...ebrima, ...e, y: ebas };
-
+      const m = measureText(titles[0], mbye.fontSize, SUL_SANS, true);
+      const e = measureText(titles[1], ebrima.fontSize, SUL_SANS, true);
+      // ⚑ 1. linhas-guia correctas: 4 para Mbye, 5 para Ebrima
+      const mBase = baselineOf(4);
+      const eBase = baselineOf(5);
+      // ⚑ 2. NÃO subtrair ascent – guardamos mesmo a baseline
+      const mPos = { ...mbye,  ...m, y: mBase };
+      const ePos = { ...ebrima, ...e, y: eBase };
+      // ⚑ 3. manter a ordem Mbye (índice 0), Ebrima (índice 1)
       return [mPos, ePos];
     });
 
     /* mirror to Frame 2 if you copy positions */
-    setTitlePositionsFrame2(p => {
-      const [mbye, ebrima] = p;
-      const m    = measureText(titles[0], mbye.fontSize, SUL_SANS, true);
-      const mbas = baselineOf(4);
-      const mPos = { ...mbye, ...m, y: mbas };
-      const e    = measureText(titles[1], ebrima.fontSize, SUL_SANS, true);
-      const ebas = baselineOf(5);
-      const ePos = { ...ebrima, ...e, y: ebas };
+    setTitlePositionsFrame2(prev => {
+      const [mbye, ebrima] = prev;
+      const m = measureText(titles[0], mbye.fontSize, SUL_SANS, true);
+      const e = measureText(titles[1], ebrima.fontSize, SUL_SANS, true);
+      const mBase = baselineOf(4);
+      const eBase = baselineOf(5);
+      const mPos = { ...mbye,  ...m, y: mBase };
+      const ePos = { ...ebrima, ...e, y: eBase };
       return [mPos, ePos];
     });
   }, [fontLoaded]);          // ⬅ runs once
