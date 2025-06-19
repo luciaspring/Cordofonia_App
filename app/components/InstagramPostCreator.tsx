@@ -45,11 +45,11 @@ interface Line {
 interface TextPosition {
   x: number
   y: number
+  baseline: number
   width: number
   height: number
   rotation: number
   fontSize: number
-  aspectRatio?: number
 }
 
 interface GroupBoundingBox {
@@ -107,15 +107,16 @@ const Ws = 720         // subtitle block width
 
 // Default positions for 1080 x 1350 layout
 export const defaultTitlePositions: TextPosition[] = [
-  { x: M, y: rowY(3), width: 1000, height: 200, rotation: 0, fontSize: 180 }, // row 4
-  { x: M, y: rowY(4), width: 1000, height: 200, rotation: 0, fontSize: 180 }  // row 5
+  { x: M, y: rowY(3), baseline: rowY(3) + 200, width: 1000, height: 200, rotation: 0, fontSize: 180 },
+  { x: M, y: rowY(4), baseline: rowY(4) + 200, width: 1000, height: 200, rotation: 0, fontSize: 180 }
 ]
 
 export const defaultSubtitlePosition: TextPosition = {
   x: M,
-  y: rowY(5),                                 // row 6
+  y: rowY(5),
+  baseline: rowY(5) + 30,
   width: 1000,
-  height: 60,
+  height: 30,
   rotation: 0,
   fontSize: 32
 }
@@ -169,21 +170,21 @@ export default function InstagramPostCreator() {
 
   // ─── FRAME 1 defaults ───────────────────────────────────────────────
   const [titlePositionsFrame1, setTitlePositionsFrame1] = useState<TextPosition[]>([
-    { x: M, y: rowY(3), width: 1000, height: 200, rotation: 0, fontSize: 180 }, // row 4
-    { x: M, y: rowY(4), width: 1000, height: 200, rotation: 0, fontSize: 180 }  // row 5
+    { x: M, y: rowY(3), baseline: rowY(3) + 200, width: 1000, height: 200, rotation: 0, fontSize: 180 },
+    { x: M, y: rowY(4), baseline: rowY(4) + 200, width: 1000, height: 200, rotation: 0, fontSize: 180 }
   ])
 
   const [subtitlePositionFrame1, setSubtitlePositionFrame1] = 
-    useState<TextPosition>({ x: M, y: rowY(5), width: 1000, height: 30, rotation: 0, fontSize: 32 })
+    useState<TextPosition>({ x: M, y: rowY(5), baseline: rowY(5) + 30, width: 1000, height: 30, rotation: 0, fontSize: 32 })
 
   // ─── FRAME 2 defaults (identical) ───────────────────────────────────
   const [titlePositionsFrame2, setTitlePositionsFrame2] = useState<TextPosition[]>([
-    { x: M, y: rowY(3), width: 1000, height: 200, rotation: 0, fontSize: 180 },
-    { x: M, y: rowY(4), width: 1000, height: 200, rotation: 0, fontSize: 180 }
+    { x: M, y: rowY(3), baseline: rowY(3) + 200, width: 1000, height: 200, rotation: 0, fontSize: 180 },
+    { x: M, y: rowY(4), baseline: rowY(4) + 200, width: 1000, height: 200, rotation: 0, fontSize: 180 }
   ])
 
   const [subtitlePositionFrame2, setSubtitlePositionFrame2] = 
-    useState<TextPosition>({ x: M, y: rowY(5), width: 1000, height: 30, rotation: 0, fontSize: 32 })
+    useState<TextPosition>({ x: M, y: rowY(5), baseline: rowY(5) + 30, width: 1000, height: 30, rotation: 0, fontSize: 32 })
 
   const [selectedTexts, setSelectedTexts] = useState<('title1' | 'title2' | 'subtitle')[]>([])
   const [resizeHandle, setResizeHandle] = useState<string | null>(null)
