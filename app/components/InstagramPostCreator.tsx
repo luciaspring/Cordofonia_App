@@ -169,21 +169,21 @@ export default function InstagramPostCreator() {
 
   // ─── FRAME 1 defaults ───────────────────────────────────────────────
   const [titlePositionsFrame1, setTitlePositionsFrame1] = useState<TextPosition[]>([
-    { x: M, y: 555, width: 1000, height: 200, rotation: 0, fontSize: 180 }, // Mbye ↓
-    { x: M, y: 715, width: 1000, height: 200, rotation: 0, fontSize: 180 }  // Ebrima ↓
+    { x: M, y: rowY(3), width: 1000, height: 200, rotation: 0, fontSize: 180 }, // row 4
+    { x: M, y: rowY(4), width: 1000, height: 200, rotation: 0, fontSize: 180 }  // row 5
   ])
 
   const [subtitlePositionFrame1, setSubtitlePositionFrame1] = 
-    useState<TextPosition>({ x: M, y: 840, width: 1000, height: 30, rotation: 0, fontSize: 32 })
+    useState<TextPosition>({ x: M, y: rowY(5), width: 1000, height: 30, rotation: 0, fontSize: 32 })
 
   // ─── FRAME 2 defaults (identical) ───────────────────────────────────
   const [titlePositionsFrame2, setTitlePositionsFrame2] = useState<TextPosition[]>([
-    { x: M, y: 555, width: 1000, height: 200, rotation: 0, fontSize: 180 },
-    { x: M, y: 715, width: 1000, height: 200, rotation: 0, fontSize: 180 }
+    { x: M, y: rowY(3), width: 1000, height: 200, rotation: 0, fontSize: 180 },
+    { x: M, y: rowY(4), width: 1000, height: 200, rotation: 0, fontSize: 180 }
   ])
 
   const [subtitlePositionFrame2, setSubtitlePositionFrame2] = 
-    useState<TextPosition>({ x: M, y: 840, width: 1000, height: 30, rotation: 0, fontSize: 32 })
+    useState<TextPosition>({ x: M, y: rowY(5), width: 1000, height: 30, rotation: 0, fontSize: 32 })
 
   const [selectedTexts, setSelectedTexts] = useState<('title1' | 'title2' | 'subtitle')[]>([])
   const [resizeHandle, setResizeHandle] = useState<string | null>(null)
@@ -2081,4 +2081,4 @@ export default function InstagramPostCreator() {
       </Dialog>
     </div>
   )
-}
+} 
