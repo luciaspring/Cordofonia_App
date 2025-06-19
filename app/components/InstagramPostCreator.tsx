@@ -45,11 +45,11 @@ interface Line {
 interface TextPosition {
   x: number
   y: number
-  baseline: number
   width: number
   height: number
   rotation: number
   fontSize: number
+  aspectRatio?: number
 }
 
 interface GroupBoundingBox {
@@ -107,13 +107,13 @@ const Ws = 720         // subtitle block width
 
 // Default positions for 1080 x 1350 layout
 export const defaultTitlePositions: TextPosition[] = [
-  { x: M, baseline: rowY(3), width: 1000, height: 200, rotation: 0, fontSize: 180 }, // row 4
-  { x: M, baseline: rowY(4), width: 1000, height: 200, rotation: 0, fontSize: 180 }  // row 5
+  { x: M, y: rowY(3), width: 1000, height: 200, rotation: 0, fontSize: 180 }, // row 4
+  { x: M, y: rowY(4), width: 1000, height: 200, rotation: 0, fontSize: 180 }  // row 5
 ]
 
 export const defaultSubtitlePosition: TextPosition = {
   x: M,
-  baseline: rowY(5),                                 // row 6
+  y: rowY(5),                                 // row 6
   width: 1000,
   height: 60,
   rotation: 0,
@@ -169,21 +169,21 @@ export default function InstagramPostCreator() {
 
   // ─── FRAME 1 defaults ───────────────────────────────────────────────
   const [titlePositionsFrame1, setTitlePositionsFrame1] = useState<TextPosition[]>([
-    { x: M, baseline: rowY(3), width: 1000, height: 200, rotation: 0, fontSize: 180 }, // row 4
-    { x: M, baseline: rowY(4), width: 1000, height: 200, rotation: 0, fontSize: 180 }  // row 5
+    { x: M, y: rowY(3), width: 1000, height: 200, rotation: 0, fontSize: 180 }, // row 4
+    { x: M, y: rowY(4), width: 1000, height: 200, rotation: 0, fontSize: 180 }  // row 5
   ])
 
   const [subtitlePositionFrame1, setSubtitlePositionFrame1] = 
-    useState<TextPosition>({ x: M, baseline: rowY(5), width: 1000, height: 30, rotation: 0, fontSize: 32 })
+    useState<TextPosition>({ x: M, y: rowY(5), width: 1000, height: 30, rotation: 0, fontSize: 32 })
 
   // ─── FRAME 2 defaults (identical) ───────────────────────────────────
   const [titlePositionsFrame2, setTitlePositionsFrame2] = useState<TextPosition[]>([
-    { x: M, baseline: rowY(3), width: 1000, height: 200, rotation: 0, fontSize: 180 },
-    { x: M, baseline: rowY(4), width: 1000, height: 200, rotation: 0, fontSize: 180 }
+    { x: M, y: rowY(3), width: 1000, height: 200, rotation: 0, fontSize: 180 },
+    { x: M, y: rowY(4), width: 1000, height: 200, rotation: 0, fontSize: 180 }
   ])
 
   const [subtitlePositionFrame2, setSubtitlePositionFrame2] = 
-    useState<TextPosition>({ x: M, baseline: rowY(5), width: 1000, height: 30, rotation: 0, fontSize: 32 })
+    useState<TextPosition>({ x: M, y: rowY(5), width: 1000, height: 30, rotation: 0, fontSize: 32 })
 
   const [selectedTexts, setSelectedTexts] = useState<('title1' | 'title2' | 'subtitle')[]>([])
   const [resizeHandle, setResizeHandle] = useState<string | null>(null)
@@ -321,49 +321,25 @@ export default function InstagramPostCreator() {
   useEffect(() => {
     if (!fontLoaded) return;
 
-    /* helper – bottom rule of any row n (0-based) */
-    const bottomOfRow = (n: number) => rowY(n) + ROW_HEIGHT;
+    /* helper — "baseline" = bottom ruling of row 5 (rows are 0-based) */
+    const baselineRow5 = rowY(5);   // already includes the inner margin M
 
-    /* ---------- Frame 1 ---------- */
-    setTitlePositionsFrame1(prev => {
-      const [mbye, ebrima] = prev;
-      const m = measureText(titles[0], mbye.fontSize, SUL_SANS, true);
-      const e = measureText(titles[1], ebrima.fontSize, SUL_SANS, true);
-      const ascM = m.ascent;
-      const dscM = m.descent;
-      const hM   = ascM + dscM;
-      const baseM = baselineOf(4);
-      const topM  = baseM - ascM;
-      const mPos = { ...mbye, width: m.width, height: hM, baseline: baseM, y: topM };
-      const ascE = e.ascent;
-      const dscE = e.descent;
-      const hE   = ascE + dscE;
-      const baseE = baselineOf(5);
-      const topE  = baseE - ascE;
-      const ePos = { ...ebrima, width: e.width, height: hE, baseline: baseE, y: topE };
-      return [mPos, ePos];
+    /* run this once right after fonts have loaded */
+    setTitlePositionsFrame1(p => {
+      const next = [...p];
+      const e = next[1];                    // index 1 = "Ebrima"
+      next[1] = { ...e, y: baselineRow5 - e.height };   // bottom-align
+      return next;
     });
 
-    /* mirror to Frame 2 if you copy positions */
-    setTitlePositionsFrame2(prev => {
-      const [mbye, ebrima] = prev;
-      const m = measureText(titles[0], mbye.fontSize, SUL_SANS, true);
-      const e = measureText(titles[1], ebrima.fontSize, SUL_SANS, true);
-      const ascM = m.ascent;
-      const dscM = m.descent;
-      const hM   = ascM + dscM;
-      const baseM = baselineOf(4);
-      const topM  = baseM - ascM;
-      const mPos = { ...mbye, width: m.width, height: hM, baseline: baseM, y: topM };
-      const ascE = e.ascent;
-      const dscE = e.descent;
-      const hE   = ascE + dscE;
-      const baseE = baselineOf(5);
-      const topE  = baseE - ascE;
-      const ePos = { ...ebrima, width: e.width, height: hE, baseline: baseE, y: topE };
-      return [mPos, ePos];
+    /* mirror the same for frame 2 if you initialise it from frame 1 */
+    setTitlePositionsFrame2(p => {
+      const next = [...p];
+      const e = next[1];
+      next[1] = { ...e, y: baselineRow5 - e.height };
+      return next;
     });
-  }, [fontLoaded]);          // ⬅ runs once
+  }, [fontLoaded]);
 
   // Recalculate text dimensions only when the source text or fonts change.
   useEffect(() => {
@@ -460,22 +436,37 @@ export default function InstagramPostCreator() {
 
   // ─── TEXT DIMENSION UPDATER ──────────────────────────────────────────────────────
   const updateTextDimensions = (ctx: CanvasRenderingContext2D) => {
+    const measureText = (txt: string, fs: number, ff = SUL_SANS, bold = true) => {
+      ctx.font = `${bold ? 'bold ' : ''}${fs}px "${ff}", sans-serif`;
+      const m = ctx.measureText(txt);
+
+      /*  ▸ key numbers we need  */
+      const ascent = m.actualBoundingBoxAscent ?? fs * 0.90;   // ← WAS 0.80
+      const descent = m.actualBoundingBoxDescent ?? fs * 0.10;
+
+      return {
+        width: m.width,
+        height: ascent + descent,
+        ascent,         // <- keep so we can align
+      };
+    };
+
     // ── TITLES ───────────────────────────────────────────────
     setTitlePositionsFrame1(prev =>
       prev.map((pos, i) => {
-        const { width, height, ascent } =
-          measureText(titles[i], pos.fontSize, SUL_SANS, true)
+        const { width, height, ascent } = measureText(titles[i], pos.fontSize, SUL_SANS, true)
+        const m = ctx.measureText(titles[i]);
+        const descent = m.actualBoundingBoxDescent ?? pos.fontSize * 0.10;
 
-        /* Mbye (i===0) já está certo – não mexe */
-        if (i === 0) {
-          return { ...pos, width, height }        // mantém y original
-        }
+        const origRow = Math.round((pos.y - M) / ROW_HEIGHT)   // 0-based index
+        // ➊ bottom grid-line for this row
+        const baseline = rowY(origRow + 1);          // bottom edge of the row
+        // ➋ distance from block-top to baseline when we use textBaseline='middle'
+        const offset   = height - descent;           // = height/2 + (height/2 – descent)
+        // ➌ top-left y so that baseline lands on the grid-line
+        const newY     = baseline - offset;
 
-        /* Ebrima – baseline na parte de baixo da fila-5  */
-        const baseline = rowY(4) + ROW_HEIGHT     // linha 5 (0-based)
-        const y = baseline - ascent               // novo topo do bloco
-
-        return { ...pos, width, height, y }
+        return { ...pos, width, height, y: newY }
       })
     )
 
@@ -485,7 +476,7 @@ export default function InstagramPostCreator() {
         const m = ctx.measureText(titles[i]);
         const descent = m.actualBoundingBoxDescent ?? pos.fontSize * 0.10;
 
-        const origRow = Math.round((pos.baseline - M) / ROW_HEIGHT)
+        const origRow = Math.round((pos.y - M) / ROW_HEIGHT)
         // ➊ bottom grid-line for this row
         const baseline = rowY(origRow + 1);          // bottom edge of the row
         // ➋ distance from block-top to baseline when we use textBaseline='middle'
@@ -514,13 +505,13 @@ export default function InstagramPostCreator() {
     /* right after you compute instrM / valM in updateTextDimensions */
     setSubtitlePositionFrame1(p => ({
       ...p,
-      baseline: subBase - instrM.ascent,
+      y: subBase - instrM.ascent,
       width: subWidth,
       height: subHeight,
     }));
     setSubtitlePositionFrame2(p => ({
       ...p,
-      baseline: subBase - instrM.ascent,
+      y: subBase - instrM.ascent,
       width: subWidth,
       height: subHeight,
     }));
@@ -572,15 +563,16 @@ export default function InstagramPostCreator() {
       const tremX = (Math.random() - 0.5) * tremblingIntensity;
       const tremY = (Math.random() - 0.5) * tremblingIntensity;
       ctx.save();
-      ctx.font         = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`;
-      ctx.fillStyle    = getContrastColor();
-      ctx.textAlign    = 'left';
-      ctx.textBaseline = 'alphabetic';          // <- baseline real
-      const x = pos.x + tremX;                  // left edge
-      const y = pos.baseline + tremY;                  // pos.baseline É baseline
-      ctx.translate(x, y);
+      // fixed font-based centering
+      const cx = pos.x + pos.width / 2;
+      const cy = pos.y + pos.height / 2;          // ← same logic as the animation
+      ctx.translate(cx + tremX, cy + tremY); // centre pivot
       ctx.rotate(pos.rotation);
-      ctx.fillText(titles[idx], 0, 0);            // (0,0) é baseline
+      ctx.font = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`;
+      ctx.fillStyle = getContrastColor();
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'left';
+      ctx.fillText(titles[idx], -pos.width / 2, 0); // shift left by ½ W
       ctx.restore();
     });
 
@@ -591,7 +583,7 @@ export default function InstagramPostCreator() {
     ctx.save();
     // use height here, not fontSize
     const scx = subPos.x + subPos.width  / 2;
-    const scy = subPos.baseline + subPos.height / 2;
+    const scy = subPos.y + subPos.height / 2;
     ctx.translate(scx + tremXsub, scy + tremYsub);
     ctx.rotate(subPos.rotation);
     ctx.font         = `${subPos.fontSize}px "${AFFAIRS}", sans-serif`;
@@ -610,7 +602,7 @@ export default function InstagramPostCreator() {
     ctx.save()
     // fixed font-based centering
     const cx = pos.x + pos.width/2
-    const cy = pos.baseline + pos.height/2
+    const cy = pos.y + pos.height/2
     ctx.translate(cx, cy)
     ctx.rotate(pos.rotation)
     ctx.font = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`
@@ -706,7 +698,7 @@ export default function InstagramPostCreator() {
 
       // 1) POSITION & ROTATION INTERPOLATION
       const x        = p1.x        + (p2.x        - p1.x)        * moveT
-      const y        = p1.baseline + (p2.baseline - p1.baseline) * moveT
+      const y        = p1.y        + (p2.y        - p1.y)        * moveT
       const rotation = p1.rotation + (p2.rotation - p1.rotation) * moveT
 
       // 2) SIZE INTERPOLATION
@@ -725,7 +717,7 @@ export default function InstagramPostCreator() {
       ctx.rotate(rotation)
       ctx.font         = `bold ${fontSize}px "${SUL_SANS}", sans-serif`
       ctx.fillStyle    = getContrastColor()
-      ctx.textBaseline = 'alphabetic'
+      ctx.textBaseline = 'middle'
       ctx.textAlign    = 'left'
       ctx.fillText(text, -dynW / 2, 0)                             // draw from left edge
       ctx.restore()
@@ -736,7 +728,7 @@ export default function InstagramPostCreator() {
     const sub2 = toFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
 
     const sx        = sub1.x + (sub2.x - sub1.x) * moveT
-    const sy        = sub1.baseline + (sub2.baseline - sub1.baseline) * moveT
+    const sy        = sub1.y + (sub2.y - sub1.y) * moveT
     const srot      = sub1.rotation + (sub2.rotation - sub1.rotation) * moveT
     const sFontSize = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT
     const streX     = (Math.random() - 0.5) * tremblingIntensity
@@ -761,7 +753,7 @@ export default function InstagramPostCreator() {
 
   const drawBoundingBox = (ctx: CanvasRenderingContext2D, pos: TextPosition) => {
     const cx = pos.x + pos.width / 2
-    const cy = pos.baseline + pos.height / 2
+    const cy = pos.y + pos.height / 2
     ctx.save()
     ctx.translate(cx, cy)
     ctx.rotate(pos.rotation)
@@ -996,7 +988,7 @@ export default function InstagramPostCreator() {
       setSubtitlePositionFrame2(prev => ({
         ...prev,
         x: prev.x + dx,
-        baseline: prev.baseline + dy
+        y: prev.y + dy
       }))
     } else {
       setTitlePositionsFrame2(prev => {
@@ -1005,7 +997,7 @@ export default function InstagramPostCreator() {
         newArr[idx] = {
           ...newArr[idx],
           x: newArr[idx].x + dx,
-          baseline: newArr[idx].baseline + dy
+          y: newArr[idx].y + dy
         }
         return newArr
       })
@@ -1019,12 +1011,12 @@ export default function InstagramPostCreator() {
     const dy = y - lastMousePosition.current.y
     setTitlePositionsFrame2(prev =>
       prev.map((pos, idx) => selectedTexts.includes(`title${idx + 1}` as 'title1' | 'title2')
-        ? { ...pos, x: pos.x + dx, baseline: pos.baseline + dy }
+        ? { ...pos, x: pos.x + dx, y: pos.y + dy }
         : pos
       )
     )
     if (selectedTexts.includes('subtitle')) {
-      setSubtitlePositionFrame2(prev => ({ ...prev, x: prev.x + dx, baseline: prev.baseline + dy }))
+      setSubtitlePositionFrame2(prev => ({ ...prev, x: prev.x + dx, y: prev.y + dy }))
     }
     lastMousePosition.current = { x, y }
   }
@@ -1039,17 +1031,17 @@ export default function InstagramPostCreator() {
     if (!resizeStartPosition || !initialPosition) return
     const ref = initialPosition
     const cx = ref.x + ref.width/2
-    const cy = ref.baseline + ref.height/2
+    const cy = ref.y + ref.height/2
 
     let scale: number
     if (scaleAnchor === 'center') {
       // always scale relative to center
-      const startDist = Math.hypot(resizeStartPosition.x - cx, resizeStartPosition.baseline - cy)
+      const startDist = Math.hypot(resizeStartPosition.x - cx, resizeStartPosition.y - cy)
       const currDist  = Math.hypot(x - cx, y - cy)
       scale = startDist ? currDist / startDist : 1
     } else {
       // original corner/edge logic
-      const startVec = { x: resizeStartPosition.x - cx, y: resizeStartPosition.baseline - cy }
+      const startVec = { x: resizeStartPosition.x - cx, y: resizeStartPosition.y - cy }
       const currVec  = { x: x - cx, y: y - cy }
       if (handle.includes('e') || handle.includes('w')) {
         scale = Math.abs(currVec.x) / Math.abs(startVec.x)
@@ -1068,7 +1060,7 @@ export default function InstagramPostCreator() {
     const newPos: TextPosition = {
       ...position,
       x: newX,
-      baseline: newY,
+      y: newY,
       width: newW,
       height: newH,
       fontSize: ref.fontSize * scale
@@ -1091,7 +1083,7 @@ export default function InstagramPostCreator() {
     const cx = initialGroupBox.x + initialGroupBox.width / 2
     const cy = initialGroupBox.y + initialGroupBox.height / 2
 
-    const startVec = { x: resizeStartPosition.x - cx, y: resizeStartPosition.baseline - cy }
+    const startVec = { x: resizeStartPosition.x - cx, y: resizeStartPosition.y - cy }
     const currVec = { x: x - cx, y: y - cy }
 
     let scale = 1
@@ -1106,13 +1098,13 @@ export default function InstagramPostCreator() {
 
     const apply = (pos: TextPosition) => {
       const relCX = (pos.x + pos.width / 2 - cx) / initialGroupBox.width
-      const relCY = (pos.baseline - cy) / initialGroupBox.height
+      const relCY = (pos.y + pos.height / 2 - cy) / initialGroupBox.height
       const w = pos.width * scale
       const h = pos.height * scale
       return {
         ...pos,
         x: cx + relCX * initialGroupBox.width * scale - w / 2,
-        baseline: cy + relCY * initialGroupBox.height * scale - h / 2,
+        y: cy + relCY * initialGroupBox.height * scale - h / 2,
         width: w,
         height: h,
         fontSize: pos.fontSize * scale
@@ -1187,13 +1179,13 @@ export default function InstagramPostCreator() {
     angle: number
   ): TextPosition => {
     const dx = pos.x + pos.width / 2 - cx
-    const dy = pos.baseline - cy
+    const dy = pos.y + pos.height / 2 - cy
     const dist = Math.hypot(dx, dy)
     const currAngle = Math.atan2(dy, dx)
     const newAngle = currAngle + angle
     const newX = cx + dist * Math.cos(newAngle) - pos.width / 2
     const newY = cy + dist * Math.sin(newAngle) - pos.height / 2
-    return { ...pos, x: newX, baseline: newY, rotation: pos.rotation + angle }
+    return { ...pos, x: newX, y: newY, rotation: pos.rotation + angle }
   }
 
   // ─── MOUSE EVENT HANDLERS ───────────────────────────────────────────────────────
@@ -1714,53 +1706,8 @@ export default function InstagramPostCreator() {
   // One-time baseline snap for Frame-1 subtitle after font load
   useEffect(() => {
     if (!fontLoaded) return;
-    setSubtitlePositionFrame1(p => ({ ...p, baseline: rowY(5) }));   // row 6
+    setSubtitlePositionFrame1(p => ({ ...p, y: rowY(5) }));   // row 6
   }, [fontLoaded]);
-
-  // Helper to measure text metrics
-  const measureText = (
-    txt: string,
-    fs: number,
-    ff = SUL_SANS,
-    bold = true
-  ): { width: number; height: number; ascent: number; descent: number } => {
-    // Create a temporary canvas for measurement
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return { width: 0, height: 0, ascent: 0, descent: 0 };
-    ctx.font = `${bold ? 'bold ' : ''}${fs}px "${ff}", sans-serif`;
-    const m = ctx.measureText(txt);
-    const ascent = m.actualBoundingBoxAscent ?? fs * 0.90;
-    const descent = m.actualBoundingBoxDescent ?? fs * 0.10;
-    return {
-      width: m.width,
-      height: ascent + descent,
-      ascent,
-      descent,
-    };
-  };
-
-  // Helper for baseline of a row
-  const baselineOf = (r: number) => rowY(r) + ROW_HEIGHT;
-
-  // Draw helper for static words
-  const drawStaticWord = (
-    ctx: CanvasRenderingContext2D,
-    txt: string,
-    pos: TextPosition
-  ) => {
-    const tremX = (Math.random() - .5) * tremblingIntensity;
-    const tremY = (Math.random() - .5) * tremblingIntensity;
-    ctx.save();
-    ctx.translate(pos.x + tremX, pos.baseline + tremY);
-    ctx.rotate(pos.rotation);
-    ctx.font         = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`;
-    ctx.textBaseline = 'alphabetic';
-    ctx.textAlign    = 'left';
-    ctx.fillStyle    = getContrastColor();
-    ctx.fillText(txt, 0, 0);
-    ctx.restore();
-  };
 
   // ─── JSX ────────────────────────────────────────────────────────────────────────
   console.log('RENDER', { phase, isPlaying, titles, subtitle });
@@ -2022,8 +1969,8 @@ export default function InstagramPostCreator() {
                 <Input
                   id="yPos"
                   type="number"
-                  value={editingPosition.baseline}
-                  onChange={e => setEditingPosition({ ...editingPosition, baseline: Number(e.target.value) })}
+                  value={editingPosition.y}
+                  onChange={e => setEditingPosition({ ...editingPosition, y: Number(e.target.value) })}
                 />
               </div>
               <div>
