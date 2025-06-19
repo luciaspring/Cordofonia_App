@@ -324,13 +324,26 @@ export default function InstagramPostCreator() {
     /* helper: baseline = bottom of row r (0-based) */
     const baselineOf = (r: number) => rowY(r) + ROW_HEIGHT;
 
+    // Helper so we don't repeat ourselves
+    const snapDownOneRow = (oldY: number, ascent: number) => {
+      const currentRow = Math.round((oldY - M) / ROW_HEIGHT);   // row index 0-7
+      const newTop     = rowY(currentRow + 1);                  // top of next row
+      return newTop - ascent;                                   // baseline stays on grid
+    };
+
     /* 1 ───── snap Frame-1 titles (rows 3 & 4) */
     setTitlePositionsFrame1(prev =>
       prev.map((pos, i) => {
         const fs = pos.fontSize;
         const ascent = fs * 0.9;             // SulSans ascent ≈ 90 % of size
         const base   = baselineOf(3 + i);    // rows 3 & 4 (so baselines 4 & 5)
-        return { ...pos, y: base - ascent };
+
+        // Only auto-snap while the user hasn't moved it manually
+        const shouldSnap =
+          Math.abs((pos.y - M) % ROW_HEIGHT) < 0.1; // tolerance
+
+        const y = shouldSnap ? snapDownOneRow(pos.y, ascent) : pos.y;
+        return { ...pos, width: 1000, height: 200, y };
       })
     );
 
@@ -339,7 +352,13 @@ export default function InstagramPostCreator() {
       const fs = prev.fontSize;
       const ascent = fs * 0.8;               // Affairs ascent ≈ 80 %
       const base   = baselineOf(5);          // baseline of 6-th row
-      return { ...prev, y: base - ascent };
+
+      // Only auto-snap while the user hasn't moved it manually
+      const shouldSnap =
+        Math.abs((prev.y - M) % ROW_HEIGHT) < 0.1; // tolerance
+
+      const y = shouldSnap ? snapDownOneRow(prev.y, ascent) : prev.y;
+      return { ...prev, width: 1000, height: 60, y };
     });
 
     /* nothing changes for Frame-2: users can still drag / resize / rotate */
