@@ -332,7 +332,8 @@ export default function InstagramPostCreator() {
       ctx.font   = `bold ${t2.fontSize}px "${SUL_SANS}", sans-serif`;
       const asc  = ctx.measureText(titles[1]).actualBoundingBoxAscent
                  ?? t2.fontSize * 0.9;                   // fallback
-      out[1] = { ...t2, y: bottomOfRow(5) - asc };       // ← row-5 baseline
+      const baseline = rowY(4) + ROW_HEIGHT;             // bottom of row-5
+      out[1] = { ...t2, y: baseline - asc };
       return out;
     });
 
@@ -344,7 +345,8 @@ export default function InstagramPostCreator() {
       ctx.font  = `bold ${t2.fontSize}px "${SUL_SANS}", sans-serif`;
       const asc = ctx.measureText(titles[1]).actualBoundingBoxAscent
                 ?? t2.fontSize * 0.9;
-      out[1] = { ...t2, y: bottomOfRow(5) - asc };
+      const baseline = rowY(4) + ROW_HEIGHT;             // bottom of row-5
+      out[1] = { ...t2, y: baseline - asc };
       return out;
     });
   }, [fontLoaded]);          // ⬅ runs once
