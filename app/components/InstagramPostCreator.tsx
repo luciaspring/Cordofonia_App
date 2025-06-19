@@ -169,8 +169,8 @@ export default function InstagramPostCreator() {
 
   // ─── FRAME 1 defaults ───────────────────────────────────────────────
   const [titlePositionsFrame1, setTitlePositionsFrame1] = useState<TextPosition[]>([
-    { x: M, y: 495, width: 1000, height: 200, rotation: 0, fontSize: 180 }, // Mbye → row-4 baseline
-    { x: M, y: 655, width: 1000, height: 200, rotation: 0, fontSize: 180 }  // Ebrima → row-5 baseline
+    { x: M, y: 555, width: 1000, height: 200, rotation: 0, fontSize: 180 }, // Mbye ↓
+    { x: M, y: 715, width: 1000, height: 200, rotation: 0, fontSize: 180 }  // Ebrima ↓
   ])
 
   const [subtitlePositionFrame1, setSubtitlePositionFrame1] = 
@@ -178,8 +178,8 @@ export default function InstagramPostCreator() {
 
   // ─── FRAME 2 defaults (identical) ───────────────────────────────────
   const [titlePositionsFrame2, setTitlePositionsFrame2] = useState<TextPosition[]>([
-    { x: M, y: 495, width: 1000, height: 200, rotation: 0, fontSize: 180 },
-    { x: M, y: 655, width: 1000, height: 200, rotation: 0, fontSize: 180 }
+    { x: M, y: 555, width: 1000, height: 200, rotation: 0, fontSize: 180 },
+    { x: M, y: 715, width: 1000, height: 200, rotation: 0, fontSize: 180 }
   ])
 
   const [subtitlePositionFrame2, setSubtitlePositionFrame2] = 
