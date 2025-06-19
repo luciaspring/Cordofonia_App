@@ -580,7 +580,7 @@ export default function InstagramPostCreator() {
       ctx.rotate(pos.rotation);
       ctx.font = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`;
       ctx.fillStyle = getContrastColor();
-      ctx.textBaseline = 'middle';
+      ctx.textBaseline = 'alphabetic';
       ctx.textAlign = 'left';
       ctx.fillText(titles[idx], -pos.width / 2, 0); // shift left by ½ W
       ctx.restore();
@@ -727,7 +727,7 @@ export default function InstagramPostCreator() {
       ctx.rotate(rotation)
       ctx.font         = `bold ${fontSize}px "${SUL_SANS}", sans-serif`
       ctx.fillStyle    = getContrastColor()
-      ctx.textBaseline = 'middle'
+      ctx.textBaseline = 'alphabetic'
       ctx.textAlign    = 'left'
       ctx.fillText(text, -dynW / 2, 0)                             // draw from left edge
       ctx.restore()
