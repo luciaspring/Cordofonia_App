@@ -215,6 +215,9 @@ export default function InstagramPostCreator() {
 
   const [showGuides, setShowGuides] = useState(false)
 
+  // Add at the top of the component, under other useState hooks
+  const [frame2Initialised, setFrame2Initialised] = useState(false);
+
   /*  put this near your other "const …" declarations  */
   const GOO_BG = 'bg-[#E5E5E5]'                   // colour that melts
   const isGooeyPhase = (p: PlayPhase) =>         // true while buttons touch
@@ -1553,11 +1556,20 @@ export default function InstagramPostCreator() {
   }
 
   // ─── FRAME CONTROLS ─────────────────────────────────────────────────────────────
-  const handleFrameChange = (frame: number) => {
-    setCurrentFrame(frame)
-    setSelectedTexts([])
-    drawCanvas()
-  }
+  const handleFrameChange = (frame: 1 | 2) => {
+    setCurrentFrame(frame);
+
+    /* When the user visits Frame 2 for the first time, copy positions
+       so the left margin & row baselines match Frame 1.                  */
+    if (frame === 2 && !frame2Initialised) {
+      setTitlePositionsFrame2(titlePositionsFrame1);
+      setSubtitlePositionFrame2(subtitlePositionFrame1);
+      setFrame2Initialised(true);          // never run again
+    }
+
+    setSelectedTexts([]);
+    drawCanvas();
+  };
 
   const handlePlayClick = () => {
     if (barRef.current) barRef.current.style.width = '0%';
