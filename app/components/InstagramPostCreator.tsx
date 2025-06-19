@@ -321,57 +321,26 @@ export default function InstagramPostCreator() {
   useEffect(() => {
     if (!fontLoaded) return;
 
-    /* helper: baseline = bottom of row r (0-based) */
-    const baselineOf = (r: number) => rowY(r) + ROW_HEIGHT;
+    /* helper: baseline of row 5 (0-based index => rowY(4) is top of row 5) */
+    const baselineRow5 = rowY(4) + ROW_HEIGHT;
 
-    // Helper so we don't repeat ourselves
-    const snapDownOneRow = (oldY: number, ascent: number) => {
-      const currentRow = Math.round((oldY - M) / ROW_HEIGHT);   // row index 0-7
-      const newTop     = rowY(currentRow + 1);                  // top of next row
-      return newTop - ascent;                                   // baseline stays on grid
-    };
-
-    /* 1 ───── snap Frame-1 titles (rows 3 & 4) */
-    const baselineRow5 = rowY(4) + ROW_HEIGHT;   // rowY(4) = top of row 5
+    /* second title line is index 1 */
     setTitlePositionsFrame1(prev =>
       prev.map((pos, i) => {
-        if (i !== 1) return pos;                // leave "Mbye" untouched
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return pos;
-        ctx.font = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`;
-        const ascent = ctx.measureText(titles[1]).actualBoundingBoxAscent ?? pos.fontSize * 0.9;
+        if (i !== 1) return pos;            // don't touch "Mbye"
+        const ascent = pos.fontSize * 0.9;  // SulSans ascent ≈90 %
         return { ...pos, y: baselineRow5 - ascent };
       })
     );
 
+    /* mirror the same snap for Frame 2 (first-time initialisation only) */
     setTitlePositionsFrame2(prev =>
       prev.map((pos, i) => {
         if (i !== 1) return pos;
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return pos;
-        ctx.font = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`;
-        const ascent = ctx.measureText(titles[1]).actualBoundingBoxAscent ?? pos.fontSize * 0.9;
+        const ascent = pos.fontSize * 0.9;
         return { ...pos, y: baselineRow5 - ascent };
       })
     );
-
-    /* 2 ───── snap Frame-1 subtitle (row 5 baseline) */
-    setSubtitlePositionFrame1(prev => {
-      const fs = prev.fontSize;
-      const ascent = fs * 0.8;               // Affairs ascent ≈ 80 %
-      const base   = baselineOf(5);          // baseline of 6-th row
-
-      // Only auto-snap while the user hasn't moved it manually
-      const shouldSnap =
-        Math.abs((prev.y - M) % ROW_HEIGHT) < 0.1; // tolerance
-
-      const y = shouldSnap ? snapDownOneRow(prev.y, ascent) : prev.y;
-      return { ...prev, width: 1000, height: 60, y };
-    });
-
-    /* nothing changes for Frame-2: users can still drag / resize / rotate */
   }, [fontLoaded]);
 
   // Recalculate text dimensions only when the source text or fonts change.
