@@ -478,12 +478,16 @@ export default function InstagramPostCreator() {
     setTitlePositionsFrame1(prev =>
       prev.map((pos, i) => {
         const { width, height, ascent } = measureText(titles[i], pos.fontSize, SUL_SANS, true)
+        const m = ctx.measureText(titles[i]);
+        const descent = m.actualBoundingBoxDescent ?? pos.fontSize * 0.10;
 
-        /* NEW: row-by-row snap ↓↓↓ */
         const origRow = Math.round((pos.y - M) / ROW_HEIGHT)   // 0-based index
-        // baseline should be the *bottom* of the row we're in
-        const baseline = rowY(origRow + 1);     // bottom edge of the row
-        const newY     = baseline - height / 2; // y so baseline = baseline line
+        // ➊ bottom grid-line for this row
+        const baseline = rowY(origRow + 1);          // bottom edge of the row
+        // ➋ distance from block-top to baseline when we use textBaseline='middle'
+        const offset   = height - descent;           // = height/2 + (height/2 – descent)
+        // ➌ top-left y so that baseline lands on the grid-line
+        const newY     = baseline - offset;
 
         return { ...pos, width, height, y: newY }
       })
@@ -492,11 +496,16 @@ export default function InstagramPostCreator() {
     setTitlePositionsFrame2(prev =>
       prev.map((pos, i) => {
         const { width, height, ascent } = measureText(titles[i], pos.fontSize, SUL_SANS, true)
+        const m = ctx.measureText(titles[i]);
+        const descent = m.actualBoundingBoxDescent ?? pos.fontSize * 0.10;
 
         const origRow = Math.round((pos.y - M) / ROW_HEIGHT)
-        // baseline should be the *bottom* of the row we're in
-        const baseline = rowY(origRow + 1);     // bottom edge of the row
-        const newY     = baseline - height / 2; // y so baseline = baseline line
+        // ➊ bottom grid-line for this row
+        const baseline = rowY(origRow + 1);          // bottom edge of the row
+        // ➋ distance from block-top to baseline when we use textBaseline='middle'
+        const offset   = height - descent;           // = height/2 + (height/2 – descent)
+        // ➌ top-left y so that baseline lands on the grid-line
+        const newY     = baseline - offset;
 
         return { ...pos, width, height, y: newY }
       })
