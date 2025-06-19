@@ -506,7 +506,7 @@ export default function InstagramPostCreator() {
       ctx.save();
       // fixed font-based centering
       const cx = pos.x + pos.width / 2;
-      const cy = pos.y + pos.fontSize / 2;
+      const cy = pos.y + pos.height / 2;          // ← same logic as the animation
       ctx.translate(cx + tremX, cy + tremY); // centre pivot
       ctx.rotate(pos.rotation);
       ctx.font = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`;
