@@ -325,24 +325,25 @@ export default function InstagramPostCreator() {
     const baselineOf = (r: number) => rowY(r) + ROW_HEIGHT;
 
     // Helper so we don't repeat ourselves
-    const snapDownOneRow = (oldY: number, h: number) => {
-      const currentRow = Math.round((oldY - M) / ROW_HEIGHT); // row index 0-7
-      /* baseline we want = bottom-edge of next row           */
-      const baseline    = rowY(currentRow + 1);
-      return baseline - h / 2;                               // top = baseline – h/2
+    const snapDownOneRow = (oldY: number, ascent: number) => {
+      const currentRow = Math.round((oldY - M) / ROW_HEIGHT);   // row index 0-7
+      const newTop     = rowY(currentRow + 1);                  // top of next row
+      return newTop - ascent;                                   // baseline stays on grid
     };
 
     /* 1 ───── snap Frame-1 titles (rows 3 & 4) */
     setTitlePositionsFrame1(prev =>
       prev.map((pos, i) => {
-        const { width, height } =
-          measureText(titles[i], pos.fontSize, SUL_SANS, true);
+        const fs = pos.fontSize;
+        const ascent = fs * 0.9;             // SulSans ascent ≈ 90 % of size
+        const base   = baselineOf(3 + i);    // rows 3 & 4 (so baselines 4 & 5)
 
+        // Only auto-snap while the user hasn't moved it manually
         const shouldSnap =
-          Math.abs((pos.y - M) % ROW_HEIGHT) < 0.1;   // only auto-snap if still on grid
+          Math.abs((pos.y - M) % ROW_HEIGHT) < 0.1; // tolerance
 
-        const y = shouldSnap ? snapDownOneRow(pos.y, height) : pos.y;
-        return { ...pos, width, height, y };
+        const y = shouldSnap ? snapDownOneRow(pos.y, ascent) : pos.y;
+        return { ...pos, width: 1000, height: 200, y };
       })
     );
 
@@ -461,47 +462,41 @@ export default function InstagramPostCreator() {
     const measureText = (txt: string, fs: number, ff = SUL_SANS, bold = true) => {
       ctx.font = `${bold ? 'bold ' : ''}${fs}px "${ff}", sans-serif`;
       const m = ctx.measureText(txt);
-      const ascent = m.actualBoundingBoxAscent ?? fs * 0.90;
+
+      /*  ▸ key numbers we need  */
+      const ascent = m.actualBoundingBoxAscent ?? fs * 0.90;   // ← WAS 0.80
       const descent = m.actualBoundingBoxDescent ?? fs * 0.10;
+
       return {
         width: m.width,
         height: ascent + descent,
-        ascent,
+        ascent,         // <- keep so we can align
       };
-    };
-
-    const snapBaselineToRow = (top: number, h: number) => {
-      /* Which row line is the current baseline sitting on?   */
-      const baselineY   = top + h / 2;                 // baseline = centre of box
-      const rowIdx      = Math.round((baselineY - M) / ROW_HEIGHT);
-      const wantedBase  = rowY(rowIdx + 1);            // bottom edge of that row
-      return wantedBase - h / 2;                       // new top so baseline sits there
     };
 
     // ── TITLES ───────────────────────────────────────────────
     setTitlePositionsFrame1(prev =>
       prev.map((pos, i) => {
-        const { width, height } =
-          measureText(titles[i], pos.fontSize, SUL_SANS, true);
+        const { width, height, ascent } = measureText(titles[i], pos.fontSize, SUL_SANS, true)
 
-        /* only snap if it's still exactly on a grid-row */
-        const onGrid = Math.abs((pos.y - M) % ROW_HEIGHT) < 0.1;
-        const newY   = onGrid ? snapBaselineToRow(pos.y, height) : pos.y;
+        /* NEW: row-by-row snap ↓↓↓ */
+        const origRow = Math.round((pos.y - M) / ROW_HEIGHT)   // 0-based index
+        const newY    = rowY(origRow + 1)                      // drop one row
 
-        return { ...pos, width, height, y: newY };
+        return { ...pos, width, height, y: newY }
       })
-    );
+    )
 
-    // ── TITLES FRAME 2 ─────────────────────────────────────--
     setTitlePositionsFrame2(prev =>
       prev.map((pos, i) => {
-        const { width, height } =
-          measureText(titles[i], pos.fontSize, SUL_SANS, true);
-        const onGrid = Math.abs((pos.y - M) % ROW_HEIGHT) < 0.1;
-        const newY   = onGrid ? snapBaselineToRow(pos.y, height) : pos.y;
-        return { ...pos, width, height, y: newY };
+        const { width, height, ascent } = measureText(titles[i], pos.fontSize, SUL_SANS, true)
+
+        const origRow = Math.round((pos.y - M) / ROW_HEIGHT)
+        const newY    = rowY(origRow + 1)
+
+        return { ...pos, width, height, y: newY }
       })
-    );
+    )
 
     // ── SUBTITLE ───────────────────────────────────────────────
     const instr = 'Instrumento:';
@@ -2163,4 +2158,4 @@ export default function InstagramPostCreator() {
       </Dialog>
     </div>
   )
-} 
+}
