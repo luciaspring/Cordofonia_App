@@ -321,34 +321,33 @@ export default function InstagramPostCreator() {
   useEffect(() => {
     if (!fontLoaded) return;
 
-    /* helper: return baseline of any row */
-    const baseline = (row: number) => rowY(row);    // bottom line of that row
+    /* helper – bottom rule of any row n (0-based) */
+    const bottomOfRow = (n: number) => rowY(n) + ROW_HEIGHT;
 
-    /* ---------------- Frame 1 ---------------- */
-    setTitlePositionsFrame1(prev => {
-      const out = [...prev];
-      const ePos = out[1];                          // 2nd line = "Ebrima"
-      const tmp   = document.createElement('canvas').getContext('2d')!;
-      tmp.font    = `bold ${ePos.fontSize}px "${SUL_SANS}", sans-serif`;
-      const asc   = tmp.measureText(titles[1]).actualBoundingBoxAscent
-                  ?? ePos.fontSize * 0.9;           // SulSans ≈90 % ascent
-      out[1] = { ...ePos, y: baseline(5) - asc };   // baseline on row-5 rule
+    /* ---------- Frame 1 ---------- */
+    setTitlePositionsFrame1(p => {
+      const out  = [...p];
+      const t2   = out[1];                               // "Ebrima"
+      const ctx  = document.createElement('canvas').getContext('2d')!;
+      ctx.font   = `bold ${t2.fontSize}px "${SUL_SANS}", sans-serif`;
+      const asc  = ctx.measureText(titles[1]).actualBoundingBoxAscent
+                 ?? t2.fontSize * 0.9;                   // fallback
+      out[1] = { ...t2, y: bottomOfRow(5) - asc };       // ← row-5 baseline
       return out;
     });
 
-    /* ---------------- Frame 2  (if you mirror F1) ---------------- */
-    setTitlePositionsFrame2(prev => {
-      const out = [...prev];
-      const ePos = out[1];
-      const tmp  = document.createElement('canvas').getContext('2d')!;
-      tmp.font   = `bold ${ePos.fontSize}px "${SUL_SANS}", sans-serif`;
-      const asc  = tmp.measureText(titles[1]).actualBoundingBoxAscent
-                 ?? ePos.fontSize * 0.9;
-      out[1] = { ...ePos, y: baseline(5) - asc };
+    /* mirror to Frame 2 if you copy positions */
+    setTitlePositionsFrame2(p => {
+      const out = [...p];
+      const t2  = out[1];
+      const ctx = document.createElement('canvas').getContext('2d')!;
+      ctx.font  = `bold ${t2.fontSize}px "${SUL_SANS}", sans-serif`;
+      const asc = ctx.measureText(titles[1]).actualBoundingBoxAscent
+                ?? t2.fontSize * 0.9;
+      out[1] = { ...t2, y: bottomOfRow(5) - asc };
       return out;
     });
-
-  }, [fontLoaded]);   // ← runs once
+  }, [fontLoaded]);          // ⬅ runs once
 
   // Recalculate text dimensions only when the source text or fonts change.
   useEffect(() => {
