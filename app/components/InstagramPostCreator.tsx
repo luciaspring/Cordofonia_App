@@ -44,6 +44,7 @@ interface Line {
 
 interface TextPosition {
   x: number
+  y: number
   baseline: number
   width: number
   height: number
@@ -328,10 +329,18 @@ export default function InstagramPostCreator() {
       const [mbye, ebrima] = prev;
       const m = measureText(titles[0], mbye.fontSize, SUL_SANS, true);
       const e = measureText(titles[1], ebrima.fontSize, SUL_SANS, true);
-      const mBase = baselineOf(4);
-      const eBase = baselineOf(5);
-      const mPos = { ...mbye, ...m, baseline: mBase };
-      const ePos = { ...ebrima, ...e, baseline: eBase };
+      const ascM = m.ascent;
+      const dscM = m.descent;
+      const hM   = ascM + dscM;
+      const baseM = baselineOf(4);
+      const topM  = baseM - ascM;
+      const mPos = { ...mbye, width: m.width, height: hM, baseline: baseM, y: topM };
+      const ascE = e.ascent;
+      const dscE = e.descent;
+      const hE   = ascE + dscE;
+      const baseE = baselineOf(5);
+      const topE  = baseE - ascE;
+      const ePos = { ...ebrima, width: e.width, height: hE, baseline: baseE, y: topE };
       return [mPos, ePos];
     });
 
@@ -340,10 +349,18 @@ export default function InstagramPostCreator() {
       const [mbye, ebrima] = prev;
       const m = measureText(titles[0], mbye.fontSize, SUL_SANS, true);
       const e = measureText(titles[1], ebrima.fontSize, SUL_SANS, true);
-      const mBase = baselineOf(4);
-      const eBase = baselineOf(5);
-      const mPos = { ...mbye, ...m, baseline: mBase };
-      const ePos = { ...ebrima, ...e, baseline: eBase };
+      const ascM = m.ascent;
+      const dscM = m.descent;
+      const hM   = ascM + dscM;
+      const baseM = baselineOf(4);
+      const topM  = baseM - ascM;
+      const mPos = { ...mbye, width: m.width, height: hM, baseline: baseM, y: topM };
+      const ascE = e.ascent;
+      const dscE = e.descent;
+      const hE   = ascE + dscE;
+      const baseE = baselineOf(5);
+      const topE  = baseE - ascE;
+      const ePos = { ...ebrima, width: e.width, height: hE, baseline: baseE, y: topE };
       return [mPos, ePos];
     });
   }, [fontLoaded]);          // ⬅ runs once
