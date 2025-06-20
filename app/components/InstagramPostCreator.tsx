@@ -715,19 +715,23 @@ export default function InstagramPostCreator() {
     const sub1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
     const sub2 = toFrame   === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
 
-    const sx         = sub1.x + (sub2.x - sub1.x) * moveT
-    const sbaseline  = sub1.baseline + (sub2.baseline - sub1.baseline) * moveT
-    const srot       = sub1.rotation + (sub2.rotation - sub1.rotation) * moveT
-    const sFontSize  = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT
-    const streX      = (Math.random() - 0.5) * tremblingIntensity
-    const streY      = (Math.random() - 0.5) * tremblingIntensity
+    const sx        = sub1.x        + (sub2.x        - sub1.x)        * moveT
+    const sbaseline = sub1.baseline + (sub2.baseline - sub1.baseline) * moveT
+    const srot      = sub1.rotation + (sub2.rotation - sub1.rotation) * moveT
+    const sFontSize = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT
+    const streX     = (Math.random() - 0.5) * tremblingIntensity
+    const streY     = (Math.random() - 0.5) * tremblingIntensity
+
+    /* current top-edge = baseline – currentAscent (ascent scales too)    */
+    const currAscent = sub1.ascent + (sub2.ascent - sub1.ascent) * scaleT
+    const stop = sbaseline - currAscent
 
     ctx.save()
-    ctx.translate(sx + streX, sbaseline + streY)
+    ctx.translate(sx + streX, stop + streY)   // lock to top-edge
     ctx.rotate(srot)
     ctx.font         = `${sFontSize}px "${AFFAIRS}", sans-serif`
     ctx.fillStyle    = getContrastColor()
-    ctx.textBaseline = 'alphabetic'
+    ctx.textBaseline = 'top'
     ctx.textAlign    = 'left'
 
     ctx.fillText('Instrumento:', 0, 0)
