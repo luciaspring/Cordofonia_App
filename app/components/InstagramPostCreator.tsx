@@ -459,26 +459,14 @@ export default function InstagramPostCreator() {
     setTitlePositionsFrame1(prev =>
       prev.map((pos, i) => {
         const { width, height, ascent, descent } = measureText(titles[i], pos.fontSize, SUL_SANS, true)
-        
-        // Calculate which row this text should be on based on current baseline
-        const currentRow = Math.round((pos.baseline - M) / ROW_HEIGHT)
-        // Snap baseline to the bottom of the target row
-        const baseline = rowY(currentRow + 1)
-
-        return { ...pos, width, height, ascent, descent, baseline }
+        return { ...pos, width, height, ascent, descent }
       })
     )
 
     setTitlePositionsFrame2(prev =>
       prev.map((pos, i) => {
         const { width, height, ascent, descent } = measureText(titles[i], pos.fontSize, SUL_SANS, true)
-        
-        // Calculate which row this text should be on based on current baseline
-        const currentRow = Math.round((pos.baseline - M) / ROW_HEIGHT)
-        // Snap baseline to the bottom of the target row
-        const baseline = rowY(currentRow + 1)
-
-        return { ...pos, width, height, ascent, descent, baseline }
+        return { ...pos, width, height, ascent, descent }
       })
     )
 
