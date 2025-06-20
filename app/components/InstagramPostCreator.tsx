@@ -730,9 +730,9 @@ export default function InstagramPostCreator() {
     ctx.font         = `${sFontSize}px "${AFFAIRS}", sans-serif`
     ctx.fillStyle    = getContrastColor()
     ctx.textBaseline = 'alphabetic'
-    ctx.textAlign    = 'center'
-    ctx.fillText('Instrumento:', -dynSW / 2, sbaseline - sub1.ascent)
-    ctx.fillText(subtitle,       -dynSW / 2, sbaseline + sFontSize + 8)
+    ctx.textAlign    = 'left'
+    ctx.fillText('Instrumento:', 0, 0)
+    ctx.fillText(subtitle, 0, sFontSize + 8)
     ctx.restore()
   }
 
