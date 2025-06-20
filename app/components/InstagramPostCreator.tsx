@@ -477,37 +477,28 @@ export default function InstagramPostCreator() {
     const instrM = measureText(instr, subtitlePositionFrame1.fontSize, AFFAIRS, false);
     const valM   = measureText(subtitle, subtitlePositionFrame1.fontSize, AFFAIRS, false);
 
-    // ── NEW: row-top anchoring ────────────────────────────────────────────
-    const subRow = 6;                                // row index that hosts the block
-    const rowTop = rowY(subRow);                     // ≡ top guide of that row
+    // --- NEW: row-top anchoring to row 5 (directly under "Ebrima") ---
+    const subRow     = 5;               // row directly under "Ebrima"
+    const rowTop     = rowY(subRow);    // ← top guide of that row
     const subAscent  = Math.max(instrM.ascent, valM.ascent);
     const subDescent = Math.max(instrM.descent, valM.descent);
-
-    /*  Make baseline = row-top + ascent   →  cap-height sits flush on the guide */
-    const subBaseline = rowTop + subAscent;
-
-    const subtitleWidth  = Math.max(instrM.width, valM.width);
-    const subtitleHeight = subAscent + subDescent   // 1st line
-                         + 8                        // gap
-                         + valM.ascent + valM.descent; // 2nd line
+    const subBase    = rowTop + subAscent;   // baseline = row-top + ascent
 
     setSubtitlePositionFrame1(p => ({
       ...p,
-      x: M,
-      baseline: subBaseline,
-      ascent:   subAscent,
-      descent:  subDescent,
-      width:    subtitleWidth,
-      height:   subtitleHeight,
+      baseline: subBase,
+      ascent  : subAscent,
+      descent : subDescent,
+      width   : Math.max(instrM.width, valM.width),
+      height  : subAscent + subDescent + 8 + subAscent + subDescent
     }));
     setSubtitlePositionFrame2(p => ({
       ...p,
-      x: M,
-      baseline: subBaseline,
-      ascent:   subAscent,
-      descent:  subDescent,
-      width:    subtitleWidth,
-      height:   subtitleHeight,
+      baseline: subBase,
+      ascent  : subAscent,
+      descent : subDescent,
+      width   : Math.max(instrM.width, valM.width),
+      height  : subAscent + subDescent + 8 + subAscent + subDescent
     }));
   }
 
