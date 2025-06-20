@@ -2230,4 +2230,4 @@ const recalcSafeBox = (p: TextPosition): TextPosition => {
   const sW = Math.abs(p.width  * Math.cos(θ)) + Math.abs(p.height * Math.sin(θ))
   const sH = Math.abs(p.width  * Math.sin(θ)) + Math.abs(p.height * Math.cos(θ))
   return { ...p, boxW: sW, boxH: sH }
-}
+} 
