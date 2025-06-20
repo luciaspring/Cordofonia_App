@@ -2274,4 +2274,4 @@ const centerOf = (p: TextPosition) => {
     cy: topY + h / 2,
     baselineOffset: h / 2 - p.descent
   }
-}
+} 
