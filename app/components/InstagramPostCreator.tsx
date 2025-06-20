@@ -796,34 +796,57 @@ export default function InstagramPostCreator() {
   }
 
   // ─── BOUNDING BOX CALCULATORS ───────────────────────────────────────────────────
+  /** Return a bounding rectangle that truly encloses every rotated element.
+    * The rectangle itself lives in the same rotation space as `groupRotation`
+    * so resizing / rotating from the handles stays intuitive. */
   const calculateGroupBoundingBox = (): GroupBoundingBox | null => {
-    if (selectedTexts.length === 0) return null;
-    const selectedPositions: TextPosition[] = titlePositionsFrame2
-      .filter((_, idx) => selectedTexts.includes(`title${idx + 1}` as 'title1' | 'title2'));
-    if (selectedTexts.includes('subtitle')) {
-      selectedPositions.push(subtitlePositionFrame2);
-    }
-    if (!selectedPositions.length) return null;
+    if (!selectedTexts.length) return null
 
-    // Calculate top positions from baseline and ascent
-    const positionsWithTop = selectedPositions.map(pos => ({
-      ...pos,
-      topY: pos.baseline - pos.ascent,
-      bottomY: pos.baseline + pos.descent
-    }));
+    /* gather every individual TextPosition that is currently selected */
+    const picked: TextPosition[] = titlePositionsFrame2
+      .filter((_, i) => selectedTexts.includes(`title${i + 1}` as 'title1' | 'title2'))
+    if (selectedTexts.includes('subtitle')) picked.push(subtitlePositionFrame2)
+    if (!picked.length) return null
 
-    let minX = Math.min(...positionsWithTop.map(p => p.x));
-    let minY = Math.min(...positionsWithTop.map(p => p.topY));
-    let maxX = Math.max(...positionsWithTop.map(p => p.x + p.width));
-    let maxY = Math.max(...positionsWithTop.map(p => p.bottomY));
+    /* We measure in the group-rotation coordinate space so width / height
+       stay axis-aligned with the group-box itself. */
+    const cosR = Math.cos(-groupRotation)
+    const sinR = Math.sin(-groupRotation)
+
+    let minX =  Infinity
+    let minY =  Infinity
+    let maxX = -Infinity
+    let maxY = -Infinity
+
+    picked.forEach(pos => {
+      getRotatedBoundingBox(pos).forEach(pt => {
+        /* rotate the corner into group space */
+        const rx = cosR * pt.x - sinR * pt.y
+        const ry = sinR * pt.x + cosR * pt.y
+        minX = Math.min(minX, rx)
+        minY = Math.min(minY, ry)
+        maxX = Math.max(maxX, rx)
+        maxY = Math.max(maxY, ry)
+      })
+    })
+
+    /* centre of the box in group-space */
+    const cgx = (minX + maxX) / 2
+    const cgy = (minY + maxY) / 2
+
+    /* …convert that centre back to canvas coordinates */
+    const cosR2 = Math.cos(groupRotation)
+    const sinR2 = Math.sin(groupRotation)
+    const worldCX = cosR2 * cgx - sinR2 * cgy
+    const worldCY = sinR2 * cgx + cosR2 * cgy
 
     return {
-      x: minX,
-      y: minY,
-      width: maxX - minX,
+      x: worldCX - (maxX - minX) / 2,
+      y: worldCY - (maxY - minY) / 2,
+      width:  maxX - minX,
       height: maxY - minY,
       rotation: groupRotation
-    };
+    }
   }
 
   // ─── MOUSE & INTERACTION HANDLERS ──────────────────────────────────────────────
