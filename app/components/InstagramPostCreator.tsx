@@ -2276,4 +2276,4 @@ useEffect(() => {
   setSubtitlePositionFrame2(p => ({ ...p, baseline: baseLineTop, ascent }))
 
   subtitleInit.current = true          // never run again
-}, [fontLoaded])
+}, [fontLoaded]) 
