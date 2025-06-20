@@ -713,34 +713,26 @@ export default function InstagramPostCreator() {
 
     // ——— Subtitle (same logic) ———
     const sub1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
-    const sub2 = toFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
+    const sub2 = toFrame   === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
 
-    const sx        = sub1.x + (sub2.x - sub1.x) * moveT
-    const sbaseline = sub1.baseline + (sub2.baseline - sub1.baseline) * moveT
-    const srot      = sub1.rotation + (sub2.rotation - sub1.rotation) * moveT
-    const sFontSize = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT
-    const streX     = (Math.random() - 0.5) * tremblingIntensity
-    const streY     = (Math.random() - 0.5) * tremblingIntensity
-    const dynSW     = sub1.width + (sub2.width - sub1.width) * scaleT
-    const dynSH     = sub1.height + (sub2.height - sub1.height) * scaleT
+    const sx         = sub1.x + (sub2.x - sub1.x) * moveT
+    const sbaseline  = sub1.baseline + (sub2.baseline - sub1.baseline) * moveT
+    const srot       = sub1.rotation + (sub2.rotation - sub1.rotation) * moveT
+    const sFontSize  = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT
+    const streX      = (Math.random() - 0.5) * tremblingIntensity
+    const streY      = (Math.random() - 0.5) * tremblingIntensity
 
-    const sboxW    = dynSW
-    const sboxH    = dynSH
-    const stopY    = sbaseline - sub1.ascent
-    const scx      = sx + sboxW / 2
-    const scy      = stopY + sboxH / 2
-    const sBase    = sboxH / 2 - sub1.descent
+    ctx.save()
+    ctx.translate(sx + streX, sbaseline + streY)
+    ctx.rotate(srot)
+    ctx.font         = `${sFontSize}px "${AFFAIRS}", sans-serif`
+    ctx.fillStyle    = getContrastColor()
+    ctx.textBaseline = 'alphabetic'
+    ctx.textAlign    = 'left'
 
-    ctx.save();
-    ctx.translate(scx + streX, scy + streY);
-    ctx.rotate(srot);
-    ctx.font         = `${sFontSize}px "${AFFAIRS}", sans-serif`;
-    ctx.fillStyle    = getContrastColor();
-    ctx.textBaseline = 'alphabetic';
-    ctx.textAlign    = 'left';
-    ctx.fillText('Instrumento:', -sboxW / 2, sBase);
-    ctx.fillText(subtitle,       -sboxW / 2, sBase + sFontSize + 8);
-    ctx.restore();
+    ctx.fillText('Instrumento:', 0, 0)
+    ctx.fillText(subtitle,       0, sFontSize + 8)
+    ctx.restore()
   }
 
   const drawBoundingBox = (ctx: CanvasRenderingContext2D, pos: TextPosition) => {
