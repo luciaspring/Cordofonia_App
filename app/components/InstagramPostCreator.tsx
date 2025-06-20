@@ -1256,6 +1256,30 @@ export default function InstagramPostCreator() {
     setSubtitlePositionFrame1(p => ({ ...p, baseline: rowY(6) }));   // row 6
   }, [fontLoaded]);
 
+  // One-shot baseline snap for the "Instrumento:" block
+  const subtitleInit = useRef(false);
+  useEffect(() => {
+    if (!fontLoaded || subtitleInit.current) return;
+
+    // measure "Instrumento:" once to get its ascent (cap-height proxy)
+    const canvas = document.createElement('canvas');
+    const ctx    = canvas.getContext('2d')!;
+    const fSize  = subtitlePositionFrame1.fontSize;          // e.g. 32
+    ctx.font     = `${fSize}px "${AFFAIRS}", serif`;
+    const m      = ctx.measureText('Instrumento:');
+    const ascent = m.actualBoundingBoxAscent ?? fSize * 0.9; // fallback
+
+    // we want the TOP of row 6 to kiss the capital-I cap-height
+    const row6Top  = rowY(6);          // top guide of row 6
+    const baseline = row6Top + ascent; // alphabetic baseline for line 1
+
+    // set once for both frames – users can still move/rotate in Frame 2
+    setSubtitlePositionFrame1(p => ({ ...p, baseline, ascent }));
+    setSubtitlePositionFrame2(p => ({ ...p, baseline, ascent }));
+
+    subtitleInit.current = true;       // never run again
+  }, [fontLoaded]);
+
   const pointToLineDistance = (pt: Point, a: Point, b: Point): number => {
     const A = pt.x - a.x;
     const B = pt.y - a.y;
@@ -2251,29 +2275,3 @@ const centerOf = (p: TextPosition) => {
     baselineOffset: h / 2 - p.descent
   }
 }
-
-// ───  ONE-SHOT  baseline snap for the "Instrumento:" block  ─────────────
-// place this *below* the existing "fonts loaded" effect that fixes Ebrima
-const subtitleInit = useRef(false)
-
-useEffect(() => {
-  if (!fontLoaded || subtitleInit.current) return
-
-  /* 1.  measure "Instrumento:" once to get its ascent */
-  const canvas = document.createElement('canvas')
-  const ctx    = canvas.getContext('2d')!
-  const fSize  = defaultSubtitlePosition.fontSize   // 32
-  ctx.font     = `${fSize}px "${AFFAIRS}", serif`
-  const m      = ctx.measureText('Instrumento:')
-  const ascent = m.actualBoundingBoxAscent ?? fSize * 0.90   // fallback
-
-  /* 2.  want the TOP of row-6 (row index 6) to touch the first line */
-  const row6Top     = rowY(6)          // helper already defined
-  const baseLineTop = row6Top + ascent // alphabetic baseline
-
-  /* 3.  update once for both frames – user can move it later in F2 */
-  setSubtitlePositionFrame1(p => ({ ...p, baseline: baseLineTop, ascent }))
-  setSubtitlePositionFrame2(p => ({ ...p, baseline: baseLineTop, ascent }))
-
-  subtitleInit.current = true          // never run again
-}, [fontLoaded]) 
