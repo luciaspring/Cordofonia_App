@@ -461,14 +461,14 @@ export default function InstagramPostCreator() {
     setTitlePositionsFrame1(prev =>
       prev.map((pos, i) => {
         const { width, height, ascent, descent } = measureText(titles[i], pos.fontSize, SUL_SANS, true)
-        return { ...pos, width, height, ascent, descent }
+        return recalcSafeBox({ ...pos, width, height, ascent, descent })
       })
     )
 
     setTitlePositionsFrame2(prev =>
       prev.map((pos, i) => {
         const { width, height, ascent, descent } = measureText(titles[i], pos.fontSize, SUL_SANS, true)
-        return { ...pos, width, height, ascent, descent }
+        return recalcSafeBox({ ...pos, width, height, ascent, descent })
       })
     )
 
@@ -2203,4 +2203,12 @@ export default function InstagramPostCreator() {
       </Dialog>
     </div>
   );
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────
+const recalcSafeBox = (p: TextPosition): TextPosition => {
+  const θ  = p.rotation ?? 0
+  const sW = Math.abs(p.width  * Math.cos(θ)) + Math.abs(p.height * Math.sin(θ))
+  const sH = Math.abs(p.width  * Math.sin(θ)) + Math.abs(p.height * Math.cos(θ))
+  return { ...p, boxW: sW, boxH: sH }
 }
