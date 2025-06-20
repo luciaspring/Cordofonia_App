@@ -549,44 +549,36 @@ export default function InstagramPostCreator() {
     const subPos = frame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2;
 
     positions.forEach((pos, idx) => {
-      const tremX = (Math.random() - 0.5) * tremblingIntensity;
-      const tremY = (Math.random() - 0.5) * tremblingIntensity;
-      ctx.save();
-      // Draw at baseline coordinates
-      ctx.translate(pos.x + tremX, pos.baseline + tremY);
-      ctx.rotate(pos.rotation);
-      ctx.font = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`;
-      ctx.fillStyle = getContrastColor();
-      ctx.textBaseline = 'alphabetic';
-      ctx.textAlign = 'left';
-      ctx.fillText(titles[idx], 0, 0); // Draw at baseline
-      ctx.restore();
-    });
+      const tremX = (Math.random() - 0.5) * tremblingIntensity
+      const tremY = (Math.random() - 0.5) * tremblingIntensity
+      const { cx, cy, baselineOffset } = centerOf(pos)
+
+      ctx.save()
+      ctx.translate(cx + tremX, cy + tremY)
+      ctx.rotate(pos.rotation)
+      ctx.font         = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`
+      ctx.fillStyle    = getContrastColor()
+      ctx.textBaseline = 'alphabetic'
+      ctx.textAlign    = 'center'
+      ctx.fillText(titles[idx], 0, baselineOffset)
+      ctx.restore()
+    })
 
     // subtitle
-    const tremXsub = (Math.random() - 0.5) * tremblingIntensity;
-    const tremYsub = (Math.random() - 0.5) * tremblingIntensity;
+    const tremXsub = (Math.random() - 0.5) * tremblingIntensity
+    const tremYsub = (Math.random() - 0.5) * tremblingIntensity
+    const { cx: scx, cy: scy, baselineOffset: sBase } = centerOf(subPos)
 
-    ctx.save();
-    // Draw subtitle at baseline coordinates
-    ctx.translate(subPos.x + tremXsub, subPos.baseline + tremYsub);
-    ctx.rotate(subPos.rotation);
-    ctx.font = `${subPos.fontSize}px "${AFFAIRS}", sans-serif`;
-    ctx.fillStyle = getContrastColor();
-    ctx.textBaseline = 'alphabetic';
-    ctx.textAlign = 'left';
-
-    // Draw both lines at baseline
-    const mSub = ctx.measureText('Instrumento:');
-    const dSub = mSub.actualBoundingBoxDescent ?? subPos.fontSize * 0.10;
-    const baseOffset = dSub - subPos.height / 2;   // baseline centred
-
-    ctx.textBaseline = 'alphabetic';
-    ctx.textAlign    = 'left';
-    const lx = -subPos.width / 2;
-    ctx.fillText('Instrumento:', lx,  baseOffset);
-    ctx.fillText(subtitle,       lx,  baseOffset + subPos.fontSize + 8);
-    ctx.restore();
+    ctx.save()
+    ctx.translate(scx + tremXsub, scy + tremYsub)
+    ctx.rotate(subPos.rotation)
+    ctx.font         = `${subPos.fontSize}px "${AFFAIRS}", sans-serif`
+    ctx.fillStyle    = getContrastColor()
+    ctx.textBaseline = 'alphabetic'
+    ctx.textAlign    = 'center'
+    ctx.fillText('Instrumento:', -subPos.width / 2, sBase)
+    ctx.fillText(subtitle,       -subPos.width / 2, sBase + subPos.fontSize + 8)
+    ctx.restore()
   }
 
   const drawRotatedText = (ctx: CanvasRenderingContext2D, pos: TextPosition, text: string) => {
@@ -701,15 +693,21 @@ export default function InstagramPostCreator() {
       const tremX = (Math.random() - 0.5) * tremblingIntensity
       const tremY = (Math.random() - 0.5) * tremblingIntensity
 
-      // 4) DRAW at baseline
+      // 4) DRAW at geometric center
+      const w  = dynW
+      const h  = dynH
+      const topY = baseline - dynAscent
+      const cx   = x + w / 2
+      const cy   = topY + h / 2
+      const base = h / 2 - dynDescent
       ctx.save()
-      ctx.translate(x + tremX, baseline + tremY)    // baseline pivot
+      ctx.translate(cx + tremX, cy + tremY)
       ctx.rotate(rotation)
       ctx.font         = `bold ${fontSize}px "${SUL_SANS}", sans-serif`
       ctx.fillStyle    = getContrastColor()
       ctx.textBaseline = 'alphabetic'
-      ctx.textAlign    = 'left'
-      ctx.fillText(text, 0, 0)                      // draw at baseline
+      ctx.textAlign    = 'center'
+      ctx.fillText(text, 0, base)
       ctx.restore()
     })
 
@@ -726,23 +724,16 @@ export default function InstagramPostCreator() {
     const dynSW     = sub1.width + (sub2.width - sub1.width) * scaleT
     const dynSH     = sub1.height + (sub2.height - sub1.height) * scaleT
 
-    ctx.save();
-    ctx.translate(sx + streX, sbaseline + streY);
-    ctx.rotate(srot);
-    ctx.font         = `${sFontSize}px "${AFFAIRS}", sans-serif`;
-    ctx.fillStyle    = getContrastColor();
-    ctx.textBaseline = 'alphabetic';
-    ctx.textAlign    = 'left';
-    const mm2  = ctx.measureText('Instrumento:')
-    const dd2  = mm2.actualBoundingBoxDescent ?? sFontSize * 0.10
-    const base2 = dd2 - dynSH / 2
-
+    ctx.save()
+    ctx.translate(sx + streX, sbaseline + streY)
+    ctx.rotate(srot)
+    ctx.font         = `${sFontSize}px "${AFFAIRS}", sans-serif`
+    ctx.fillStyle    = getContrastColor()
     ctx.textBaseline = 'alphabetic'
-    ctx.textAlign    = 'left'
-    const lx = -dynSW / 2
-    ctx.fillText('Instrumento:', lx, base2)
-    ctx.fillText(subtitle,       lx, base2 + sFontSize + 8)
-    ctx.restore();
+    ctx.textAlign    = 'center'
+    ctx.fillText('Instrumento:', -dynSW / 2, sbaseline - sub1.ascent)
+    ctx.fillText(subtitle,       -dynSW / 2, sbaseline + sFontSize + 8)
+    ctx.restore()
   }
 
   const drawBoundingBox = (ctx: CanvasRenderingContext2D, pos: TextPosition) => {
@@ -2244,4 +2235,16 @@ const recalcSafeBox = (p: TextPosition): TextPosition => {
   const sW = Math.abs(p.width  * Math.cos(θ)) + Math.abs(p.height * Math.sin(θ))
   const sH = Math.abs(p.width  * Math.sin(θ)) + Math.abs(p.height * Math.cos(θ))
   return { ...p, boxW: sW, boxH: sH }
+}
+
+// Utility: get geometric center and baseline offset for a TextPosition
+const centerOf = (p: TextPosition) => {
+  const w = p.boxW ?? p.width
+  const h = p.boxH ?? p.height
+  const topY = p.baseline - p.ascent
+  return {
+    cx: p.x + w / 2,
+    cy: topY + h / 2,
+    baselineOffset: h / 2 - p.descent
+  }
 }
