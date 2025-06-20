@@ -802,49 +802,45 @@ export default function InstagramPostCreator() {
   const calculateGroupBoundingBox = (): GroupBoundingBox | null => {
     if (!selectedTexts.length) return null
 
-    /* gather every individual TextPosition that is currently selected */
+    /* ── collect every selected element ─────────────────────────────── */
     const picked: TextPosition[] = titlePositionsFrame2
       .filter((_, i) => selectedTexts.includes(`title${i + 1}` as 'title1' | 'title2'))
     if (selectedTexts.includes('subtitle')) picked.push(subtitlePositionFrame2)
     if (!picked.length) return null
 
-    /* We measure in the group-rotation coordinate space so width / height
-       stay axis-aligned with the group-box itself. */
-    const cosR = Math.cos(-groupRotation)
-    const sinR = Math.sin(-groupRotation)
+    /* ── project every corner into the axis-pair defined by groupRotation ─ */
+    const cosR = Math.cos(groupRotation)
+    const sinR = Math.sin(groupRotation)
+    const ux =  cosR,  uy = sinR          // unit vector along the box's X-axis
+    const vx = -sinR,  vy = cosR          // unit vector along the box's Y-axis
 
-    let minX =  Infinity
-    let minY =  Infinity
-    let maxX = -Infinity
-    let maxY = -Infinity
+    let minU =  Infinity
+    let maxU = -Infinity
+    let minV =  Infinity
+    let maxV = -Infinity
 
     picked.forEach(pos => {
       getRotatedBoundingBox(pos).forEach(pt => {
-        /* rotate the corner into group space */
-        const rx = cosR * pt.x - sinR * pt.y
-        const ry = sinR * pt.x + cosR * pt.y
-        minX = Math.min(minX, rx)
-        minY = Math.min(minY, ry)
-        maxX = Math.max(maxX, rx)
-        maxY = Math.max(maxY, ry)
+        const u = pt.x * ux + pt.y * uy   // projection onto axis-u
+        const v = pt.x * vx + pt.y * vy   // projection onto axis-v
+        minU = Math.min(minU, u)
+        maxU = Math.max(maxU, u)
+        minV = Math.min(minV, v)
+        maxV = Math.max(maxV, v)
       })
     })
 
-    /* centre of the box in group-space */
-    const cgx = (minX + maxX) / 2
-    const cgy = (minY + maxY) / 2
-
-    /* …convert that centre back to canvas coordinates */
-    const cosR2 = Math.cos(groupRotation)
-    const sinR2 = Math.sin(groupRotation)
-    const worldCX = cosR2 * cgx - sinR2 * cgy
-    const worldCY = sinR2 * cgx + cosR2 * cgy
+    /* centre in the rotated space, then convert back to world coords */
+    const cU = (minU + maxU) / 2
+    const cV = (minV + maxV) / 2
+    const worldCX = cU * ux + cV * vx
+    const worldCY = cU * uy + cV * vy
 
     return {
-      x: worldCX - (maxX - minX) / 2,
-      y: worldCY - (maxY - minY) / 2,
-      width:  maxX - minX,
-      height: maxY - minY,
+      x: worldCX - (maxU - minU) / 2,
+      y: worldCY - (maxV - minV) / 2,
+      width:  maxU - minU,
+      height: maxV - minV,
       rotation: groupRotation
     }
   }
