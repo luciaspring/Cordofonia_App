@@ -577,8 +577,15 @@ export default function InstagramPostCreator() {
     ctx.textAlign = 'left';
 
     // Draw both lines at baseline
-    ctx.fillText('Instrumento:', 0, 0);
-    ctx.fillText(subtitle, 0, subPos.fontSize + 8);
+    const mSub = ctx.measureText('Instrumento:');
+    const dSub = mSub.actualBoundingBoxDescent ?? subPos.fontSize * 0.10;
+    const baseOffset = dSub - subPos.height / 2;   // baseline centred
+
+    ctx.textBaseline = 'alphabetic';
+    ctx.textAlign    = 'left';
+    const lx = -subPos.width / 2;
+    ctx.fillText('Instrumento:', lx,  baseOffset);
+    ctx.fillText(subtitle,       lx,  baseOffset + subPos.fontSize + 8);
     ctx.restore();
   }
 
@@ -726,8 +733,15 @@ export default function InstagramPostCreator() {
     ctx.fillStyle    = getContrastColor();
     ctx.textBaseline = 'alphabetic';
     ctx.textAlign    = 'left';
-    ctx.fillText('Instrumento:', 0, 0);
-    ctx.fillText(subtitle, 0, sFontSize + 8);
+    const mm2  = ctx.measureText('Instrumento:')
+    const dd2  = mm2.actualBoundingBoxDescent ?? sFontSize * 0.10
+    const base2 = dd2 - dynSH / 2
+
+    ctx.textBaseline = 'alphabetic'
+    ctx.textAlign    = 'left'
+    const lx = -dynSW / 2
+    ctx.fillText('Instrumento:', lx, base2)
+    ctx.fillText(subtitle,       lx, base2 + sFontSize + 8)
     ctx.restore();
   }
 
@@ -2230,4 +2244,4 @@ const recalcSafeBox = (p: TextPosition): TextPosition => {
   const sW = Math.abs(p.width  * Math.cos(θ)) + Math.abs(p.height * Math.sin(θ))
   const sH = Math.abs(p.width  * Math.sin(θ)) + Math.abs(p.height * Math.cos(θ))
   return { ...p, boxW: sW, boxH: sH }
-} 
+}
