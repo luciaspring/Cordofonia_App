@@ -2251,3 +2251,29 @@ const centerOf = (p: TextPosition) => {
     baselineOffset: h / 2 - p.descent
   }
 }
+
+// ───  ONE-SHOT  baseline snap for the "Instrumento:" block  ─────────────
+// place this *below* the existing "fonts loaded" effect that fixes Ebrima
+const subtitleInit = useRef(false)
+
+useEffect(() => {
+  if (!fontLoaded || subtitleInit.current) return
+
+  /* 1.  measure "Instrumento:" once to get its ascent */
+  const canvas = document.createElement('canvas')
+  const ctx    = canvas.getContext('2d')!
+  const fSize  = defaultSubtitlePosition.fontSize   // 32
+  ctx.font     = `${fSize}px "${AFFAIRS}", serif`
+  const m      = ctx.measureText('Instrumento:')
+  const ascent = m.actualBoundingBoxAscent ?? fSize * 0.90   // fallback
+
+  /* 2.  want the TOP of row-6 (row index 6) to touch the first line */
+  const row6Top     = rowY(6)          // helper already defined
+  const baseLineTop = row6Top + ascent // alphabetic baseline
+
+  /* 3.  update once for both frames – user can move it later in F2 */
+  setSubtitlePositionFrame1(p => ({ ...p, baseline: baseLineTop, ascent }))
+  setSubtitlePositionFrame2(p => ({ ...p, baseline: baseLineTop, ascent }))
+
+  subtitleInit.current = true          // never run again
+}, [fontLoaded])
