@@ -475,34 +475,39 @@ export default function InstagramPostCreator() {
     // ── SUBTITLE ───────────────────────────────────────────────
     const instr = 'Instrumento:';
     const instrM = measureText(instr, subtitlePositionFrame1.fontSize, AFFAIRS, false);
-    const valM = measureText(subtitle, subtitlePositionFrame1.fontSize, AFFAIRS, false);
+    const valM   = measureText(subtitle, subtitlePositionFrame1.fontSize, AFFAIRS, false);
 
-    const lineGap = 8;
-    const subtitleWidth = Math.max(instrM.width, valM.width);
-    const lineHeight = subtitlePositionFrame1.fontSize;
-    const subtitleHeight = lineHeight * 2 + lineGap;
-
-    // Use the larger ascent/descent for the subtitle block
-    const subAscent = Math.max(instrM.ascent, valM.ascent);
+    // ── NEW: row-top anchoring ────────────────────────────────────────────
+    const subRow = 6;                                // row index that hosts the block
+    const rowTop = rowY(subRow);                     // ≡ top guide of that row
+    const subAscent  = Math.max(instrM.ascent, valM.ascent);
     const subDescent = Math.max(instrM.descent, valM.descent);
-    const subBaseline = rowY(6); // Baseline of 6th row
+
+    /*  Make baseline = row-top + ascent   →  cap-height sits flush on the guide */
+    const subBaseline = rowTop + subAscent;
+
+    const subtitleWidth  = Math.max(instrM.width, valM.width);
+    const subtitleHeight = subAscent + subDescent   // 1st line
+                         + 8                        // gap
+                         + valM.ascent + valM.descent; // 2nd line
 
     setSubtitlePositionFrame1(p => ({
       ...p,
+      x: M,
       baseline: subBaseline,
-      ascent: subAscent,
-      descent: subDescent,
-      width: subtitleWidth,
-      height: subtitleHeight,
+      ascent:   subAscent,
+      descent:  subDescent,
+      width:    subtitleWidth,
+      height:   subtitleHeight,
     }));
-    
     setSubtitlePositionFrame2(p => ({
       ...p,
+      x: M,
       baseline: subBaseline,
-      ascent: subAscent,
-      descent: subDescent,
-      width: subtitleWidth,
-      height: subtitleHeight,
+      ascent:   subAscent,
+      descent:  subDescent,
+      width:    subtitleWidth,
+      height:   subtitleHeight,
     }));
   }
 
@@ -2274,4 +2279,4 @@ const centerOf = (p: TextPosition) => {
     cy: topY + h / 2,
     baselineOffset: h / 2 - p.descent
   }
-} 
+}
