@@ -51,6 +51,8 @@ interface TextPosition {
   height: number
   rotation: number
   fontSize: number
+  boxW?: number         // Optional override for bounding box width
+  boxH?: number         // Optional override for bounding box height
 }
 
 interface GroupBoundingBox {
@@ -732,16 +734,18 @@ export default function InstagramPostCreator() {
   const drawBoundingBox = (ctx: CanvasRenderingContext2D, pos: TextPosition) => {
     // Calculate top position from baseline and ascent
     const topY = pos.baseline - pos.ascent;
-    const cx = pos.x + pos.width / 2;
-    const cy = topY + pos.height / 2;
+    const boxWidth = pos.boxW ?? pos.width;
+    const boxHeight = pos.boxH ?? pos.height;
+    const cx = pos.x + boxWidth / 2;
+    const cy = topY + boxHeight / 2;
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(pos.rotation);
-    const hw = pos.width / 2;
-    const hh = pos.height / 2;
+    const hw = boxWidth / 2;
+    const hh = boxHeight / 2;
     ctx.strokeStyle = 'rgba(0, 120, 255, 0.8)';
     ctx.lineWidth = 2;
-    ctx.strokeRect(-hw, -hh, pos.width, pos.height);
+    ctx.strokeRect(-hw, -hh, boxWidth, boxHeight);
     const handleSize = HANDLE_ICON        // only the icon uses this size
     const corners = [
       [-hw, -hh],
@@ -836,11 +840,11 @@ export default function InstagramPostCreator() {
     if ('baseline' in position) {
       // TextPosition - calculate center from baseline and ascent
       const topY = position.baseline - position.ascent;
-      cx = position.x + position.width / 2;
-      cy = topY + position.height / 2;
+      width = position.boxW ?? position.width;
+      height = position.boxH ?? position.height;
+      cx = position.x + width / 2;
+      cy = topY + height / 2;
       rot = position.rotation;
-      width = position.width;
-      height = position.height;
     } else {
       // GroupBoundingBox - use y directly
       cx = position.x + position.width / 2;
@@ -880,11 +884,11 @@ export default function InstagramPostCreator() {
     if ('baseline' in position) {
       // TextPosition - calculate center from baseline and ascent
       const topY = position.baseline - position.ascent;
-      cx = position.x + position.width / 2;
-      cy = topY + position.height / 2;
+      width = position.boxW ?? position.width;
+      height = position.boxH ?? position.height;
+      cx = position.x + width / 2;
+      cy = topY + height / 2;
       rot = position.rotation;
-      width = position.width;
-      height = position.height;
     } else {
       // GroupBoundingBox - use y directly
       cx = position.x + position.width / 2;
@@ -1267,10 +1271,10 @@ export default function InstagramPostCreator() {
   const getRotatedBoundingBox = (pos: TextPosition): Point[] => {
     // Calculate top position from baseline and ascent
     const topY = pos.baseline - pos.ascent;
-    const cx = pos.x + pos.width / 2;
-    const cy = topY + pos.height / 2;
-    const w = pos.width;
-    const h = pos.height;
+    const w = pos.boxW ?? pos.width;
+    const h = pos.boxH ?? pos.height;
+    const cx = pos.x + w / 2;
+    const cy = topY + h / 2;
     const corners = [
       { x: -w / 2, y: -h / 2 },
       { x: w / 2, y: -h / 2 },
@@ -1367,10 +1371,12 @@ export default function InstagramPostCreator() {
   ) => {
     if (!resizeStartPosition || !initialPosition) return;
     const ref = initialPosition;
+    const refWidth = ref.boxW ?? ref.width;
+    const refHeight = ref.boxH ?? ref.height;
     // Calculate center from baseline and ascent
     const topY = ref.baseline - ref.ascent;
-    const cx = ref.x + ref.width/2;
-    const cy = topY + ref.height/2;
+    const cx = ref.x + refWidth / 2;
+    const cy = topY + refHeight / 2;
 
     let scale: number;
     if (scaleAnchor === 'center') {
@@ -1392,8 +1398,8 @@ export default function InstagramPostCreator() {
     }
     scale = Math.max(0.1, scale);
 
-    const newW = ref.width  * scale;
-    const newH = ref.height * scale;
+    const newW = refWidth * scale;
+    const newH = refHeight * scale;
     const newX = cx - newW/2;
     const newBaseline = ref.baseline; // Keep baseline at same position
     const newAscent = ref.ascent * scale;
@@ -1405,8 +1411,10 @@ export default function InstagramPostCreator() {
       baseline: newBaseline,
       ascent: newAscent,
       descent: newDescent,
-      width: newW,
+      width: ref.width * scale, // scale the actual text width
       height: newH,
+      boxW: newW,
+      boxH: newH,
       fontSize: ref.fontSize * scale
     };
 
