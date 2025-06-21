@@ -474,32 +474,35 @@ export default function InstagramPostCreator() {
 
     // ── SUBTITLE ───────────────────────────────────────────────
     {
-      const instr      = 'Instrumento:';
-      const instrM     = measureText(instr, subtitlePositionFrame1.fontSize, AFFAIRS, false);
-      const valM       = measureText(subtitle, subtitlePositionFrame1.fontSize, AFFAIRS, false);
+      // — subtitle metrics —
+      const instrM = measureText('Instrumento:', subtitlePositionFrame1.fontSize, AFFAIRS, false);
+      const valM   = measureText(subtitle,      subtitlePositionFrame1.fontSize, AFFAIRS, false);
 
-      const lineGap    = 8;
-      const blockW     = Math.max(instrM.width, valM.width);
-      const blockH     = instrM.height + lineGap + valM.height;
+      const subAscent  = Math.max(instrM.ascent, valM.ascent);
+      const subDescent = Math.max(instrM.descent, valM.descent);
+      const subtitleW  = Math.max(instrM.width,  valM.width);
+      const subtitleH  = instrM.height + 8 + valM.height;
 
-      /* TOP of the row immediately below "Ebrima" (row index 5) */
-      const rowTop     = rowY(5);                 // ← 0-based: 0,1,2,3,4,5…
-      /* Baseline so that the *top* of "Instrumento:" hugs rowTop */
-      const baseLine   = rowTop + instrM.ascent;  // ascent = cap-height
+      /* TOP of the row directly under "Ebrima" (row index 5, 0-based) */
+      const rowTop = rowY(5);                    //  ← guide-line we want to hug
+      const subBaseline = rowTop + subAscent;    //  ← move baseline down by ascent
 
-      const newSubPos = {
-        x:        M,
-        baseline: baseLine,
-        ascent:   instrM.ascent,                  // use first-line ascent
-        descent:  valM.descent,                   // keep descent for bbox
-        width:    blockW,
-        height:   blockH,
-        rotation: 0,
-        fontSize: subtitlePositionFrame1.fontSize,
-      };
-
-      setSubtitlePositionFrame1(newSubPos);
-      setSubtitlePositionFrame2(newSubPos);
+      setSubtitlePositionFrame1(p => ({
+        ...p,
+        baseline: subBaseline,
+        ascent:   subAscent,
+        descent:  subDescent,
+        width:    subtitleW,
+        height:   subtitleH,
+      }));
+      setSubtitlePositionFrame2(p => ({
+        ...p,
+        baseline: subBaseline,
+        ascent:   subAscent,
+        descent:  subDescent,
+        width:    subtitleW,
+        height:   subtitleH,
+      }));
     }
   }
 
