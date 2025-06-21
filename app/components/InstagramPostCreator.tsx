@@ -568,40 +568,42 @@ export default function InstagramPostCreator() {
     })
 
     // subtitle  (Frame-1 or Frame-2)
-    const subPos = frame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
+    {
+      /* subPos already defined earlier in this function */
 
-    /* ── compensate baseline if the block is rotated (Frame-2 only) ── */
-    let baseX   = subPos.x
-    let baseY   = subPos.baseline
-    if (frame === 2 && subPos.rotation !== 0) {
-      /*  cap-height of "Instrumento:" is     rowY(6) → subPos.baseline − subPos.ascent₀
-          tallest ascent (after you typed "Kora") is subPos.ascent
-          Extra ascent we must lift = subPos.ascent − (subPos.baseline − rowY(6))         */
-      const capAscent   = subPos.baseline - rowY(6)         // ascent of the capital "I"
-      const extraAsc    = subPos.ascent - capAscent         // growth caused by 2nd line
-      baseX  +=  extraAsc * Math.sin(subPos.rotation)
-      baseY  +=  extraAsc * Math.cos(subPos.rotation)
+      /* ── if the block is rotated (Frame-2), lift it so its
+             rotated top-edge never shifts                                 */
+      let baseX = subPos.x;
+      let baseBaseline = subPos.baseline;
+
+      if (frame === 2 && subPos.rotation !== 0) {
+        const capAscent = subPos.baseline - rowY(6);      // cap-height of the "I"
+        const extraAsc  = subPos.ascent - capAscent;      // added by 2nd line
+        baseX        += extraAsc * Math.sin(subPos.rotation);
+        baseBaseline += extraAsc * Math.cos(subPos.rotation);
+      }
+
+      /* trembling + draw */
+      const tremX = (Math.random() - 0.5) * tremblingIntensity;
+      const tremY = (Math.random() - 0.5) * tremblingIntensity;
+
+      const { cx, cy, baselineOffset } = centerOf({
+        ...subPos,
+        x: baseX,
+        baseline: baseBaseline,
+      });
+
+      ctx.save();
+      ctx.translate(cx + tremX, cy + tremY);
+      ctx.rotate(subPos.rotation);
+      ctx.font         = `${subPos.fontSize}px "${AFFAIRS}", sans-serif`;
+      ctx.fillStyle    = getContrastColor();
+      ctx.textBaseline = 'alphabetic';
+      ctx.textAlign    = 'left';
+      ctx.fillText('Instrumento:', -subPos.width / 2, baselineOffset);
+      ctx.fillText(subtitle,       -subPos.width / 2, baselineOffset + subPos.fontSize + 8);
+      ctx.restore();
     }
-
-    /* ── trembling & draw exactly once ── */
-    const tremXsub = (Math.random() - 0.5) * tremblingIntensity
-    const tremYsub = (Math.random() - 0.5) * tremblingIntensity
-    const { cx: scx, cy: scy, baselineOffset: sBase } = centerOf({
-      ...subPos,
-      x: baseX,            // compensated values
-      baseline: baseY
-    })
-
-    ctx.save()
-    ctx.translate(scx + tremXsub, scy + tremYsub)
-    ctx.rotate(subPos.rotation)
-    ctx.font         = `${subPos.fontSize}px "${AFFAIRS}", sans-serif`
-    ctx.fillStyle    = getContrastColor()
-    ctx.textBaseline = 'alphabetic'
-    ctx.textAlign    = 'left'
-    ctx.fillText('Instrumento:', -subPos.width / 2, sBase)
-    ctx.fillText(subtitle,       -subPos.width / 2, sBase + subPos.fontSize + 8)
-    ctx.restore()
   }
 
   const drawRotatedText = (ctx: CanvasRenderingContext2D, pos: TextPosition, text: string) => {
