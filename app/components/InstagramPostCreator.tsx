@@ -1245,12 +1245,6 @@ export default function InstagramPostCreator() {
     ctx.restore()
   }
 
-  // One-time baseline snap for Frame-1 subtitle after font load
-  useEffect(() => {
-    if (!fontLoaded) return;
-    setSubtitlePositionFrame1(p => ({ ...p, baseline: rowY(6) }));   // row 6
-  }, [fontLoaded]);
-
   // One-shot baseline snap for the "Instrumento:" block
   const subtitleInit = useRef(false);
   useEffect(() => {
