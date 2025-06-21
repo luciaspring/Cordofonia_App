@@ -718,38 +718,33 @@ export default function InstagramPostCreator() {
     const sub1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
     const sub2 = toFrame   === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
     {
-      /* 1 ▸ interpolate the "move" phase (before scaling) */
-      const xMove  = sub1.x + (sub2.x - sub1.x) * moveT;
-      const baseMove = sub1.baseline + (sub2.baseline - sub1.baseline) * moveT;
-      const rot    = sub1.rotation + (sub2.rotation - sub1.rotation) * moveT;
+      /* 1 ▸ interpolate move-phase values (these are *final* before scaling) */
+      const xMove   = sub1.x        + (sub2.x        - sub1.x)        * moveT;
+      const baseMov = sub1.baseline + (sub2.baseline - sub1.baseline) * moveT;
+      const rot     = sub1.rotation + (sub2.rotation - sub1.rotation) * moveT;
 
-      /* 2 ▸ current font-size and ascent while scaling */
+      /* 2 ▸ font size & ascent during the scale phase */
       const size = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT;
-      const asc1 = sub1.ascent;
-      const asc2 = sub2.ascent;
-      const ascMove  = asc1 + (asc2 - asc1) * moveT;   // ascent at end of move
-      const ascScale = asc1 + (asc2 - asc1) * scaleT;  // ascent this frame
+      const asc1 = sub1.ascent;                              // ascent at start of scale
+      const asc  = asc1 + (sub2.ascent - asc1) * scaleT;     // ascent this frame
+      const dAsc = asc - asc1;                               // growth since scale began
 
-      /* 3 ▸ keep the *rotated* top-edge fixed while scaling
-             ------------------------------------------------
-             topWorld = (x, baseline) + R(rot)·(0, –ascent)
-             To keep it constant we translate by Δascent in the rotated frame.
-      */
-      const dAsc = ascScale - ascMove;        // ascent growth this frame
-      const sx   = xMove  - dAsc * Math.sin(rot);  // horizontal compensation
-      const baseline = baseMove + dAsc * Math.cos(rot);  // vertical compensation
+      /* 3 ▸ compensate in world-space so the *rotated* top-edge never moves */
+      const sx       = xMove  + dAsc * Math.sin(rot);
+      const baseline = baseMov - dAsc * Math.cos(rot);
 
-      /* 4 ▸ draw the two-line subtitle */
+      /* 4 ▸ trembling & draw */
       const tremX = (Math.random() - 0.5) * tremblingIntensity;
       const tremY = (Math.random() - 0.5) * tremblingIntensity;
 
       ctx.save();
-      ctx.translate(sx + tremX, baseline + tremY);   // pivot = baseline-left
+      ctx.translate(sx + tremX, baseline + tremY);    // pivot: baseline-left
       ctx.rotate(rot);
       ctx.font         = `${size}px "${AFFAIRS}", sans-serif`;
       ctx.fillStyle    = getContrastColor();
       ctx.textBaseline = 'alphabetic';
       ctx.textAlign    = 'left';
+
       ctx.fillText('Instrumento:', 0, 0);
       ctx.fillText(subtitle,        0, size + 8);
       ctx.restore();
