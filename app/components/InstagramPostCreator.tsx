@@ -473,33 +473,34 @@ export default function InstagramPostCreator() {
     )
 
     // ── SUBTITLE ───────────────────────────────────────────────
-    const instr = 'Instrumento:';
-    const instrM = measureText(instr, subtitlePositionFrame1.fontSize, AFFAIRS, false);
-    const valM   = measureText(subtitle, subtitlePositionFrame1.fontSize, AFFAIRS, false);
+    {
+      const instr      = 'Instrumento:';
+      const instrM     = measureText(instr, subtitlePositionFrame1.fontSize, AFFAIRS, false);
+      const valM       = measureText(subtitle, subtitlePositionFrame1.fontSize, AFFAIRS, false);
 
-    // --- NEW: row-top anchoring to row 5 (directly under "Ebrima") ---
-    const subRow     = 5;               // row directly under "Ebrima"
-    const rowTop     = rowY(subRow);    // ← top guide of that row
-    const subAscent  = Math.max(instrM.ascent, valM.ascent);
-    const subDescent = Math.max(instrM.descent, valM.descent);
-    const subBase    = rowTop + subAscent;   // baseline = row-top + ascent
+      const lineGap    = 8;
+      const blockW     = Math.max(instrM.width, valM.width);
+      const blockH     = instrM.height + lineGap + valM.height;
 
-    setSubtitlePositionFrame1(p => ({
-      ...p,
-      baseline: subBase,
-      ascent  : subAscent,
-      descent : subDescent,
-      width   : Math.max(instrM.width, valM.width),
-      height  : subAscent + subDescent + 8 + subAscent + subDescent
-    }));
-    setSubtitlePositionFrame2(p => ({
-      ...p,
-      baseline: subBase,
-      ascent  : subAscent,
-      descent : subDescent,
-      width   : Math.max(instrM.width, valM.width),
-      height  : subAscent + subDescent + 8 + subAscent + subDescent
-    }));
+      /* TOP of the row immediately below "Ebrima" (row index 5) */
+      const rowTop     = rowY(5);                 // ← 0-based: 0,1,2,3,4,5…
+      /* Baseline so that the *top* of "Instrumento:" hugs rowTop */
+      const baseLine   = rowTop + instrM.ascent;  // ascent = cap-height
+
+      const newSubPos = {
+        x:        M,
+        baseline: baseLine,
+        ascent:   instrM.ascent,                  // use first-line ascent
+        descent:  valM.descent,                   // keep descent for bbox
+        width:    blockW,
+        height:   blockH,
+        rotation: 0,
+        fontSize: subtitlePositionFrame1.fontSize,
+      };
+
+      setSubtitlePositionFrame1(newSubPos);
+      setSubtitlePositionFrame2(newSubPos);
+    }
   }
 
   // ─── DRAWING ROUTINES ────────────────────────────────────────────────────────────
