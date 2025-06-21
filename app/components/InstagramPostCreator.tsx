@@ -474,39 +474,37 @@ export default function InstagramPostCreator() {
 
     // ── SUBTITLE ───────────────────────────────────────────────
     const instr  = 'Instrumento:';
-    const aff    = AFFAIRS;                       // shorthand
+    const aff    = AFFAIRS;
 
-    /* Measure the two lines separately */
     const instrM = measureText(instr,    subtitlePositionFrame1.fontSize, aff, false);
     const valM   = measureText(subtitle, subtitlePositionFrame1.fontSize, aff, false);
 
-    /* The cap-height of "Instrumento:" is our reference for the guide-line */
-    const capAscent = instrM.ascent;              // ← FIRST-line cap-height only
-
-    /* Bounding-box numbers still use the tallest metrics of both lines */
-    const subAscent  = Math.max(instrM.ascent,  valM.ascent);
-    const subDescent = Math.max(instrM.descent, valM.descent);
+    /* 1 ▸ measurements -------------------------------------------------- */
+    const capAscent = instrM.ascent;                       // cap-height of "I"
+    const subAscent = Math.max(instrM.ascent,  valM.ascent);
+    const subDesc   = Math.max(instrM.descent, valM.descent);
 
     const subtitleWidth  = Math.max(instrM.width, valM.width);
     const lineGap        = 8;
-    const subtitleHeight = subAscent + subDescent       // line 1
+    const subtitleHeight = subAscent + subDesc        // first line
                          + lineGap
-                         + valM.ascent + valM.descent;  // line 2
+                         + valM.ascent + valM.descent;
 
-    /* Baseline = top of row-7 + cap-height of the "I"               */
-    const row6Top     = rowY(6);                 // row index is 0-based
+    /* 2 ▸ baseline = top of row-7 + cap-height (keeps "I" on the guide) */
+    const row6Top     = rowY(6);                // top guide of the 7-th grid row
     const subBaseline = row6Top + capAscent;
 
+    /* 3 ▸ update helper -------------------------------------------------- */
     const updSubtitle = (p: TextPosition): TextPosition => ({
       ...p,
-      baseline : subBaseline,   // locks the cap-height to the guide
-      ascent   : capAscent,     // **do NOT use subAscent here**
-      descent  : instrM.descent,
+      baseline : subBaseline,   // stays locked to the guide
+      ascent   : subAscent,     // <- IMPORTANT: use the *tallest* ascent again
+      descent  : subDesc,
       width    : subtitleWidth,
       height   : subtitleHeight,
     });
 
-    /* Apply to both frames */
+    /* 4 ▸ apply to both frames ------------------------------------------ */
     setSubtitlePositionFrame1(updSubtitle);
     setSubtitlePositionFrame2(updSubtitle);
   }
