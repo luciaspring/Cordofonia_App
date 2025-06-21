@@ -473,37 +473,33 @@ export default function InstagramPostCreator() {
     )
 
     // ── SUBTITLE ───────────────────────────────────────────────
-    {
-      // — subtitle metrics —
-      const instrM = measureText('Instrumento:', subtitlePositionFrame1.fontSize, AFFAIRS, false);
-      const valM   = measureText(subtitle,      subtitlePositionFrame1.fontSize, AFFAIRS, false);
+    const instr  = 'Instrumento:';
+    const instrM = measureText(instr, subtitlePositionFrame1.fontSize, AFFAIRS, false);
+    const valM   = measureText(subtitle, subtitlePositionFrame1.fontSize, AFFAIRS, false);
 
-      const subAscent  = Math.max(instrM.ascent, valM.ascent);
-      const subDescent = Math.max(instrM.descent, valM.descent);
-      const subtitleW  = Math.max(instrM.width,  valM.width);
-      const subtitleH  = instrM.height + 8 + valM.height;
+    const subAscent  = Math.max(instrM.ascent,  valM.ascent);
+    const subDescent = Math.max(instrM.descent, valM.descent);
 
-      /* TOP of the row directly under "Ebrima" (row index 5, 0-based) */
-      const rowTop = rowY(5);                    //  ← guide-line we want to hug
-      const subBaseline = rowTop + subAscent;    //  ← move baseline down by ascent
+    const subtitleWidth  = Math.max(instrM.width, valM.width);
+    const lineGap        = 8;
+    const subtitleHeight = subAscent + subDescent       // first line
+                         + lineGap
+                         + valM.ascent + valM.descent;  // second line
 
-      setSubtitlePositionFrame1(p => ({
-        ...p,
-        baseline: subBaseline,
-        ascent:   subAscent,
-        descent:  subDescent,
-        width:    subtitleW,
-        height:   subtitleH,
-      }));
-      setSubtitlePositionFrame2(p => ({
-        ...p,
-        baseline: subBaseline,
-        ascent:   subAscent,
-        descent:  subDescent,
-        width:    subtitleW,
-        height:   subtitleH,
-      }));
-    }
+    const row6Top     = rowY(6);              // top of 7th row
+    const subBaseline = row6Top + instrM.ascent;  // ← top of capital "I" on guide
+
+    const updSubtitle = (p: TextPosition): TextPosition => ({
+      ...p,
+      baseline : subBaseline,
+      ascent   : subAscent,
+      descent  : subDescent,
+      width    : subtitleWidth,
+      height   : subtitleHeight,
+    });
+
+    setSubtitlePositionFrame1(updSubtitle);
+    setSubtitlePositionFrame2(updSubtitle);
   }
 
   // ─── DRAWING ROUTINES ────────────────────────────────────────────────────────────
