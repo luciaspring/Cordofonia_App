@@ -718,33 +718,34 @@ export default function InstagramPostCreator() {
     const sub1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
     const sub2 = toFrame   === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
     {
-      /* 1 ▸ interpolate move-phase values (these are *final* before scaling) */
+      /* 1 ▸ interpolate the MOVE phase ­(done before we start scaling) */
       const xMove   = sub1.x        + (sub2.x        - sub1.x)        * moveT;
       const baseMov = sub1.baseline + (sub2.baseline - sub1.baseline) * moveT;
       const rot     = sub1.rotation + (sub2.rotation - sub1.rotation) * moveT;
 
-      /* 2 ▸ font size & ascent during the scale phase */
+      /* 2 ▸ font-size & ascent while we SCALE */
       const size = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT;
-      const asc1 = sub1.ascent;                              // ascent at start of scale
-      const asc  = asc1 + (sub2.ascent - asc1) * scaleT;     // ascent this frame
-      const dAsc = asc - asc1;                               // growth since scale began
+      const asc1 = sub1.ascent;                               // ascent at start-of-scale
+      const asc2 = sub2.ascent;
+      const asc  = asc1 + (asc2 - asc1) * scaleT;             // ascent this frame
+      const dAsc = asc - asc1;                                // ascent growth so far
 
-      /* 3 ▸ compensate in world-space so the *rotated* top-edge never moves */
-      const sx       = xMove  + dAsc * Math.sin(rot);
-      const baseline = baseMov - dAsc * Math.cos(rot);
+      /* 3 ▸ keep the *rotated* top-left corner perfectly fixed
+             Δx =  +dAsc · sin(rot)     Δy =  +dAsc · cos(rot)          */
+      const sx       = xMove   + dAsc * Math.sin(rot);
+      const baseline = baseMov + dAsc * Math.cos(rot);
 
-      /* 4 ▸ trembling & draw */
+      /* 4 ▸ draw (with the usual trembling) */
       const tremX = (Math.random() - 0.5) * tremblingIntensity;
       const tremY = (Math.random() - 0.5) * tremblingIntensity;
 
       ctx.save();
-      ctx.translate(sx + tremX, baseline + tremY);    // pivot: baseline-left
+      ctx.translate(sx + tremX, baseline + tremY);   // pivot: baseline-left
       ctx.rotate(rot);
       ctx.font         = `${size}px "${AFFAIRS}", sans-serif`;
       ctx.fillStyle    = getContrastColor();
       ctx.textBaseline = 'alphabetic';
       ctx.textAlign    = 'left';
-
       ctx.fillText('Instrumento:', 0, 0);
       ctx.fillText(subtitle,        0, size + 8);
       ctx.restore();
