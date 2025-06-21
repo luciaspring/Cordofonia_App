@@ -715,41 +715,40 @@ export default function InstagramPostCreator() {
     })
 
     // ——— Subtitle (same logic) ———
-    const sub1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
-    const sub2 = toFrame   === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
-    {
-      /* 1 ▸ interpolate the MOVE phase ­(done before we start scaling) */
-      const xMove   = sub1.x        + (sub2.x        - sub1.x)        * moveT;
-      const baseMov = sub1.baseline + (sub2.baseline - sub1.baseline) * moveT;
-      const rot     = sub1.rotation + (sub2.rotation - sub1.rotation) * moveT;
+    const sub1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2;
+    const sub2 = toFrame   === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2;
 
-      /* 2 ▸ font-size & ascent while we SCALE */
-      const size = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT;
-      const asc1 = sub1.ascent;                               // ascent at start-of-scale
-      const asc2 = sub2.ascent;
-      const asc  = asc1 + (asc2 - asc1) * scaleT;             // ascent this frame
-      const dAsc = asc - asc1;                                // ascent growth so far
+    /* 1 ─ interpolate MOVE values (before scaling) */
+    const xMove   = sub1.x        + (sub2.x        - sub1.x)        * moveT;
+    const baseMov = sub1.baseline + (sub2.baseline - sub1.baseline) * moveT;
+    const rot     = sub1.rotation + (sub2.rotation - sub1.rotation) * moveT;
 
-      /* 3 ▸ keep the *rotated* top-left corner perfectly fixed
-             Δx =  +dAsc · sin(rot)     Δy =  +dAsc · cos(rot)          */
-      const sx       = xMove   + dAsc * Math.sin(rot);
-      const baseline = baseMov + dAsc * Math.cos(rot);
+    /* 2 ─ font size & ascent during SCALE */
+    const size    = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT;
+    const asc     = sub1.ascent   + (sub2.ascent   - sub1.ascent)   * scaleT;
 
-      /* 4 ▸ draw (with the usual trembling) */
-      const tremX = (Math.random() - 0.5) * tremblingIntensity;
-      const tremY = (Math.random() - 0.5) * tremblingIntensity;
+    /* 3 ─ TOP-LEFT corner in world-space never moves  */
+    const topX = xMove  - sub1.ascent * Math.sin(rot);      // world X of cap-height
+    const topY = baseMov - sub1.ascent * Math.cos(rot);     // world Y of cap-height
 
-      ctx.save();
-      ctx.translate(sx + tremX, baseline + tremY);   // pivot: baseline-left
-      ctx.rotate(rot);
-      ctx.font         = `${size}px "${AFFAIRS}", sans-serif`;
-      ctx.fillStyle    = getContrastColor();
-      ctx.textBaseline = 'alphabetic';
-      ctx.textAlign    = 'left';
-      ctx.fillText('Instrumento:', 0, 0);
-      ctx.fillText(subtitle,        0, size + 8);
-      ctx.restore();
-    }
+    /* rebuild baseline from that fixed top-left */
+    const sx       = topX + asc * Math.sin(rot);            // current baseline-left X
+    const baseline = topY + asc * Math.cos(rot);            // current baseline
+
+    /* 4 ─ draw (with trembling) */
+    const tremX = (Math.random() - 0.5) * tremblingIntensity;
+    const tremY = (Math.random() - 0.5) * tremblingIntensity;
+
+    ctx.save();
+    ctx.translate(sx + tremX, baseline + tremY);            // pivot = baseline-left
+    ctx.rotate(rot);
+    ctx.font         = `${size}px "${AFFAIRS}", sans-serif`;
+    ctx.fillStyle    = getContrastColor();
+    ctx.textBaseline = 'alphabetic';
+    ctx.textAlign    = 'left';
+    ctx.fillText('Instrumento:', 0, 0);
+    ctx.fillText(subtitle,        0, size + 8);
+    ctx.restore();
   }
 
   const drawBoundingBox = (ctx: CanvasRenderingContext2D, pos: TextPosition) => {
