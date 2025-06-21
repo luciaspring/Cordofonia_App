@@ -719,26 +719,36 @@ export default function InstagramPostCreator() {
     // ——— Subtitle (same logic) ———
     const sub1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
     const sub2 = toFrame   === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
-
-    const sx        = sub1.x        + (sub2.x        - sub1.x)        * moveT
-    const sbaseline = sub1.baseline + (sub2.baseline - sub1.baseline) * moveT
-    const srot      = sub1.rotation + (sub2.rotation - sub1.rotation) * moveT
-    const sFontSize = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT
-    
     {
+      /* 1 ─ shorthand handles */
+      const a1 = sub1.ascent;          // cap-height in Frame-1
+      const a2 = sub2.ascent;          // cap-height in Frame-2
+
+      /* 2 ─ plain linear lerps */
+      const sx = sub1.x + (sub2.x - sub1.x) * moveT;       // position
+      const rot = sub1.rotation + (sub2.rotation - sub1.rotation) * moveT;
+      const fontPx = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT;
+
+      /* 3 ─ keep the *top* of the block fixed while scaling
+             baseline = baseline(after move) + Δ(cap-height)                */
+      const baseMove = sub1.baseline + (sub2.baseline - sub1.baseline) * moveT;
+      const asc      = a1 + (a2 - a1) * scaleT;            // current cap-height
+      const baseline = baseMove + (asc - a1);              // ← magic line
+
+      /* 4 ─ draw */
       const tremX = (Math.random() - 0.5) * tremblingIntensity;
       const tremY = (Math.random() - 0.5) * tremblingIntensity;
 
       ctx.save();
-      ctx.translate(sx + tremX, sbaseline + tremY);        // pivot = baseline left
-      ctx.rotate(srot);
-      ctx.font         = `${sFontSize}px "${AFFAIRS}", sans-serif`;
+      ctx.translate(sx + tremX, baseline + tremY);         // pivot: baseline-left
+      ctx.rotate(rot);
+      ctx.font         = `${fontPx}px "${AFFAIRS}", sans-serif`;
       ctx.fillStyle    = getContrastColor();
       ctx.textBaseline = 'alphabetic';
       ctx.textAlign    = 'left';
 
-      ctx.fillText('Instrumento:', 0, 0);                  // baseline on row-6 top
-      ctx.fillText(subtitle,        0, sFontSize + 8);
+      ctx.fillText('Instrumento:', 0, 0);                  // line 1
+      ctx.fillText(subtitle,        0, fontPx + 8);        // line 2
       ctx.restore();
     }
   }
