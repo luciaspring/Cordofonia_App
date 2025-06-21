@@ -725,15 +725,15 @@ export default function InstagramPostCreator() {
       const tremY = (Math.random() - 0.5) * tremblingIntensity;
 
       ctx.save();
-      ctx.translate(sx + tremX, sbaseline + tremY);        // pivot = baseline
+      ctx.translate(sx + tremX, sbaseline + tremY);        // pivot = baseline left
       ctx.rotate(srot);
       ctx.font         = `${sFontSize}px "${AFFAIRS}", sans-serif`;
       ctx.fillStyle    = getContrastColor();
       ctx.textBaseline = 'alphabetic';
       ctx.textAlign    = 'left';
 
-      ctx.fillText('Instrumento:', 0, 0);
-      ctx.fillText(subtitle,      0, sFontSize + 8);
+      ctx.fillText('Instrumento:', 0, 0);                  // baseline on row-6 top
+      ctx.fillText(subtitle,        0, sFontSize + 8);
       ctx.restore();
     }
   }
