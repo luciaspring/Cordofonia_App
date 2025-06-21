@@ -474,30 +474,39 @@ export default function InstagramPostCreator() {
 
     // ── SUBTITLE ───────────────────────────────────────────────
     const instr  = 'Instrumento:';
-    const instrM = measureText(instr, subtitlePositionFrame1.fontSize, AFFAIRS, false);
-    const valM   = measureText(subtitle, subtitlePositionFrame1.fontSize, AFFAIRS, false);
+    const aff    = AFFAIRS;                       // shorthand
 
+    /* Measure the two lines separately */
+    const instrM = measureText(instr,    subtitlePositionFrame1.fontSize, aff, false);
+    const valM   = measureText(subtitle, subtitlePositionFrame1.fontSize, aff, false);
+
+    /* The cap-height of "Instrumento:" is our reference for the guide-line */
+    const capAscent = instrM.ascent;              // ← FIRST-line cap-height only
+
+    /* Bounding-box numbers still use the tallest metrics of both lines */
     const subAscent  = Math.max(instrM.ascent,  valM.ascent);
     const subDescent = Math.max(instrM.descent, valM.descent);
 
     const subtitleWidth  = Math.max(instrM.width, valM.width);
     const lineGap        = 8;
-    const subtitleHeight = subAscent + subDescent       // first line
+    const subtitleHeight = subAscent + subDescent       // line 1
                          + lineGap
-                         + valM.ascent + valM.descent;  // second line
+                         + valM.ascent + valM.descent;  // line 2
 
-    const row6Top     = rowY(6);              // top of 7th row
-    const subBaseline = row6Top + instrM.ascent;  // ← top of capital "I" on guide
+    /* Baseline = top of row-7 + cap-height of the "I"               */
+    const row6Top     = rowY(6);                 // row index is 0-based
+    const subBaseline = row6Top + capAscent;
 
     const updSubtitle = (p: TextPosition): TextPosition => ({
       ...p,
-      baseline : subBaseline,
-      ascent   : subAscent,
-      descent  : subDescent,
+      baseline : subBaseline,   // locks the cap-height to the guide
+      ascent   : capAscent,     // **do NOT use subAscent here**
+      descent  : instrM.descent,
       width    : subtitleWidth,
       height   : subtitleHeight,
     });
 
+    /* Apply to both frames */
     setSubtitlePositionFrame1(updSubtitle);
     setSubtitlePositionFrame2(updSubtitle);
   }
