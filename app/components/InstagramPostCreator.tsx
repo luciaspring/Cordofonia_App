@@ -567,10 +567,30 @@ export default function InstagramPostCreator() {
       ctx.restore()
     })
 
-    // subtitle
+    // subtitle  (Frame-1 or Frame-2)
+    const subPos = frame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
+
+    /* ── compensate baseline if the block is rotated (Frame-2 only) ── */
+    let baseX   = subPos.x
+    let baseY   = subPos.baseline
+    if (frame === 2 && subPos.rotation !== 0) {
+      /*  cap-height of "Instrumento:" is     rowY(6) → subPos.baseline − subPos.ascent₀
+          tallest ascent (after you typed "Kora") is subPos.ascent
+          Extra ascent we must lift = subPos.ascent − (subPos.baseline − rowY(6))         */
+      const capAscent   = subPos.baseline - rowY(6)         // ascent of the capital "I"
+      const extraAsc    = subPos.ascent - capAscent         // growth caused by 2nd line
+      baseX  +=  extraAsc * Math.sin(subPos.rotation)
+      baseY  +=  extraAsc * Math.cos(subPos.rotation)
+    }
+
+    /* ── trembling & draw exactly once ── */
     const tremXsub = (Math.random() - 0.5) * tremblingIntensity
     const tremYsub = (Math.random() - 0.5) * tremblingIntensity
-    const { cx: scx, cy: scy, baselineOffset: sBase } = centerOf(subPos)
+    const { cx: scx, cy: scy, baselineOffset: sBase } = centerOf({
+      ...subPos,
+      x: baseX,            // compensated values
+      baseline: baseY
+    })
 
     ctx.save()
     ctx.translate(scx + tremXsub, scy + tremYsub)
