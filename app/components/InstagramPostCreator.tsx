@@ -718,35 +718,41 @@ export default function InstagramPostCreator() {
     const sub1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
     const sub2 = toFrame   === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
     {
-      /* 1 ─ shorthand handles */
-      const a1 = sub1.ascent;          // cap-height in Frame-1
-      const a2 = sub2.ascent;          // cap-height in Frame-2
+      /* 1 ▸ handy shorthands */
+      const asc1 = sub1.ascent;          // ascent in   fromFrame
+      const asc2 = sub2.ascent;          // ascent in     toFrame
 
-      /* 2 ─ plain linear lerps */
-      const sx = sub1.x + (sub2.x - sub1.x) * moveT;       // position
+      /* 2 ▸ position / rotation interpolate on moveT (0‒1) */
+      const sx  = sub1.x + (sub2.x - sub1.x) * moveT;
       const rot = sub1.rotation + (sub2.rotation - sub1.rotation) * moveT;
-      const fontPx = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT;
 
-      /* 3 ─ keep the *top* of the block fixed while scaling
-             baseline = baseline(after move) + Δ(cap-height)                */
+      /* 3 ▸ font size and current ascent follow scaleT (0‒1) */
+      const sFont = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT;
+      const asc   = asc1 + (asc2 - asc1) * scaleT;          // live ascent
+
+      /* 4 ▸ keep the *top* of the block fixed while scaling
+             -------------------------------------------------
+             baseline = baseline(after move)  +  Δ(ascent)
+             where Δ(ascent) = asc – ascent that would exist *before* scaling
+      */
       const baseMove = sub1.baseline + (sub2.baseline - sub1.baseline) * moveT;
-      const asc      = a1 + (a2 - a1) * scaleT;            // current cap-height
-      const baseline = baseMove + (asc - a1);              // ← magic line
+      const ascMove  = asc1 + (asc2 - asc1) * moveT;        // ascent at move-phase
+      const baseline = baseMove + (asc - ascMove);
 
-      /* 4 ─ draw */
+      /* 5 ▸ draw it, with trembling */
       const tremX = (Math.random() - 0.5) * tremblingIntensity;
       const tremY = (Math.random() - 0.5) * tremblingIntensity;
 
       ctx.save();
-      ctx.translate(sx + tremX, baseline + tremY);         // pivot: baseline-left
+      ctx.translate(sx + tremX, baseline + tremY);          // pivot: baseline-left
       ctx.rotate(rot);
-      ctx.font         = `${fontPx}px "${AFFAIRS}", sans-serif`;
+      ctx.font         = `${sFont}px "${AFFAIRS}", sans-serif`;
       ctx.fillStyle    = getContrastColor();
       ctx.textBaseline = 'alphabetic';
       ctx.textAlign    = 'left';
 
-      ctx.fillText('Instrumento:', 0, 0);                  // line 1
-      ctx.fillText(subtitle,        0, fontPx + 8);        // line 2
+      ctx.fillText('Instrumento:', 0, 0);                   // first line
+      ctx.fillText(subtitle,        0, sFont + 8);          // second line
       ctx.restore();
     }
   }
