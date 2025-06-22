@@ -779,8 +779,8 @@ export default function InstagramPostCreator() {
   const drawBoundingBox = (ctx: CanvasRenderingContext2D, pos: TextPosition) => {
     // Calculate top position from baseline and ascent
     const topY = pos.baseline - pos.ascent;
-    const boxWidth = pos.boxW ?? pos.width;
-    const boxHeight = pos.boxH ?? pos.height;
+    const boxWidth  = pos.width;       // ← un-rotated glyph bounds
+    const boxHeight = pos.height;      //    (don't use the 'safe' one here)
     const cx = pos.x + boxWidth / 2;
     const cy = topY + boxHeight / 2;
     ctx.save();
@@ -816,8 +816,8 @@ export default function InstagramPostCreator() {
     ctx.save()
     ctx.translate(cx, cy)
     ctx.rotate(box.rotation)
-    const hw = box.width / 2
-    const hh = box.height / 2
+    const hw = box.width  / 2   // (these are already the *raw* dims
+    const hh = box.height / 2   //  from calculateGroupBoundingBox)
     ctx.strokeStyle = 'rgba(0, 120, 255, 0.8)'
     ctx.lineWidth = 2
     ctx.strokeRect(-hw, -hh, box.width, box.height)
