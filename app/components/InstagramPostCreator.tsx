@@ -1544,27 +1544,52 @@ export default function InstagramPostCreator() {
     textType: 'title1' | 'title2' | 'subtitle'
   ) => {
     if (!lastMousePosition.current) return;
-    // Calculate center from baseline and ascent
+
+    /* 1 ─ current centre of the text block */
+    const boxW = position.boxW ?? position.width;
+    const boxH = position.boxH ?? position.height;
     const topY = position.baseline - position.ascent;
-    const centerX = position.x + position.width / 2;
-    const centerY = topY + position.height / 2;
-    const lastAngle = Math.atan2(lastMousePosition.current.y - centerY, lastMousePosition.current.x - centerX);
-    const currentAngle = Math.atan2(y - centerY, x - centerX);
-    let delta = currentAngle - lastAngle;
-    if (delta > Math.PI) delta -= 2 * Math.PI;
+    const cx   = position.x + boxW / 2;
+    const cy   = topY        + boxH / 2;
+
+    /* 2 ─ angle delta measured around that centre */
+    const prevA = Math.atan2(
+      lastMousePosition.current.y - cy,
+      lastMousePosition.current.x - cx
+    );
+    const currA = Math.atan2(y - cy, x - cx);
+    let delta = currA - prevA;
+    if (delta >  Math.PI) delta -= 2 * Math.PI;
     if (delta < -Math.PI) delta += 2 * Math.PI;
+
+    /* 3 ─ rotate baseline-left corner to keep the centre fixed */
+    const offX = position.x - cx;             // centre → BL-corner
+    const offY = position.baseline - cy;
+    const cos  = Math.cos(delta);
+    const sin  = Math.sin(delta);
+    const newOffX = offX * cos - offY * sin;
+    const newOffY = offX * sin + offY * cos;
+
+    const apply = (p: TextPosition): TextPosition => ({
+      ...p,
+      x        : cx + newOffX,
+      baseline : cy + newOffY,
+      rotation : p.rotation + delta,
+    });
+
     if (textType === 'subtitle') {
-      setSubtitlePositionFrame2(prev => ({ ...prev, rotation: prev.rotation + delta }));
+      setSubtitlePositionFrame2(apply);
     } else {
       setTitlePositionsFrame2(prev => {
         const arr = [...prev];
         const idx = textType === 'title1' ? 0 : 1;
-        arr[idx] = { ...arr[idx], rotation: arr[idx].rotation + delta };
+        arr[idx]  = apply(arr[idx]);
         return arr;
       });
     }
+
     lastMousePosition.current = { x, y };
-  }
+  };
 
   const rotateGroup = (x: number, y: number, box: GroupBoundingBox) => {
     if (!lastMousePosition.current) return;
