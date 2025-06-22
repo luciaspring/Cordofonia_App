@@ -672,37 +672,42 @@ export default function InstagramPostCreator() {
     fromFrame: number,
     toFrame: number
   ) => {
-    const titlesArr = titles
+    const titlesArr     = titles
     const fromPositions = fromFrame === 1 ? titlePositionsFrame1 : titlePositionsFrame2
-    const toPositions   = toFrame  === 1 ? titlePositionsFrame1 : titlePositionsFrame2
+    const toPositions   = toFrame   === 1 ? titlePositionsFrame1 : titlePositionsFrame2
 
     titlesArr.forEach((text, i) => {
       const p1 = fromPositions[i]
       const p2 = toPositions[i]
 
-      // 1) POSITION & ROTATION INTERPOLATION
-      const x        = p1.x        + (p2.x        - p1.x)        * moveT
-      const baseline = p1.baseline + (p2.baseline - p1.baseline) * moveT
-      const rotation = p1.rotation + (p2.rotation - p1.rotation) * moveT
+      // 1) interpolate position & rotation
+      const x0        = p1.x        + (p2.x        - p1.x)        * moveT
+      const baseline0 = p1.baseline + (p2.baseline - p1.baseline) * moveT
+      const rotation  = p1.rotation + (p2.rotation - p1.rotation) * moveT
 
-      // 2) SIZE INTERPOLATION
-      const fontSize = p1.fontSize + (p2.fontSize - p1.fontSize) * scaleT
-      const dynW = p1.width + (p2.width - p1.width) * scaleT
-      const dynH = p1.height + (p2.height - p1.height) * scaleT
-      const dynAscent = p1.ascent + (p2.ascent - p1.ascent) * scaleT
-      const dynDescent = p1.descent + (p2.descent - p1.descent) * scaleT
+      // 2) interpolate size metrics
+      const fontSize   = p1.fontSize + (p2.fontSize - p1.fontSize) * scaleT
+      const dynW       = p1.width    + (p2.width    - p1.width)    * scaleT
+      const dynH       = p1.height   + (p2.height   - p1.height)   * scaleT
+      const dynAscent  = p1.ascent   + (p2.ascent   - p1.ascent)   * scaleT
+      const dynDescent = p1.descent  + (p2.descent  - p1.descent)  * scaleT
 
-      // 3) RANDOM TREMBLE
+      // 3) ── NEW: pin the rotated top-left corner ─────────────────────────
+      const dAsc = dynAscent - p1.ascent
+      const sx   = x0        + dAsc * Math.sin(rotation)
+      const bl   = baseline0 + dAsc * Math.cos(rotation)
+      // ───────────────────────────────────────────────────────────────────
+
+      // 4) trembling + draw
       const tremX = (Math.random() - 0.5) * tremblingIntensity
       const tremY = (Math.random() - 0.5) * tremblingIntensity
 
-      // 4) DRAW at geometric center
-      const w  = dynW
-      const h  = dynH
-      const topY = baseline - dynAscent
-      const cx   = x + w / 2
-      const cy   = topY + h / 2
-      const base = h / 2 - dynDescent
+      // compute centre from pinned coords
+      const topY = bl - dynAscent
+      const cx   = sx + dynW / 2
+      const cy   = topY + dynH / 2
+      const base = dynH / 2 - dynDescent
+
       ctx.save()
       ctx.translate(cx + tremX, cy + tremY)
       ctx.rotate(rotation)
@@ -714,41 +719,40 @@ export default function InstagramPostCreator() {
       ctx.restore()
     })
 
-    // ——— Subtitle (same logic) ———
+    // Subtitle is already doing the same pin-top-left trick, so leave it as is:
     const sub1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
     const sub2 = toFrame   === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
     {
-      /* 1 ▸ interpolate the MOVE phase ­(done before we start scaling) */
-      const xMove   = sub1.x        + (sub2.x        - sub1.x)        * moveT;
-      const baseMov = sub1.baseline + (sub2.baseline - sub1.baseline) * moveT;
-      const rot     = sub1.rotation + (sub2.rotation - sub1.rotation) * moveT;
+      /* 1 ▸ move */
+      const xMove   = sub1.x        + (sub2.x        - sub1.x)        * moveT
+      const baseMov = sub1.baseline + (sub2.baseline - sub1.baseline) * moveT
+      const rot     = sub1.rotation + (sub2.rotation - sub1.rotation) * moveT
 
-      /* 2 ▸ font-size & ascent while we SCALE */
-      const size = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT;
-      const asc1 = sub1.ascent;                               // ascent at start-of-scale
-      const asc2 = sub2.ascent;
-      const asc  = asc1 + (asc2 - asc1) * scaleT;             // ascent this frame
-      const dAsc = asc - asc1;                                // ascent growth so far
+      /* 2 ▸ scale ascent */
+      const size = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT
+      const asc1 = sub1.ascent
+      const asc2 = sub2.ascent
+      const asc  = asc1 + (asc2 - asc1) * scaleT
+      const dAsc = asc - asc1
 
-      /* 3 ▸ keep the *rotated* top-left corner perfectly fixed
-             Δx =  +dAsc · sin(rot)     Δy =  +dAsc · cos(rot)          */
-      const sx       = xMove   + dAsc * Math.sin(rot);
-      const baseline = baseMov + dAsc * Math.cos(rot);
+      /* 3 ▸ pin top-left */
+      const sx       = xMove   + dAsc * Math.sin(rot)
+      const baseline = baseMov + dAsc * Math.cos(rot)
 
-      /* 4 ▸ draw (with the usual trembling) */
-      const tremX = (Math.random() - 0.5) * tremblingIntensity;
-      const tremY = (Math.random() - 0.5) * tremblingIntensity;
+      /* 4 ▸ draw */
+      const tremX = (Math.random() - 0.5) * tremblingIntensity
+      const tremY = (Math.random() - 0.5) * tremblingIntensity
 
-      ctx.save();
-      ctx.translate(sx + tremX, baseline + tremY);   // pivot: baseline-left
-      ctx.rotate(rot);
-      ctx.font         = `${size}px "${AFFAIRS}", sans-serif`;
-      ctx.fillStyle    = getContrastColor();
-      ctx.textBaseline = 'alphabetic';
-      ctx.textAlign    = 'left';
-      ctx.fillText('Instrumento:', 0, 0);
-      ctx.fillText(subtitle,        0, size + 8);
-      ctx.restore();
+      ctx.save()
+      ctx.translate(sx + tremX, baseline + tremY)
+      ctx.rotate(rot)
+      ctx.font         = `${size}px "${AFFAIRS}", sans-serif`
+      ctx.fillStyle    = getContrastColor()
+      ctx.textBaseline = 'alphabetic'
+      ctx.textAlign    = 'left'
+      ctx.fillText('Instrumento:', 0, 0)
+      ctx.fillText(subtitle,        0, size + 8)
+      ctx.restore()
     }
   }
 
