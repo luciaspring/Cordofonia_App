@@ -498,7 +498,7 @@ export default function InstagramPostCreator() {
     const updSubtitle = (p: TextPosition): TextPosition => ({
       ...p,
       baseline : subBaseline,   // stays locked to the guide
-      ascent   : subAscent,     // <- IMPORTANT: use the *tallest* ascent again
+      ascent   : capAscent,     // keep only the cap-height
       descent  : subDesc,
       width    : subtitleWidth,
       height   : subtitleHeight,
