@@ -752,39 +752,27 @@ export default function InstagramPostCreator() {
     }
   }
 
-  const drawBoundingBox = (ctx: CanvasRenderingContext2D, pos: TextPosition) => {
-    // Calculate top position from baseline and ascent
-    const topY = pos.baseline - pos.ascent;
-    const boxWidth = pos.boxW ?? pos.width;
-    const boxHeight = pos.boxH ?? pos.height;
-    const cx = pos.x + boxWidth / 2;
-    const cy = topY + boxHeight / 2;
+  const drawBoundingBox = (ctx: CanvasRenderingContext2D, p: TextPosition) => {
+    const { cx, cy, w, h } = glyphRect(p);
     ctx.save();
     ctx.translate(cx, cy);
-    ctx.rotate(pos.rotation);
-    const hw = boxWidth / 2;
-    const hh = boxHeight / 2;
-    ctx.strokeStyle = 'rgba(0, 120, 255, 0.8)';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(-hw, -hh, boxWidth, boxHeight);
-    const handleSize = HANDLE_ICON        // only the icon uses this size
-    const corners = [
-      [-hw, -hh],
-      [hw, -hh],
-      [hw, hh],
-      [-hw, hh]
-    ];
-    corners.forEach(([x, y]) => {
-      ctx.fillStyle = 'white';
-      ctx.strokeStyle = 'rgba(0, 120, 255, 0.8)';
+    ctx.rotate(p.rotation);
+
+    ctx.strokeStyle = 'rgba(0,120,255,0.8)';
+    ctx.lineWidth   = 2;
+    ctx.strokeRect(-w / 2, -h / 2, w, h);
+
+    const hs = HANDLE_ICON;
+    [[-w,-h],[w,-h],[w,h],[-w,h]].forEach(([lx,ly]) => {
+      const x = lx/2, y = ly/2;
+      ctx.fillStyle = '#FFF';
+      ctx.strokeStyle = 'rgba(0,120,255,0.8)';
       ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.rect(x - handleSize / 2, y - handleSize / 2, handleSize, handleSize);
-      ctx.fill();
-      ctx.stroke();
+      ctx.fillRect  (x-hs/2, y-hs/2, hs, hs);
+      ctx.strokeRect(x-hs/2, y-hs/2, hs, hs);
     });
     ctx.restore();
-  }
+  };
 
   const drawGroupBoundingBox = (ctx: CanvasRenderingContext2D, box: GroupBoundingBox) => {
     const cx = box.x + box.width / 2
@@ -821,50 +809,70 @@ export default function InstagramPostCreator() {
     * The rectangle itself lives in the same rotation space as `groupRotation`
     * so resizing / rotating from the handles stays intuitive. */
   const calculateGroupBoundingBox = (): GroupBoundingBox | null => {
-    if (!selectedTexts.length) return null
+    if (!selectedTexts.length) return null;
 
-    /* ── collect every selected element ─────────────────────────────── */
-    const picked: TextPosition[] = titlePositionsFrame2
-      .filter((_, i) => selectedTexts.includes(`title${i + 1}` as 'title1' | 'title2'))
-    if (selectedTexts.includes('subtitle')) picked.push(subtitlePositionFrame2)
-    if (!picked.length) return null
+    /* collect every selected element in Frame 2 */
+    const items: TextPosition[] = titlePositionsFrame2
+      .filter((_, i) => selectedTexts.includes(`title${i + 1}` as 'title1' | 'title2'));
+    if (selectedTexts.includes('subtitle')) items.push(subtitlePositionFrame2);
+    if (!items.length) return null;
 
-    /* ── project every corner into the axis-pair defined by groupRotation ─ */
-    const cosR = Math.cos(groupRotation)
-    const sinR = Math.sin(groupRotation)
-    const ux =  cosR,  uy = sinR          // unit vector along the box's X-axis
-    const vx = -sinR,  vy = cosR          // unit vector along the box's Y-axis
+    /* project every corner into the axis-pair defined by `groupRotation` */
+    const θ = groupRotation,  cos = Math.cos(θ),  sin = Math.sin(θ);
+    const ux =  cos,  uy = sin;          // unit-vector X of the box
+    const vx = -sin,  vy = cos;          // unit-vector Y of the box
+    let minU =  Infinity,  maxU = -Infinity,
+        minV =  Infinity,  maxV = -Infinity;
 
-    let minU =  Infinity
-    let maxU = -Infinity
-    let minV =  Infinity
-    let maxV = -Infinity
-
-    picked.forEach(pos => {
-      getRotatedBoundingBox(pos).forEach(pt => {
-        const u = pt.x * ux + pt.y * uy   // projection onto axis-u
-        const v = pt.x * vx + pt.y * vy   // projection onto axis-v
-        minU = Math.min(minU, u)
-        maxU = Math.max(maxU, u)
-        minV = Math.min(minV, v)
-        maxV = Math.max(maxV, v)
+    items.forEach(p =>
+      getRotatedBoundingBox(p).forEach(pt => {
+        const u = pt.x * ux + pt.y * uy;
+        const v = pt.x * vx + pt.y * vy;
+        minU = Math.min(minU, u);  maxU = Math.max(maxU, u);
+        minV = Math.min(minV, v);  maxV = Math.max(maxV, v);
       })
-    })
+    );
 
-    /* centre in the rotated space, then convert back to world coords */
-    const cU = (minU + maxU) / 2
-    const cV = (minV + maxV) / 2
-    const worldCX = cU * ux + cV * vx
-    const worldCY = cU * uy + cV * vy
+    const cU = (minU + maxU) / 2,  cV = (minV + maxV) / 2;
+    const cx = cU * ux + cV * vx,   cy = cU * uy + cV * vy;
 
     return {
-      x: worldCX - (maxU - minU) / 2,
-      y: worldCY - (maxV - minV) / 2,
-      width:  maxU - minU,
+      x: cx - (maxU - minU) / 2,
+      y: cy - (maxV - minV) / 2,
+      width : maxU - minU,
       height: maxV - minV,
-      rotation: groupRotation
-    }
-  }
+      rotation: groupRotation,
+    };
+  };
+
+  const drawGroupBoundingBox = (
+    ctx: CanvasRenderingContext2D,
+    box: GroupBoundingBox
+  ) => {
+    const cx = box.x + box.width  / 2;
+    const cy = box.y + box.height / 2;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(box.rotation);
+
+    ctx.strokeStyle = 'rgba(0,120,255,0.8)';
+    ctx.lineWidth   = 2;
+    ctx.strokeRect(-box.width/2, -box.height/2, box.width, box.height);
+
+    const hs = HANDLE_ICON;                    // same icon size constant
+    [[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([sx,sy]) => {
+      const x = sx * box.width  / 2;
+      const y = sy * box.height / 2;
+      ctx.fillStyle   = '#FFF';
+      ctx.strokeStyle = 'rgba(0,120,255,0.8)';
+      ctx.lineWidth   = 2;
+      ctx.fillRect  (x - hs/2, y - hs/2, hs, hs);
+      ctx.strokeRect(x - hs/2, y - hs/2, hs, hs);
+    });
+
+    ctx.restore();
+  };
 
   // ─── MOUSE & INTERACTION HANDLERS ──────────────────────────────────────────────
   const getResizeHandle = (
@@ -1326,25 +1334,33 @@ export default function InstagramPostCreator() {
     return inside;
   }
 
-  const getRotatedBoundingBox = (pos: TextPosition): Point[] => {
-    // Calculate top position from baseline and ascent
-    const topY = pos.baseline - pos.ascent;
-    const w = pos.boxW ?? pos.width;
-    const h = pos.boxH ?? pos.height;
-    const cx = pos.x + w / 2;
-    const cy = topY + h / 2;
-    const corners = [
-      { x: -w / 2, y: -h / 2 },
-      { x: w / 2, y: -h / 2 },
-      { x: w / 2, y: h / 2 },
-      { x: -w / 2, y: h / 2 }
+  /** Raw glyph rectangle ( *un-rotated* ) */
+  const glyphRect = (p: TextPosition) => {
+    const topY = p.baseline - p.ascent;             // baseline → top
+    return {
+      cx   : p.x + (p.boxW ?? p.width) / 2,
+      cy   : topY + (p.boxH ?? p.height) / 2,
+      w    : p.width,
+      h    : p.height,
+      safeW: p.boxW ?? p.width,
+      safeH: p.boxH ?? p.height,
+    };
+  };
+
+  /** Four world-space corners of the rotated glyph rectangle */
+  const getRotatedBoundingBox = (p: TextPosition): Point[] => {
+    const { cx, cy, w, h } = glyphRect(p);
+    const local = [
+      { x: -w / 2, y: -h / 2 }, { x:  w / 2, y: -h / 2 },
+      { x:  w / 2, y:  h / 2 }, { x: -w / 2, y:  h / 2 },
     ];
-    return corners.map(c => {
-      const rx = c.x * Math.cos(pos.rotation) - c.y * Math.sin(pos.rotation);
-      const ry = c.x * Math.sin(pos.rotation) + c.y * Math.cos(pos.rotation);
-      return { x: rx + cx, y: ry + cy };
-    });
-  }
+    const cos = Math.cos(p.rotation);
+    const sin = Math.sin(p.rotation);
+    return local.map(({ x, y }) => ({
+      x: x * cos - y * sin + cx,
+      y: x * sin + y * cos + cy,
+    }));
+  };
 
   const getRotatedGroupBoundingBox = (box: GroupBoundingBox): Point[] => {
     const cx = box.x + box.width / 2;
