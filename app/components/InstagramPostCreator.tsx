@@ -680,9 +680,11 @@ export default function InstagramPostCreator() {
       const p1 = fromPositions[i];
       const p2 = toPositions[i];
 
-      /* 1 ─ interpolate X / baseline / rotation (unchanged) */
-      const x        = p1.x        + (p2.x        - p1.x)        * moveT;
-      const baseline = p1.baseline + (p2.baseline - p1.baseline) * moveT;
+      // 1) POSITION & ROTATION INTERPOLATION  -------------------------------
+      // (anchor = baseline-left corner – we'll keep it glued during scaling)
+      let anchorX  = p1.x        + (p2.x        - p1.x)        * moveT;
+      let anchorBL = p1.baseline + (p2.baseline - p1.baseline) * moveT;
+
       const rotation = p1.rotation + (p2.rotation - p1.rotation) * moveT;
 
       /* 2 ─ interpolate size metrics (unchanged) */
@@ -692,18 +694,18 @@ export default function InstagramPostCreator() {
       const dynAscent  = p1.ascent   + (p2.ascent   - p1.ascent)   * scaleT;
       const dynDescent = p1.descent  + (p2.descent  - p1.descent)  * scaleT;
 
-      /* ── NEW: pin the rotated top-left corner ────────────────────────── */
-      const dAsc = dynAscent - p1.ascent;          // ascent growth so far
-      const sx   = x        + dAsc * Math.sin(rotation);
-      const bl   = baseline + dAsc * Math.cos(rotation);
-      /* ─────────────────────────────────────────────────────────────────── */
+      // ── compensate for ascent growth so the anchor doesn't drift
+      const asc0   = p1.ascent;                      // ascent at scaleT = 0
+      const dAsc   = dynAscent - asc0;               // extra ascent right now
+      anchorX  += dAsc * Math.sin(rotation);         // rotate the delta
+      anchorBL += dAsc * Math.cos(rotation);
 
-      /* 3 ─ trembling + draw (same as before, but use sx / bl) */
+      /* 3 ─ trembling + draw (same as before, but use anchorX / anchorBL) */
       const tremX = (Math.random() - 0.5) * tremblingIntensity;
       const tremY = (Math.random() - 0.5) * tremblingIntensity;
 
-      const topY = bl - dynAscent;
-      const cx   = sx + dynW / 2;
+      const topY = anchorBL - dynAscent;
+      const cx   = anchorX  + dynW / 2;
       const cy   = topY + dynH / 2;
       const base = dynH / 2 - dynDescent;
 
