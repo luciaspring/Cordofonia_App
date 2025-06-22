@@ -459,22 +459,16 @@ export default function InstagramPostCreator() {
 
     // ── TITLES ───────────────────────────────────────────────
     setTitlePositionsFrame1(prev =>
-      prev.map((oldPos, i) => {
-        const centre  = centerOf(oldPos);                                 // remember ⊙
-        const m       = measureText(titles[i], oldPos.fontSize, SUL_SANS, true);
-        let next      = recalcSafeBox({ ...oldPos, ...m });
-        next          = withFixedCentre(next, centre.cx, centre.cy);      // 👈 NEW
-        return next;
+      prev.map((pos, i) => {
+        const { width, height, ascent, descent } = measureText(titles[i], pos.fontSize, SUL_SANS, true)
+        return recalcSafeBox({ ...pos, width, height, ascent, descent })
       })
     )
 
     setTitlePositionsFrame2(prev =>
-      prev.map((oldPos, i) => {
-        const centre  = centerOf(oldPos);
-        const m       = measureText(titles[i], oldPos.fontSize, SUL_SANS, true);
-        let next      = recalcSafeBox({ ...oldPos, ...m });
-        next          = withFixedCentre(next, centre.cx, centre.cy);      // 👈 NEW
-        return next;
+      prev.map((pos, i) => {
+        const { width, height, ascent, descent } = measureText(titles[i], pos.fontSize, SUL_SANS, true)
+        return recalcSafeBox({ ...pos, width, height, ascent, descent })
       })
     )
 
@@ -511,21 +505,8 @@ export default function InstagramPostCreator() {
     });
 
     /* 4 ▸ apply to both frames ------------------------------------------ */
-    setSubtitlePositionFrame1(oldPos => {
-      const centre  = centerOf(oldPos);
-      const m       = measureText(subtitle, oldPos.fontSize, AFFAIRS, false);
-      let next      = recalcSafeBox({ ...oldPos, ...m });
-      next          = withFixedCentre(next, centre.cx, centre.cy);        // 👈 NEW
-      return next;
-    });
-
-    setSubtitlePositionFrame2(oldPos => {
-      const centre  = centerOf(oldPos);
-      const m       = measureText(subtitle, oldPos.fontSize, AFFAIRS, false);
-      let next      = recalcSafeBox({ ...oldPos, ...m });
-      next          = withFixedCentre(next, centre.cx, centre.cy);        // 👈 NEW
-      return next;
-    });
+    setSubtitlePositionFrame1(updSubtitle);
+    setSubtitlePositionFrame2(updSubtitle);
   }
 
   // ─── DRAWING ROUTINES ────────────────────────────────────────────────────────────
@@ -1493,7 +1474,7 @@ export default function InstagramPostCreator() {
     newPos = recalcSafeBox(newPos);
 
     /* restore the original centre with the **safe** width */
-    newPos = withFixedCentre(newPos, cx, cy);
+    newPos.x = cx - (newPos.boxW ?? newPos.width) / 2;
 
     if (textType === 'subtitle') {
       setSubtitlePositionFrame2(newPos);
@@ -1547,7 +1528,9 @@ export default function InstagramPostCreator() {
       });  // safe-box first
 
       // re-centre with the new safe width
-      return withFixedCentre(next, newCenterX, newCenterY);
+      next.x = cx + relCX * initialGroupBox.width * scale
+               - (next.boxW ?? next.width) / 2;
+      return next;
     };
 
     setTitlePositionsFrame2(p =>
@@ -2321,17 +2304,6 @@ const recalcSafeBox = (p: TextPosition): TextPosition => {
 
 const withSafeBox = (p: TextPosition) => recalcSafeBox(p)
 
-/** Keep the geometric centre at (cx, cy) even after the safe-box changes. */
-const withFixedCentre = (p: TextPosition, cx: number, cy: number): TextPosition => {
-  const w = p.boxW ?? p.width;
-  const h = p.boxH ?? p.height;
-  return {
-    ...p,
-    x        : cx - w / 2,
-    baseline : cy + h / 2 - p.descent,          // alphabetic baseline
-  };
-};
-
 // Utility: get geometric center and baseline offset for a TextPosition
 const centerOf = (p: TextPosition) => {
   const w = p.boxW ?? p.width
@@ -2343,4 +2315,4 @@ const centerOf = (p: TextPosition) => {
     // baseline (cap-height of line 1) relative to the centre of the block
     baselineOffset: p.ascent - h / 2
   }
-}
+} 
