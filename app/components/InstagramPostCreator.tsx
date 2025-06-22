@@ -567,21 +567,23 @@ export default function InstagramPostCreator() {
       ctx.restore()
     })
 
-    // subtitle
-    const tremXsub = (Math.random() - 0.5) * tremblingIntensity
-    const tremYsub = (Math.random() - 0.5) * tremblingIntensity
-    const { cx: scx, cy: scy, baselineOffset: sBase } = centerOf(subPos)
+    // subtitle  (baseline-left pivot, same as drawAnimatedText)
+    {
+      const tremX = (Math.random() - 0.5) * tremblingIntensity;
+      const tremY = (Math.random() - 0.5) * tremblingIntensity;
 
-    ctx.save()
-    ctx.translate(scx + tremXsub, scy + tremYsub)
-    ctx.rotate(subPos.rotation)
-    ctx.font         = `${subPos.fontSize}px "${AFFAIRS}", sans-serif`
-    ctx.fillStyle    = getContrastColor()
-    ctx.textBaseline = 'alphabetic'
-    ctx.textAlign    = 'left'
-    ctx.fillText('Instrumento:', -subPos.width / 2, sBase)
-    ctx.fillText(subtitle,       -subPos.width / 2, sBase + subPos.fontSize + 8)
-    ctx.restore()
+      ctx.save();
+      ctx.translate(subPos.x + tremX, subPos.baseline + tremY); // pivot = baseline-left
+      ctx.rotate(subPos.rotation);
+      ctx.font         = `${subPos.fontSize}px "${AFFAIRS}", sans-serif`;
+      ctx.fillStyle    = getContrastColor();
+      ctx.textBaseline = 'alphabetic';
+      ctx.textAlign    = 'left';
+
+      ctx.fillText('Instrumento:', 0, 0);                // line 1
+      ctx.fillText(subtitle,        0, subPos.fontSize + 8); // line 2
+      ctx.restore();
+    }
   }
 
   const drawRotatedText = (ctx: CanvasRenderingContext2D, pos: TextPosition, text: string) => {
