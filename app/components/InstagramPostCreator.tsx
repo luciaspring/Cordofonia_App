@@ -1847,7 +1847,7 @@ export default function InstagramPostCreator() {
           setResizeHandle(handle);
           setIsResizing(true);
           setResizeStartPosition({ x, y });
-          setInitialPosition(recalcSafeBox(position));
+          setInitialPosition(position);
         }
       } else {
         setIsDragging(true);
@@ -2304,15 +2304,16 @@ export default function InstagramPostCreator() {
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────
 const recalcSafeBox = (p: TextPosition): TextPosition => {
-  const θ  = p.rotation ?? 0
-  const sW = Math.abs(p.width  * Math.cos(θ)) + Math.abs(p.height * Math.sin(θ))
-  const sH = Math.abs(p.width  * Math.sin(θ)) + Math.abs(p.height * Math.cos(θ))
-  return { ...p, boxW: sW, boxH: sH }
-}
+  const w = p.width;
+  const h = p.height;
+  return { ...p, boxW: w, boxH: h };      // no cos/sin any more
+};
 
-// Helper: returns a new TextPosition with updated rotation and recalculated safe box
-const withRotation = (p: TextPosition, rot: number) =>
-  recalcSafeBox({ ...p, rotation: rot })
+/* rotation helper – just change the angle, leave box as-is */
+const withRotation = (p: TextPosition, rot: number): TextPosition => ({
+  ...p,
+  rotation: rot
+});
 
 const withSafeBox = (p: TextPosition) => recalcSafeBox(p)
 
