@@ -554,7 +554,7 @@ export default function InstagramPostCreator() {
     positions.forEach((pos, idx) => {
       const tremX = (Math.random() - 0.5) * tremblingIntensity
       const tremY = (Math.random() - 0.5) * tremblingIntensity
-      const { cx, cy, baselineOffset } = centerOf(pos)
+      const { cx, cy, baselineOffset } = centerOfGlyph(pos)
 
       ctx.save()
       ctx.translate(cx + tremX, cy + tremY)
@@ -570,7 +570,7 @@ export default function InstagramPostCreator() {
     // subtitle
     const tremXsub = (Math.random() - 0.5) * tremblingIntensity
     const tremYsub = (Math.random() - 0.5) * tremblingIntensity
-    const { cx: scx, cy: scy, baselineOffset: sBase } = centerOf(subPos)
+    const { cx: scx, cy: scy, baselineOffset: sBase } = centerOfGlyph(subPos)
 
     ctx.save()
     ctx.translate(scx + tremXsub, scy + tremYsub)
@@ -2301,10 +2301,12 @@ const recalcSafeBox = (p: TextPosition): TextPosition => {
 
 const withSafeBox = (p: TextPosition) => recalcSafeBox(p)
 
-// Utility: get geometric center and baseline offset for a TextPosition
-const centerOf = (p: TextPosition) => {
-  const w = p.boxW ?? p.width
-  const h = p.boxH ?? p.height
+/* ─── centres ──────────────────────────────────────────────
+     centreOfGlyph → use *glyph* box (width / height) – drawing
+     centreOfSafe  → use *safe*  box (boxW / boxH)   – handles  */
+const centerOfGlyph = (p: TextPosition) => {
+  const w = p.width
+  const h = p.height
   const topY = p.baseline - p.ascent
   return {
     cx: p.x + w / 2,
@@ -2313,3 +2315,14 @@ const centerOf = (p: TextPosition) => {
     baselineOffset: p.ascent - h / 2
   }
 }
+
+const centerOfSafe = (p: TextPosition) => {
+  const w = p.boxW ?? p.width
+  const h = p.boxH ?? p.height
+  const topY = p.baseline - p.ascent
+  return {
+    cx: p.x + w / 2,
+    cy: topY + h / 2,
+    baselineOffset: p.ascent - h / 2
+  }
+} 
