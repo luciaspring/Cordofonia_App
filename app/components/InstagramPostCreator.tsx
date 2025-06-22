@@ -1554,7 +1554,9 @@ export default function InstagramPostCreator() {
     if (delta > Math.PI) delta -= 2 * Math.PI;
     if (delta < -Math.PI) delta += 2 * Math.PI;
     if (textType === 'subtitle') {
-      setSubtitlePositionFrame2(prev => ({ ...prev, rotation: prev.rotation + delta }));
+      setSubtitlePositionFrame2(prev =>
+        withSafeBox({ ...prev, rotation: prev.rotation + delta })
+      );
     } else {
       setTitlePositionsFrame2(prev => {
         const arr = [...prev];
@@ -2271,6 +2273,8 @@ const recalcSafeBox = (p: TextPosition): TextPosition => {
   return { ...p, boxW: sW, boxH: sH }
 }
 
+const withSafeBox = (p: TextPosition) => recalcSafeBox(p)
+
 // Utility: get geometric center and baseline offset for a TextPosition
 const centerOf = (p: TextPosition) => {
   const w = p.boxW ?? p.width
@@ -2282,4 +2286,4 @@ const centerOf = (p: TextPosition) => {
     // baseline (cap-height of line 1) relative to the centre of the block
     baselineOffset: p.ascent - h / 2
   }
-}  
+} 
