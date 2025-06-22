@@ -680,9 +680,11 @@ export default function InstagramPostCreator() {
       const p1 = fromPositions[i]
       const p2 = toPositions[i]
 
-      // 1) POSITION & ROTATION INTERPOLATION
-      const x        = p1.x        + (p2.x        - p1.x)        * moveT
-      const baseline = p1.baseline + (p2.baseline - p1.baseline) * moveT
+      /* 1 ─ interpolate the *centre* directly (not baseline-left) */
+      const c1 = centerOfGlyph(p1)
+      const c2 = centerOfGlyph(p2)
+      const cx = c1.cx + (c2.cx - c1.cx) * moveT
+      const cy = c1.cy + (c2.cy - c1.cy) * moveT
       const rotation = p1.rotation + (p2.rotation - p1.rotation) * moveT
 
       // 2) SIZE INTERPOLATION
@@ -696,12 +698,9 @@ export default function InstagramPostCreator() {
       const tremX = (Math.random() - 0.5) * tremblingIntensity
       const tremY = (Math.random() - 0.5) * tremblingIntensity
 
-      // 4) DRAW at geometric center
-      const w  = dynW
-      const h  = dynH
-      const topY = baseline - dynAscent
-      const cx   = x + w / 2
-      const cy   = topY + h / 2
+      // 4) DRAW around that same centre
+      const w = dynW
+      const h = dynH
       const base = h / 2 - dynDescent
       ctx.save()
       ctx.translate(cx + tremX, cy + tremY)
