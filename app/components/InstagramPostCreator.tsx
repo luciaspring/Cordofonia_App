@@ -1579,12 +1579,14 @@ export default function InstagramPostCreator() {
     const newOffX = offX * cos - offY * sin;
     const newOffY = offX * sin + offY * cos;
 
-    const apply = (p: TextPosition): TextPosition => ({
-      ...p,
-      x        : cx + newOffX,
-      baseline : cy + newOffY,
-      rotation : p.rotation + delta,
-    });
+    const apply = (p: TextPosition): TextPosition =>
+      withRotation(
+        { ...p,
+          x        : cx + newOffX,
+          baseline : cy + newOffY,
+          rotation : p.rotation + delta },
+        p.rotation + delta
+      );
 
     if (textType === 'subtitle') {
       setSubtitlePositionFrame2(apply);
@@ -1644,7 +1646,10 @@ export default function InstagramPostCreator() {
     const newX = newCenterX - pos.width / 2;
     // Calculate new baseline from new center and ascent
     const newBaseline = newCenterY + pos.ascent - pos.height / 2;
-    return { ...pos, x: newX, baseline: newBaseline, rotation: pos.rotation + angle };
+    return withRotation(
+      { ...pos, x: newX, baseline: newBaseline, rotation: pos.rotation + angle },
+      pos.rotation + angle
+    );
   }
 
   // ─── MOUSE EVENT HANDLERS ───────────────────────────────────────────────────────
@@ -1842,7 +1847,7 @@ export default function InstagramPostCreator() {
           setResizeHandle(handle);
           setIsResizing(true);
           setResizeStartPosition({ x, y });
-          setInitialPosition(position);
+          setInitialPosition(recalcSafeBox(position));
         }
       } else {
         setIsDragging(true);
@@ -2304,6 +2309,10 @@ const recalcSafeBox = (p: TextPosition): TextPosition => {
   const sH = Math.abs(p.width  * Math.sin(θ)) + Math.abs(p.height * Math.cos(θ))
   return { ...p, boxW: sW, boxH: sH }
 }
+
+// Helper: returns a new TextPosition with updated rotation and recalculated safe box
+const withRotation = (p: TextPosition, rot: number) =>
+  recalcSafeBox({ ...p, rotation: rot })
 
 const withSafeBox = (p: TextPosition) => recalcSafeBox(p)
 
