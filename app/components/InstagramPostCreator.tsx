@@ -467,7 +467,7 @@ export default function InstagramPostCreator() {
       const newX        = oldCX - sW / 2;
       const newBaseline = oldCY + dims.ascent - sH / 2;
 
-      return <TextPosition>{
+      return {
         ...oldPos,
         x        : newX,
         baseline : newBaseline,
@@ -477,7 +477,7 @@ export default function InstagramPostCreator() {
         descent  : dims.descent,
         boxW     : sW,
         boxH     : sH,
-      };
+      } as TextPosition;
     };
 
     /* update both frames in one go so they stay mirrored */
@@ -504,7 +504,7 @@ export default function InstagramPostCreator() {
       const sH = Math.abs(blockW * Math.sin(θ)) + Math.abs(blockH * Math.cos(θ));
       const cx = oldPos.x + (oldPos.boxW ?? oldPos.width) / 2;
       const cy = (oldPos.baseline - oldPos.ascent) + (oldPos.boxH ?? oldPos.height) / 2;
-      return <TextPosition>{
+      return {
         ...oldPos,
         x        : cx - sW / 2,
         baseline : cy + subDims.ascent - sH / 2,
@@ -514,7 +514,7 @@ export default function InstagramPostCreator() {
         descent  : subDims.descent,
         boxW     : sW,
         boxH     : sH,
-      };
+      } as TextPosition;
     };
 
     setSubtitlePositionFrame1(fixSub);
