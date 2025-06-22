@@ -1561,7 +1561,10 @@ export default function InstagramPostCreator() {
       setTitlePositionsFrame2(prev => {
         const arr = [...prev];
         const idx = textType === 'title1' ? 0 : 1;
-        arr[idx] = { ...arr[idx], rotation: arr[idx].rotation + delta };
+        arr[idx] = withSafeBox({
+          ...arr[idx],
+          rotation: arr[idx].rotation + delta,
+        });
         return arr;
       });
     }
@@ -1581,12 +1584,14 @@ export default function InstagramPostCreator() {
     setTitlePositionsFrame2(prev =>
       prev.map((pos, idx) =>
         selectedTexts.includes(`title${idx + 1}` as 'title1' | 'title2')
-          ? rotateAroundPoint(pos, cx, cy, delta)
+          ? withSafeBox(rotateAroundPoint(pos, cx, cy, delta))
           : pos
       )
     );
     if (selectedTexts.includes('subtitle')) {
-      setSubtitlePositionFrame2(prev => rotateAroundPoint(prev, cx, cy, delta));
+      setSubtitlePositionFrame2(prev =>
+        withSafeBox(rotateAroundPoint(prev, cx, cy, delta))
+      );
     }
     setGroupRotation(prev => prev + delta);
     lastMousePosition.current = { x, y };
