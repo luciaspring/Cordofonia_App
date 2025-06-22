@@ -1456,28 +1456,45 @@ export default function InstagramPostCreator() {
     }
     scale = Math.max(0.1, scale);
 
-    const newW = refWidth * scale;
-    const newH = refHeight * scale;
-    const newX = cx - newW/2;
-    const newBaseline = ref.baseline; // Keep baseline at same position
-    const newAscent = ref.ascent * scale;
-    const newDescent = ref.descent * scale;
-    
-    let newPos: TextPosition = {
-      ...position,
-      x: newX,
-      baseline: newBaseline,
-      ascent: newAscent,
-      descent: newDescent,
-      width: ref.width * scale,     // scale the actual glyph width
-      height: newH,
-      boxW: newW,
-      boxH: newH,
-      fontSize: ref.fontSize * scale
-    };
+    /* ----------  NEW accurate glyph numbers  ---------- */
+    const newFontSize = ref.fontSize * scale;
 
-    /* one-step fix: update the "safe" square now, not later */
-    newPos = recalcSafeBox(newPos);
+    const sample = textType === 'subtitle'
+      ? subtitle
+      : titles[textType === 'title1' ? 0 : 1];
+
+    const c   = document.createElement('canvas');
+    const ctx = c.getContext('2d')!;
+    ctx.font  = `${textType === 'subtitle' ? '' : 'bold '}${newFontSize}px "${textType === 'subtitle' ? AFFAIRS : SUL_SANS}", sans-serif`;
+    const m   = ctx.measureText(sample);
+    const asc = m.actualBoundingBoxAscent ?? newFontSize * 0.9;
+    const desc= m.actualBoundingBoxDescent ?? newFontSize * 0.1;
+    const w   = m.width;
+    const h   = asc + desc;
+
+    /* ----------  Anchor decision  ---------- */
+    const refCX = ref.x + (ref.boxW ?? ref.width) / 2;
+    const refCY = ref.baseline - ref.ascent + (ref.boxH ?? ref.height) / 2;
+
+    const newCX = refCX;                     // centre never moves
+    const newCY = refCY;
+
+    /* baseline-left corner: keep it or recalc? */
+    const newX        = scaleAnchor === 'center'
+                        ? newCX - (w/2)       /* centre-pivot   */
+                        : ref.x;              /* flush-left 🔒  */  // 👈 CHANGED
+    const newBaseline = ref.baseline;                                 // 👈 CHANGED
+
+    let newPos: TextPosition = recalcSafeBox({
+      ...position,
+      x        : newX,           // 👈 CHANGED
+      baseline : newBaseline,    // 👈 CHANGED
+      fontSize : newFontSize,
+      width    : w,
+      height   : h,
+      ascent   : asc,
+      descent  : desc,
+    });
 
     if (textType === 'subtitle') {
       setSubtitlePositionFrame2(newPos);
@@ -1488,7 +1505,7 @@ export default function InstagramPostCreator() {
         return out;
       });
     }
-  }
+  };
 
   const resizeGroup = (x: number, y: number, handle: string) => {
     if (!initialGroupBox || !resizeStartPosition) return;
@@ -1516,18 +1533,38 @@ export default function InstagramPostCreator() {
       const centerY = topY + pos.height / 2;
       const relCX = (centerX - cx) / initialGroupBox.width;
       const relCY = (centerY - cy) / initialGroupBox.height;
-      const w = pos.width * scale;
-      const h = pos.height * scale;
+      
+      /* ----------  NEW accurate glyph numbers  ---------- */
+      const newFontSize = pos.fontSize * scale;
+      const idx = titlePositionsFrame2.indexOf(pos);
+      const sample = pos === subtitlePositionFrame2 ? subtitle : titles[idx];
+      
+      const c   = document.createElement('canvas');
+      const ctx = c.getContext('2d')!;
+      ctx.font  = `${pos === subtitlePositionFrame2 ? '' : 'bold '}${newFontSize}px "${pos === subtitlePositionFrame2 ? AFFAIRS : SUL_SANS}", sans-serif`;
+      const mm  = ctx.measureText(sample);
+      const asc = mm.actualBoundingBoxAscent ?? newFontSize * 0.9;
+      const desc= mm.actualBoundingBoxDescent ?? newFontSize * 0.1;
+      const w   = mm.width;
+      const h   = asc + desc;
+      
       const newCenterX = cx + relCX * initialGroupBox.width * scale;
       const newCenterY = cy + relCY * initialGroupBox.height * scale;
-      return {
+      
+      return recalcSafeBox({
         ...pos,
-        x: newCenterX - w / 2,
-        baseline: newCenterY + pos.ascent * scale - h / 2,
-        width: w,
-        height: h,
-        fontSize: pos.fontSize * scale
-      };
+        fontSize : newFontSize,
+        width    : w,
+        height   : h,
+        ascent   : asc,
+        descent  : desc,
+        x        : scaleAnchor === 'center'
+                     ? newCenterX - w / 2   // centre pivot
+                     : pos.x,                // flush-left pivot
+        baseline : scaleAnchor === 'center'
+                     ? newCenterY + asc - h / 2
+                     : pos.baseline,
+      });
     };
 
     setTitlePositionsFrame2(p =>
@@ -1538,7 +1575,7 @@ export default function InstagramPostCreator() {
     if (selectedTexts.includes('subtitle')) {
       setSubtitlePositionFrame2(apply);
     }
-  }
+  };
 
   const rotateSingle = (
     x: number,
