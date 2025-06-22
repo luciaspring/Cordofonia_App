@@ -705,8 +705,6 @@ export default function InstagramPostCreator() {
       const tremY = (Math.random() - 0.5) * tremblingIntensity
 
       // 4) DRAW at geometric center
-      const w  = dynW
-      const h  = dynH
       const topY = baseline - dynAscent
       const cx   = x + w / 2
       const cy   = topY + h / 2
@@ -733,6 +731,14 @@ export default function InstagramPostCreator() {
 
       /* 2 ▸ font-size & ascent while we SCALE */
       const size = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT;
+      /* use the "safe" box while we animate so the centre
+         matches what drawStaticText() will use next frame   */
+      const w1 = sub1.boxW ?? sub1.width
+      const h1 = sub1.boxH ?? sub1.height
+      const w2 = sub2.boxW ?? sub2.width
+      const h2 = sub2.boxH ?? sub2.height
+      const w  = w1 + (w2 - w1) * scaleT
+      const h  = h1 + (h2 - h1) * scaleT
       const asc1 = sub1.ascent;                               // ascent at start-of-scale
       const asc2 = sub2.ascent;
       const asc  = asc1 + (asc2 - asc1) * scaleT;             // ascent this frame
@@ -1544,7 +1550,7 @@ export default function InstagramPostCreator() {
       )
     );
     if (selectedTexts.includes('subtitle')) {
-      setSubtitlePositionFrame2(apply);
+      setSubtitlePositionFrame2(p => recalcSafeBox(apply(p)));
     }
   }
 
@@ -1646,7 +1652,12 @@ export default function InstagramPostCreator() {
     const newX = newCenterX - pos.width / 2;
     // Calculate new baseline from new center and ascent
     const newBaseline = newCenterY + pos.ascent - pos.height / 2;
-    return { ...pos, x: newX, baseline: newBaseline, rotation: pos.rotation + angle };
+    return recalcSafeBox({
+      ...pos, 
+      x: newX, 
+      baseline: newBaseline, 
+      rotation: pos.rotation + angle 
+    });
   }
 
   // ─── MOUSE EVENT HANDLERS ───────────────────────────────────────────────────────
