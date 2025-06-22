@@ -498,7 +498,7 @@ export default function InstagramPostCreator() {
     const updSubtitle = (p: TextPosition): TextPosition => ({
       ...p,
       baseline : subBaseline,   // stays locked to the guide
-      ascent   : capAscent,     // keep only the cap-height
+      ascent   : subAscent,     // <- IMPORTANT: use the *tallest* ascent again
       descent  : subDesc,
       width    : subtitleWidth,
       height   : subtitleHeight,
@@ -567,23 +567,21 @@ export default function InstagramPostCreator() {
       ctx.restore()
     })
 
-    // subtitle  (baseline-left pivot, same as drawAnimatedText)
-    {
-      const tremX = (Math.random() - 0.5) * tremblingIntensity;
-      const tremY = (Math.random() - 0.5) * tremblingIntensity;
+    // subtitle
+    const tremXsub = (Math.random() - 0.5) * tremblingIntensity
+    const tremYsub = (Math.random() - 0.5) * tremblingIntensity
+    const { cx: scx, cy: scy, baselineOffset: sBase } = centerOf(subPos)
 
-      ctx.save();
-      ctx.translate(subPos.x + tremX, subPos.baseline + tremY); // pivot = baseline-left
-      ctx.rotate(subPos.rotation);
-      ctx.font         = `${subPos.fontSize}px "${AFFAIRS}", sans-serif`;
-      ctx.fillStyle    = getContrastColor();
-      ctx.textBaseline = 'alphabetic';
-      ctx.textAlign    = 'left';
-
-      ctx.fillText('Instrumento:', 0, 0);                // line 1
-      ctx.fillText(subtitle,        0, subPos.fontSize + 8); // line 2
-      ctx.restore();
-    }
+    ctx.save()
+    ctx.translate(scx + tremXsub, scy + tremYsub)
+    ctx.rotate(subPos.rotation)
+    ctx.font         = `${subPos.fontSize}px "${AFFAIRS}", sans-serif`
+    ctx.fillStyle    = getContrastColor()
+    ctx.textBaseline = 'alphabetic'
+    ctx.textAlign    = 'left'
+    ctx.fillText('Instrumento:', -subPos.width / 2, sBase)
+    ctx.fillText(subtitle,       -subPos.width / 2, sBase + subPos.fontSize + 8)
+    ctx.restore()
   }
 
   const drawRotatedText = (ctx: CanvasRenderingContext2D, pos: TextPosition, text: string) => {
@@ -717,42 +715,41 @@ export default function InstagramPostCreator() {
     })
 
     // ——— Subtitle (same logic) ———
-    const sub1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2;
-    const sub2 = toFrame   === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2;
+    const sub1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
+    const sub2 = toFrame   === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
+    {
+      /* 1 ▸ interpolate the MOVE phase ­(done before we start scaling) */
+      const xMove   = sub1.x        + (sub2.x        - sub1.x)        * moveT;
+      const baseMov = sub1.baseline + (sub2.baseline - sub1.baseline) * moveT;
+      const rot     = sub1.rotation + (sub2.rotation - sub1.rotation) * moveT;
 
-    /* 1 ▸ interpolate position & rotation (moveT) */
-    const x        = sub1.x        + (sub2.x        - sub1.x)        * moveT;
-    const baseline = sub1.baseline + (sub2.baseline - sub1.baseline) * moveT;
-    const rot      = sub1.rotation + (sub2.rotation - sub1.rotation) * moveT;
+      /* 2 ▸ font-size & ascent while we SCALE */
+      const size = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT;
+      const asc1 = sub1.ascent;                               // ascent at start-of-scale
+      const asc2 = sub2.ascent;
+      const asc  = asc1 + (asc2 - asc1) * scaleT;             // ascent this frame
+      const dAsc = asc - asc1;                                // ascent growth so far
 
-    /* 2 ▸ interpolate size (scaleT) */
-    const fontSize = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT;
-    const asc      = sub1.ascent   + (sub2.ascent   - sub1.ascent)   * scaleT;
-    const desc     = sub1.descent  + (sub2.descent  - sub1.descent)  * scaleT;
-    const width    = sub1.width    + (sub2.width    - sub1.width)    * scaleT;
-    const height   = sub1.height   + (sub2.height   - sub1.height)   * scaleT;
+      /* 3 ▸ keep the *rotated* top-left corner perfectly fixed
+             Δx =  +dAsc · sin(rot)     Δy =  +dAsc · cos(rot)          */
+      const sx       = xMove   + dAsc * Math.sin(rot);
+      const baseline = baseMov + dAsc * Math.cos(rot);
 
-    /* 3 ▸ centre of the block (same pivot used by drawStaticText / centreOf) */
-    const topY = baseline - asc;
-    const cx   = x + width  / 2;
-    const cy   = topY + height / 2;
-    const baseOffset = height / 2 - desc;      // baseline relative to centre
+      /* 4 ▸ draw (with the usual trembling) */
+      const tremX = (Math.random() - 0.5) * tremblingIntensity;
+      const tremY = (Math.random() - 0.5) * tremblingIntensity;
 
-    /* 4 ▸ draw (with trembling) */
-    const tremX = (Math.random() - 0.5) * tremblingIntensity;
-    const tremY = (Math.random() - 0.5) * tremblingIntensity;
-
-    ctx.save();
-    ctx.translate(cx + tremX, cy + tremY);
-    ctx.rotate(rot);
-    ctx.font         = `${fontSize}px "${AFFAIRS}", sans-serif`;
-    ctx.fillStyle    = getContrastColor();
-    ctx.textBaseline = 'alphabetic';
-    ctx.textAlign    = 'left';
-
-    ctx.fillText('Instrumento:', -width / 2,  baseOffset);
-    ctx.fillText(subtitle,       -width / 2,  baseOffset + fontSize + 8);
-    ctx.restore();
+      ctx.save();
+      ctx.translate(sx + tremX, baseline + tremY);   // pivot: baseline-left
+      ctx.rotate(rot);
+      ctx.font         = `${size}px "${AFFAIRS}", sans-serif`;
+      ctx.fillStyle    = getContrastColor();
+      ctx.textBaseline = 'alphabetic';
+      ctx.textAlign    = 'left';
+      ctx.fillText('Instrumento:', 0, 0);
+      ctx.fillText(subtitle,        0, size + 8);
+      ctx.restore();
+    }
   }
 
   const drawBoundingBox = (ctx: CanvasRenderingContext2D, pos: TextPosition) => {
@@ -2274,8 +2271,6 @@ const recalcSafeBox = (p: TextPosition): TextPosition => {
   return { ...p, boxW: sW, boxH: sH }
 }
 
-const withSafeBox = (p: TextPosition) => recalcSafeBox(p)
-
 // Utility: get geometric center and baseline offset for a TextPosition
 const centerOf = (p: TextPosition) => {
   const w = p.boxW ?? p.width
@@ -2287,4 +2282,4 @@ const centerOf = (p: TextPosition) => {
     // baseline (cap-height of line 1) relative to the centre of the block
     baselineOffset: p.ascent - h / 2
   }
-} 
+}  
