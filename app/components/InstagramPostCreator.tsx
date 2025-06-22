@@ -713,40 +713,46 @@ export default function InstagramPostCreator() {
       ctx.restore()
     })
 
-    // ——— Subtitle (same logic) ———
+    // ——— Subtitle (only this block changed) ———
     const sub1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
     const sub2 = toFrame   === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
     {
-      /* 1 ▸ interpolate the MOVE phase ­(done before we start scaling) */
+      /* 1 ▸ interpolate position & rotation (unchanged) */
       const xMove   = sub1.x        + (sub2.x        - sub1.x)        * moveT;
       const baseMov = sub1.baseline + (sub2.baseline - sub1.baseline) * moveT;
       const rot     = sub1.rotation + (sub2.rotation - sub1.rotation) * moveT;
 
-      /* 2 ▸ font-size & ascent while we SCALE */
-      const size = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT;
-      const asc1 = sub1.ascent;                               // ascent at start-of-scale
-      const asc2 = sub2.ascent;
-      const asc  = asc1 + (asc2 - asc1) * scaleT;             // ascent this frame
-      const dAsc = asc - asc1;                                // ascent growth so far
+      /* 2 ▸ interpolate size-related metrics */
+      const size    = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT;
+      const asc     = sub1.ascent   + (sub2.ascent   - sub1.ascent  ) * scaleT;
+      const desc    = sub1.descent  + (sub2.descent  - sub1.descent ) * scaleT;
+      const width   = sub1.width    + (sub2.width    - sub1.width   ) * scaleT;
+      const height  = sub1.height   + (sub2.height   - sub1.height  ) * scaleT;
 
-      /* 3 ▸ keep the *rotated* top-left corner perfectly fixed
-             Δx =  +dAsc · sin(rot)     Δy =  +dAsc · cos(rot)          */
-      const sx       = xMove   + dAsc * Math.sin(rot);
-      const baseline = baseMov + dAsc * Math.cos(rot);
+      /* 3 ▸ build a "frame-now" TextPosition so we can reuse centreOfGlyph */
+      const tempPos: TextPosition = {
+        x: xMove, baseline: baseMov,
+        ascent: asc, descent: desc,
+        width, height,
+        rotation: rot,
+        fontSize: size,
+      };
 
-      /* 4 ▸ draw (with the usual trembling) */
+      const { cx, cy, baselineOffset } = centerOfGlyph(tempPos);
+
+      /* 4 ▸ draw – **exactly** the same offsets as drawStaticText() uses */
       const tremX = (Math.random() - 0.5) * tremblingIntensity;
       const tremY = (Math.random() - 0.5) * tremblingIntensity;
 
       ctx.save();
-      ctx.translate(sx + tremX, baseline + tremY);   // pivot: baseline-left
+      ctx.translate(cx + tremX, cy + tremY);
       ctx.rotate(rot);
       ctx.font         = `${size}px "${AFFAIRS}", sans-serif`;
       ctx.fillStyle    = getContrastColor();
       ctx.textBaseline = 'alphabetic';
       ctx.textAlign    = 'left';
-      ctx.fillText('Instrumento:', 0, 0);
-      ctx.fillText(subtitle,        0, size + 8);
+      ctx.fillText('Instrumento:', -width / 2, baselineOffset);
+      ctx.fillText(subtitle,       -width / 2, baselineOffset + size + 8);
       ctx.restore();
     }
   }
