@@ -677,51 +677,46 @@ export default function InstagramPostCreator() {
     const toPositions   = toFrame  === 1 ? titlePositionsFrame1 : titlePositionsFrame2
 
     titlesArr.forEach((text, i) => {
-      const p1 = fromPositions[i]
-      const p2 = toPositions[i]
+      const p1 = fromPositions[i];
+      const p2 = toPositions[i];
 
-      // 1) POSITION & ROTATION INTERPOLATION
-      const x        = p1.x        + (p2.x        - p1.x)        * moveT
-      const baseline = p1.baseline + (p2.baseline - p1.baseline) * moveT
-      const rotation = p1.rotation + (p2.rotation - p1.rotation) * moveT
+      /* 1 ─ interpolate X / baseline / rotation (unchanged) */
+      const x        = p1.x        + (p2.x        - p1.x)        * moveT;
+      const baseline = p1.baseline + (p2.baseline - p1.baseline) * moveT;
+      const rotation = p1.rotation + (p2.rotation - p1.rotation) * moveT;
 
-      // 2) SIZE INTERPOLATION
-      const fontSize = p1.fontSize + (p2.fontSize - p1.fontSize) * scaleT
-      const dynW = p1.width + (p2.width - p1.width) * scaleT
-      const dynH = p1.height + (p2.height - p1.height) * scaleT
-      const dynAscent = p1.ascent + (p2.ascent - p1.ascent) * scaleT
-      const dynDescent = p1.descent + (p2.descent - p1.descent) * scaleT
+      /* 2 ─ interpolate size metrics (unchanged) */
+      const fontSize   = p1.fontSize + (p2.fontSize - p1.fontSize) * scaleT;
+      const dynW       = p1.width    + (p2.width    - p1.width)    * scaleT;
+      const dynH       = p1.height   + (p2.height   - p1.height)   * scaleT;
+      const dynAscent  = p1.ascent   + (p2.ascent   - p1.ascent)   * scaleT;
+      const dynDescent = p1.descent  + (p2.descent  - p1.descent)  * scaleT;
 
-      // keep the rotated top-left corner locked while ascent grows
-      const ascStart = p1.ascent;                   // ascent when scaleT === 0
-      const dAsc     = dynAscent - ascStart;        // how much taller we are
-      const rot      = rotation;                    // already interpolated above
+      /* ── NEW: pin the rotated top-left corner ────────────────────────── */
+      const dAsc = dynAscent - p1.ascent;          // ascent growth so far
+      const sx   = x        + dAsc * Math.sin(rotation);
+      const bl   = baseline + dAsc * Math.cos(rotation);
+      /* ─────────────────────────────────────────────────────────────────── */
 
-      // shift baseline-left point by that delta, in the glyph's local axes
-      const sx       = x        + dAsc * Math.sin(rot);
-      const bl       = baseline + dAsc * Math.cos(rot);
+      /* 3 ─ trembling + draw (same as before, but use sx / bl) */
+      const tremX = (Math.random() - 0.5) * tremblingIntensity;
+      const tremY = (Math.random() - 0.5) * tremblingIntensity;
 
-      // 3) RANDOM TREMBLE
-      const tremX = (Math.random() - 0.5) * tremblingIntensity
-      const tremY = (Math.random() - 0.5) * tremblingIntensity
-
-      // 4) DRAW at geometric center using sx/bl instead of x/baseline
-      const w  = dynW
-      const h  = dynH
       const topY = bl - dynAscent;
       const cx   = sx + dynW / 2;
       const cy   = topY + dynH / 2;
       const base = dynH / 2 - dynDescent;
-      ctx.save()
-      ctx.translate(cx + tremX, cy + tremY)
-      ctx.rotate(rotation)
-      ctx.font         = `bold ${fontSize}px "${SUL_SANS}", sans-serif`
-      ctx.fillStyle    = getContrastColor()
-      ctx.textBaseline = 'alphabetic'
-      ctx.textAlign    = 'center'
-      ctx.fillText(text, 0, base)
-      ctx.restore()
-    })
+
+      ctx.save();
+      ctx.translate(cx + tremX, cy + tremY);
+      ctx.rotate(rotation);
+      ctx.font         = `bold ${fontSize}px "${SUL_SANS}", sans-serif`;
+      ctx.fillStyle    = getContrastColor();
+      ctx.textBaseline = 'alphabetic';
+      ctx.textAlign    = 'center';
+      ctx.fillText(text, 0, base);
+      ctx.restore();
+    });
 
     // ——— Subtitle (same logic) ———
     const sub1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
