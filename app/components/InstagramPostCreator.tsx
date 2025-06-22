@@ -552,37 +552,11 @@ export default function InstagramPostCreator() {
     const positions = frame === 1 ? titlePositionsFrame1 : titlePositionsFrame2;
     const subPos = frame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2;
 
-    positions.forEach((pos, idx) => {
-      const tremX = (Math.random() - 0.5) * tremblingIntensity
-      const tremY = (Math.random() - 0.5) * tremblingIntensity
-      const { cx, cy, baselineOffset } = centerOf(pos)
-
-      ctx.save()
-      ctx.translate(cx + tremX, cy + tremY)
-      ctx.rotate(pos.rotation)
-      ctx.font         = `bold ${pos.fontSize}px "${SUL_SANS}", sans-serif`
-      ctx.fillStyle    = getContrastColor()
-      ctx.textBaseline = 'alphabetic'
-      ctx.textAlign    = 'center'
-      ctx.fillText(titles[idx], 0, baselineOffset)
-      ctx.restore()
-    })
-
-    // subtitle
-    const tremXsub = (Math.random() - 0.5) * tremblingIntensity
-    const tremYsub = (Math.random() - 0.5) * tremblingIntensity
-    const { cx: scx, cy: scy, baselineOffset: sBase } = centerOf(subPos)
-
-    ctx.save()
-    ctx.translate(scx + tremXsub, scy + tremYsub)
-    ctx.rotate(subPos.rotation)
-    ctx.font         = `${subPos.fontSize}px "${AFFAIRS}", sans-serif`
-    ctx.fillStyle    = getContrastColor()
-    ctx.textBaseline = 'alphabetic'
-    ctx.textAlign    = 'left'
-    ctx.fillText('Instrumento:', -subPos.width / 2, sBase)
-    ctx.fillText(subtitle,       -subPos.width / 2, sBase + subPos.fontSize + 8)
-    ctx.restore()
+    positions.forEach((pos, idx) =>
+      drawTextBlock(ctx, titles[idx], pos, SUL_SANS, true, true)
+    );
+    drawTextBlock(ctx, 'Instrumento:', subPos, AFFAIRS, false, false);
+    drawTextBlock(ctx, subtitle,        subPos, AFFAIRS, false, false);
   }
 
   const drawRotatedText = (ctx: CanvasRenderingContext2D, pos: TextPosition, text: string) => {
@@ -666,6 +640,36 @@ export default function InstagramPostCreator() {
     if (frame2Lines.length) drawFrameLines(frame2Lines, progress)
   }
 
+  // ─── TEXT BLOCK DRAW HELPER ─────────────────────────────────────────────
+  function drawTextBlock(
+    ctx: CanvasRenderingContext2D,
+    text: string,
+    pos: TextPosition,
+    fontFamily: string,
+    bold: boolean,
+    alignCenter: boolean
+  ) {
+    // compute the "safe" bounding-box
+    const w = pos.boxW ?? pos.width;
+    const h = pos.boxH ?? pos.height;
+    // figure out the top-left of that box from baseline/ascent
+    const topY = pos.baseline - pos.ascent;
+    // center point
+    const cx = pos.x + w/2;
+    const cy = topY + h/2;
+    // how much to move from center to the alphabetic baseline
+    const baselineOffset = pos.ascent - h/2;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(pos.rotation);
+    ctx.font = `${bold ? 'bold ' : ''}${pos.fontSize}px "${fontFamily}", sans-serif`;
+    ctx.textBaseline = 'alphabetic';
+    ctx.textAlign = alignCenter ? 'center' : 'left';
+    ctx.fillText(text, alignCenter ? 0 : -w/2, baselineOffset);
+    ctx.restore();
+  }
+
   const drawAnimatedText = (
     ctx: CanvasRenderingContext2D,
     moveT: number,
@@ -693,67 +697,63 @@ export default function InstagramPostCreator() {
       const dynAscent  = p1.ascent   + (p2.ascent   - p1.ascent)   * scaleT
       const dynDescent = p1.descent  + (p2.descent  - p1.descent)  * scaleT
 
-      // 3) ── NEW: pin the rotated top-left corner ─────────────────────────
+      // 3) pin the rotated top-left corner
       const dAsc = dynAscent - p1.ascent
       const sx   = x0        + dAsc * Math.sin(rotation)
       const bl   = baseline0 + dAsc * Math.cos(rotation)
-      // ───────────────────────────────────────────────────────────────────
 
-      // 4) trembling + draw
+      // trembling
       const tremX = (Math.random() - 0.5) * tremblingIntensity
       const tremY = (Math.random() - 0.5) * tremblingIntensity
 
-      // compute centre from pinned coords
-      const topY = bl - dynAscent
-      const cx   = sx + dynW / 2
-      const cy   = topY + dynH / 2
-      const base = dynH / 2 - dynDescent
-
-      ctx.save()
-      ctx.translate(cx + tremX, cy + tremY)
-      ctx.rotate(rotation)
-      ctx.font         = `bold ${fontSize}px "${SUL_SANS}", sans-serif`
-      ctx.fillStyle    = getContrastColor()
-      ctx.textBaseline = 'alphabetic'
-      ctx.textAlign    = 'center'
-      ctx.fillText(text, 0, base)
-      ctx.restore()
+      // build interpolated TextPosition
+      const interpPos: TextPosition = {
+        x: sx,
+        baseline: bl,
+        ascent: dynAscent,
+        descent: dynDescent,
+        width: dynW,
+        height: dynH,
+        rotation,
+        fontSize,
+        boxW: dynW,
+        boxH: dynH,
+      };
+      // draw
+      drawTextBlock(ctx, text, interpPos, SUL_SANS, true, true);
     })
 
-    // Subtitle is already doing the same pin-top-left trick, so leave it as is:
+    // Subtitle
     const sub1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
     const sub2 = toFrame   === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2
     {
-      /* 1 ▸ move */
       const xMove   = sub1.x        + (sub2.x        - sub1.x)        * moveT
       const baseMov = sub1.baseline + (sub2.baseline - sub1.baseline) * moveT
       const rot     = sub1.rotation + (sub2.rotation - sub1.rotation) * moveT
-
-      /* 2 ▸ scale ascent */
       const size = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT
       const asc1 = sub1.ascent
       const asc2 = sub2.ascent
       const asc  = asc1 + (asc2 - asc1) * scaleT
+      const desc = sub1.descent + (sub2.descent - sub1.descent) * scaleT
+      const w    = sub1.width + (sub2.width - sub1.width) * scaleT
+      const h    = sub1.height + (sub2.height - sub1.height) * scaleT
       const dAsc = asc - asc1
-
-      /* 3 ▸ pin top-left */
       const sx       = xMove   + dAsc * Math.sin(rot)
       const baseline = baseMov + dAsc * Math.cos(rot)
-
-      /* 4 ▸ draw */
-      const tremX = (Math.random() - 0.5) * tremblingIntensity
-      const tremY = (Math.random() - 0.5) * tremblingIntensity
-
-      ctx.save()
-      ctx.translate(sx + tremX, baseline + tremY)
-      ctx.rotate(rot)
-      ctx.font         = `${size}px "${AFFAIRS}", sans-serif`
-      ctx.fillStyle    = getContrastColor()
-      ctx.textBaseline = 'alphabetic'
-      ctx.textAlign    = 'left'
-      ctx.fillText('Instrumento:', 0, 0)
-      ctx.fillText(subtitle,        0, size + 8)
-      ctx.restore()
+      const interpSub: TextPosition = {
+        x: sx,
+        baseline,
+        ascent: asc,
+        descent: desc,
+        width: w,
+        height: h,
+        rotation: rot,
+        fontSize: size,
+        boxW: w,
+        boxH: h,
+      }
+      drawTextBlock(ctx, 'Instrumento:', interpSub, AFFAIRS, false, false);
+      drawTextBlock(ctx, subtitle,        interpSub, AFFAIRS, false, false);
     }
   }
 
