@@ -688,11 +688,12 @@ export default function InstagramPostCreator() {
       const rotation = p1.rotation + (p2.rotation - p1.rotation) * moveT
 
       // 2) SIZE INTERPOLATION
-      const fontSize = p1.fontSize + (p2.fontSize - p1.fontSize) * scaleT
-      const dynW = p1.width + (p2.width - p1.width) * scaleT
-      const dynH = p1.height + (p2.height - p1.height) * scaleT
-      const dynAscent = p1.ascent + (p2.ascent - p1.ascent) * scaleT
-      const dynDescent = p1.descent + (p2.descent - p1.descent) * scaleT
+      const fontSize   = p1.fontSize + (p2.fontSize - p1.fontSize) * scaleT
+      const s          = fontSize / p1.fontSize   // exact factor
+      const dynW       = p1.width   * s
+      const dynH       = p1.height  * s
+      const dynAscent  = p1.ascent  * s
+      const dynDescent = p1.descent * s
 
       // 3) RANDOM TREMBLE
       const tremX = (Math.random() - 0.5) * tremblingIntensity
@@ -1455,9 +1456,15 @@ export default function InstagramPostCreator() {
     }
     scale = Math.max(0.1, scale);
 
-    const newW = refWidth * scale;
-    const newH = refHeight * scale;
-    const newX = cx - newW/2;
+    const safeW = ref.boxW ?? ref.width;    // safe -> only for handles
+    const safeH = ref.boxH ?? ref.height;
+
+    const newGlyphW = ref.width  * scale;   // real ink box
+    const newGlyphH = ref.height * scale;
+    const newSafeW  = safeW * scale;        // safe box follows afterwards
+    const newSafeH  = safeH * scale;
+
+    const newX = cx - newGlyphW / 2;
     const newBaseline = ref.baseline; // Keep baseline at same position
     const newAscent = ref.ascent * scale;
     const newDescent = ref.descent * scale;
@@ -1468,10 +1475,10 @@ export default function InstagramPostCreator() {
       baseline: newBaseline,
       ascent: newAscent,
       descent: newDescent,
-      width: ref.width * scale,     // scale the actual glyph width
-      height: newH,
-      boxW: newW,
-      boxH: newH,
+      width : newGlyphW,
+      height: newGlyphH,
+      boxW  : newSafeW,
+      boxH  : newSafeH,
       fontSize: ref.fontSize * scale
     };
 
