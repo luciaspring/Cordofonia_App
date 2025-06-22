@@ -1463,18 +1463,21 @@ export default function InstagramPostCreator() {
     const newAscent = ref.ascent * scale;
     const newDescent = ref.descent * scale;
     
-    const newPos: TextPosition = {
+    let newPos: TextPosition = {
       ...position,
       x: newX,
       baseline: newBaseline,
       ascent: newAscent,
       descent: newDescent,
-      width: ref.width * scale, // scale the actual text width
+      width: ref.width * scale,     // scale the actual glyph width
       height: newH,
       boxW: newW,
       boxH: newH,
       fontSize: ref.fontSize * scale
     };
+
+    /* one-step fix: update the "safe" square now, not later */
+    newPos = recalcSafeBox(newPos);
 
     if (textType === 'subtitle') {
       setSubtitlePositionFrame2(newPos);
