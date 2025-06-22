@@ -687,6 +687,14 @@ export default function InstagramPostCreator() {
 
       // 2) SIZE INTERPOLATION
       const fontSize = p1.fontSize + (p2.fontSize - p1.fontSize) * scaleT
+      /* use the "safe" box while we animate so the centre
+         matches what drawStaticText() will use next frame   */
+      const w1 = p1.boxW ?? p1.width
+      const h1 = p1.boxH ?? p1.height
+      const w2 = p2.boxW ?? p2.width
+      const h2 = p2.boxH ?? p2.height
+      const w  = w1 + (w2 - w1) * scaleT
+      const h  = h1 + (h2 - h1) * scaleT
       const dynW = p1.width + (p2.width - p1.width) * scaleT
       const dynH = p1.height + (p2.height - p1.height) * scaleT
       const dynAscent = p1.ascent + (p2.ascent - p1.ascent) * scaleT
