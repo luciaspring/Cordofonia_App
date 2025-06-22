@@ -2312,4 +2312,4 @@ const centerOf = (p: TextPosition) => {
     // baseline (cap-height of line 1) relative to the centre of the block
     baselineOffset: p.ascent - h / 2
   }
-} 
+}
