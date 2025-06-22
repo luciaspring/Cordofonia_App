@@ -527,7 +527,8 @@ export default function InstagramPostCreator() {
 
     const framelines = lines.filter(l => l.frame === currentFrame)
     drawLines(ctx, framelines)
-    drawStaticText(ctx, currentFrame)
+    // draw through your animated‐text routine, with zero movement/scale
+    drawAnimatedText(ctx, 0, 0, currentFrame, currentFrame)
 
     if (currentFrame === 2 && selectedTexts.length > 0) {
       const groupBox = calculateGroupBoundingBox()
