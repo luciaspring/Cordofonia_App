@@ -2320,25 +2320,33 @@ const withSafeBox = (p: TextPosition) => recalcSafeBox(p)
 /* ─── centres ──────────────────────────────────────────────
      centreOfGlyph → use *glyph* box (width / height) – drawing
      centreOfSafe  → use *safe*  box (boxW / boxH)   – handles  */
+const centreVector = (p: TextPosition) => ({
+  dx: p.width  / 2,                 // +X  (half the ink width)
+  dy: -(p.ascent - p.height / 2),   // –Y  (baseline is below centre)
+});
+
 const centerOfGlyph = (p: TextPosition) => {
-  const w = p.width
-  const h = p.height
-  const topY = p.baseline - p.ascent
+  const { dx, dy } = centreVector(p);
+  const cos = Math.cos(p.rotation);
+  const sin = Math.sin(p.rotation);
+
   return {
-    cx: p.x + w / 2,
-    cy: topY + h / 2,
-    // baseline (cap-height of line 1) relative to the centre of the block
-    baselineOffset: p.ascent - h / 2
-  }
-}
+    cx: p.x +  dx * cos - dy * sin,
+    cy: p.baseline + dx * sin + dy * cos,
+    baselineOffset: p.ascent - p.height / 2,   // unchanged – local space
+  };
+};
 
 const centerOfSafe = (p: TextPosition) => {
-  const w = p.boxW ?? p.width
-  const h = p.boxH ?? p.height
-  const topY = p.baseline - p.ascent
+  const w  = p.boxW ?? p.width;
+  const dx =  w / 2;
+  const dy = -(p.ascent - p.height / 2);
+  const cos = Math.cos(p.rotation);
+  const sin = Math.sin(p.rotation);
+
   return {
-    cx: p.x + w / 2,
-    cy: topY + h / 2,
-    baselineOffset: p.ascent - h / 2
-  }
-} 
+    cx: p.x +  dx * cos - dy * sin,
+    cy: p.baseline + dx * sin + dy * cos,
+    baselineOffset: dy * -1,                // same as above
+  };
+}; 
