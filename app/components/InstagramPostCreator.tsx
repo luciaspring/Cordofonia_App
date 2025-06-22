@@ -549,6 +549,18 @@ export default function InstagramPostCreator() {
 
   // ─── STATIC TEXT DRAW WITH TREMBLING ─────────────────────────────────────────────
   const drawStaticText = (ctx: CanvasRenderingContext2D, frame: number) => {
+    const titlesPos = frame === 1 ? titlePositionsFrame1 : titlePositionsFrame2;
+    const subPos    = frame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2;
+
+    titlesPos.forEach((pos, i) =>
+      drawTextBlock(ctx, titles[i], pos, SUL_SANS, /*bold=*/true, /*center=*/true)
+    );
+
+    // subtitle is two lines, left-aligned
+    drawTextBlock(ctx, 'Instrumento:', subPos, AFFAIRS, /*bold=*/false, /*center=*/false);
+    drawTextBlock(ctx, subtitle,        subPos, AFFAIRS, /*bold=*/false, /*center=*/false);
+  }
+
     const positions = frame === 1 ? titlePositionsFrame1 : titlePositionsFrame2;
     const subPos = frame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2;
 
