@@ -1485,56 +1485,47 @@ export default function InstagramPostCreator() {
     }
   }
 
+  /* returns the centre of the blue "safe" rectangle in world-space */
+  const pivotOf = (p: TextPosition) => centerOfSafe(p);   // -> { cx, cy }
+
   const rotateSingle = (
-    x: number,
-    y: number,
-    position: TextPosition,
-    textType: 'title1' | 'title2' | 'subtitle'
+    x:number, y:number,
+    pos:TextPosition,
+    kind:'title1'|'title2'|'subtitle'
   ) => {
     if (!lastMousePosition.current) return;
 
-    /* 1 ─ current centre of the text block */
-    const boxW = position.boxW ?? position.width;
-    const boxH = position.boxH ?? position.height;
-    const topY = position.baseline - position.ascent;
-    const cx   = position.x + boxW / 2;
-    const cy   = topY        + boxH / 2;
+    /* real centre, works in any orientation */
+    const { cx, cy } = pivotOf(pos);
 
-    /* 2 ─ angle delta measured around that centre */
-    const prevA = Math.atan2(
-      lastMousePosition.current.y - cy,
-      lastMousePosition.current.x - cx
-    );
-    const currA = Math.atan2(y - cy, x - cx);
-    let delta = currA - prevA;
-    if (delta >  Math.PI) delta -= 2 * Math.PI;
-    if (delta < -Math.PI) delta += 2 * Math.PI;
+    /* angle delta */
+    const a0 = Math.atan2(lastMousePosition.current.y - cy,
+                          lastMousePosition.current.x - cx);
+    const a1 = Math.atan2(y - cy, x - cx);
+    let d = a1 - a0;
+    if (d >  Math.PI) d -= 2*Math.PI;
+    if (d < -Math.PI) d += 2*Math.PI;
 
-    /* 3 ─ rotate baseline-left corner to keep the centre fixed */
-    const offX = position.x - cx;             // centre → BL-corner
-    const offY = position.baseline - cy;
-    const cos  = Math.cos(delta);
-    const sin  = Math.sin(delta);
-    const newOffX = offX * cos - offY * sin;
-    const newOffY = offX * sin + offY * cos;
+    /* rotate the baseline-left corner so the centre stays fixed */
+    const offX = pos.x - cx;
+    const offY = pos.baseline - cy;
+    const cos  = Math.cos(d);
+    const sin  = Math.sin(d);
 
-    const apply = (p: TextPosition): TextPosition =>
-      withRotation(
-        { ...p,
-          x        : cx + newOffX,
-          baseline : cy + newOffY,
-          rotation : p.rotation + delta },
-        p.rotation + delta
-      );
+    const newX        = cx + offX*cos - offY*sin;
+    const newBaseline = cy + offX*sin + offY*cos;
+    const newAngle    = pos.rotation + d;
 
-    if (textType === 'subtitle') {
+    const apply = (p:TextPosition):TextPosition =>
+      withRotation({ ...p, x:newX, baseline:newBaseline }, newAngle);
+
+    if (kind === 'subtitle') {
       setSubtitlePositionFrame2(apply);
     } else {
-      setTitlePositionsFrame2(prev => {
-        const arr = [...prev];
-        const idx = textType === 'title1' ? 0 : 1;
-        arr[idx]  = apply(arr[idx]);
-        return arr;
+      setTitlePositionsFrame2(v => {
+        const nxt = [...v];
+        nxt[kind === 'title1' ? 0 : 1] = apply(nxt[kind === 'title1' ? 0 : 1]);
+        return nxt;
       });
     }
 
@@ -1566,30 +1557,28 @@ export default function InstagramPostCreator() {
   }
 
   const rotateAroundPoint = (
-    pos: TextPosition,
-    cx: number,
-    cy: number,
-    angle: number
-  ): TextPosition => {
-    // Calculate center from baseline and ascent
-    const topY = pos.baseline - pos.ascent;
-    const centerX = pos.x + pos.width / 2;
-    const centerY = topY + pos.height / 2;
-    const dx = centerX - cx;
-    const dy = centerY - cy;
-    const dist = Math.hypot(dx, dy);
-    const currAngle = Math.atan2(dy, dx);
-    const newAngle = currAngle + angle;
-    const newCenterX = cx + dist * Math.cos(newAngle);
-    const newCenterY = cy + dist * Math.sin(newAngle);
-    const newX = newCenterX - pos.width / 2;
-    // Calculate new baseline from new center and ascent
-    const newBaseline = newCenterY + pos.ascent - pos.height / 2;
-    return withRotation(
-      { ...pos, x: newX, baseline: newBaseline, rotation: pos.rotation + angle },
-      pos.rotation + angle
-    );
-  }
+    p:TextPosition,
+    cx:number, cy:number,
+    d:number,                           // delta angle
+  ):TextPosition => {
+    const { cx: c0, cy: c0y } = pivotOf(p);        // old centre
+    const vX = c0 - cx;
+    const vY = c0y - cy;
+
+    /* new centre after the delta */
+    const cos = Math.cos(d);
+    const sin = Math.sin(d);
+    const cX  = cx + vX*cos - vY*sin;
+    const cY  = cy + vX*sin + vY*cos;
+
+    /* shift baseline-left so the new centre stays put */
+    const offX = p.x - c0;               // old BL-corner → old centre
+    const offY = p.baseline - c0y;
+    const nX   = cX + offX*cos - offY*sin;
+    const nBas = cY + offX*sin + offY*cos;
+
+    return withRotation({ ...p, x:nX, baseline:nBas }, p.rotation + d);
+  };
 
   // ─── MOUSE EVENT HANDLERS ───────────────────────────────────────────────────────
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
