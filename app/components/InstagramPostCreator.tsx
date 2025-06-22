@@ -1554,9 +1554,7 @@ export default function InstagramPostCreator() {
     if (delta > Math.PI) delta -= 2 * Math.PI;
     if (delta < -Math.PI) delta += 2 * Math.PI;
     if (textType === 'subtitle') {
-      setSubtitlePositionFrame2(prev =>
-        withSafeBox({ ...prev, rotation: prev.rotation + delta })
-      );
+      setSubtitlePositionFrame2(prev => ({ ...prev, rotation: prev.rotation + delta }));
     } else {
       setTitlePositionsFrame2(prev => {
         const arr = [...prev];
