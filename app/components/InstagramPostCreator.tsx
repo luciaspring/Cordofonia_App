@@ -689,11 +689,10 @@ export default function InstagramPostCreator() {
 
       // 2) SIZE INTERPOLATION
       const fontSize   = p1.fontSize + (p2.fontSize - p1.fontSize) * scaleT
-      const s          = fontSize / p1.fontSize   // exact factor
-      const dynW       = p1.width   * s
-      const dynH       = p1.height  * s
-      const dynAscent  = p1.ascent  * s
-      const dynDescent = p1.descent * s
+      const dynW       = p1.width   + (p2.width   - p1.width  )   * scaleT
+      const dynH       = p1.height  + (p2.height  - p1.height )   * scaleT
+      const dynAscent  = p1.ascent  + (p2.ascent  - p1.ascent )   * scaleT
+      const dynDescent = p1.descent + (p2.descent - p1.descent)   * scaleT
 
       // 3) RANDOM TREMBLE
       const tremX = (Math.random() - 0.5) * tremblingIntensity
