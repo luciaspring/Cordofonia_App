@@ -441,73 +441,85 @@ export default function InstagramPostCreator() {
 
   // ─── TEXT DIMENSION UPDATER ──────────────────────────────────────────────────────
   const updateTextDimensions = (ctx: CanvasRenderingContext2D) => {
-    const measureText = (txt: string, fs: number, ff = SUL_SANS, bold = true) => {
+    /* helper: measure glyph box */
+    const measure = (txt: string, fs: number, ff = SUL_SANS, bold = true) => {
       ctx.font = `${bold ? 'bold ' : ''}${fs}px "${ff}", sans-serif`;
       const m = ctx.measureText(txt);
+      const ascent  = m.actualBoundingBoxAscent  ?? fs * 0.9;
+      const descent = m.actualBoundingBoxDescent ?? fs * 0.1;
+      return { width: m.width, ascent, descent, height: ascent + descent };
+    };
 
-      /*  ▸ key numbers we need  */
-      const ascent = m.actualBoundingBoxAscent ?? fs * 0.90;
-      const descent = m.actualBoundingBoxDescent ?? fs * 0.10;
+    /* ───────────────────────────────────────────────── TITLES ──────────── */
+    const fixCenter = (oldPos: TextPosition, dims: ReturnType<typeof measure>) => {
+      /* 1 ▸ save CURRENT geometric centre (before we overwrite width/height) */
+      const oldW = oldPos.boxW ?? oldPos.width;
+      const oldH = oldPos.boxH ?? oldPos.height;
+      const oldCX = oldPos.x + oldW / 2;
+      const oldCY = (oldPos.baseline - oldPos.ascent) + oldH / 2;
 
-      return {
-        width: m.width,
-        height: ascent + descent,
-        ascent,
-        descent,
+      /* 2 ▸ safe-box after the glyphs changed                                    */
+      const θ = oldPos.rotation;
+      const sW = Math.abs(dims.width * Math.cos(θ)) + Math.abs(dims.height * Math.sin(θ));
+      const sH = Math.abs(dims.width * Math.sin(θ)) + Math.abs(dims.height * Math.cos(θ));
+
+      /* 3 ▸ restore centre by adjusting x & baseline                            */
+      const newX        = oldCX - sW / 2;
+      const newBaseline = oldCY + dims.ascent - sH / 2;
+
+      return <TextPosition>{
+        ...oldPos,
+        x        : newX,
+        baseline : newBaseline,
+        width    : dims.width,
+        height   : dims.height,
+        ascent   : dims.ascent,
+        descent  : dims.descent,
+        boxW     : sW,
+        boxH     : sH,
       };
     };
 
-    // ── TITLES ───────────────────────────────────────────────
-    setTitlePositionsFrame1(prev =>
-      prev.map((pos, i) => {
-        const { width, height, ascent, descent } = measureText(titles[i], pos.fontSize, SUL_SANS, true)
-        return recalcSafeBox({ ...pos, width, height, ascent, descent })
-      })
-    )
+    /* update both frames in one go so they stay mirrored */
+    setTitlePositionsFrame1(prev => prev.map((p, i) => fixCenter(p, measure(titles[i], p.fontSize))));
+    setTitlePositionsFrame2(prev => prev.map((p, i) => fixCenter(p, measure(titles[i], p.fontSize))));
 
-    setTitlePositionsFrame2(prev =>
-      prev.map((pos, i) => {
-        const { width, height, ascent, descent } = measureText(titles[i], pos.fontSize, SUL_SANS, true)
-        return recalcSafeBox({ ...pos, width, height, ascent, descent })
-      })
-    )
+    /* ─────────────────────────────────────────────── SUBTITLE ──────────── */
+    const instr     = 'Instrumento:';
+    const fs        = subtitlePositionFrame1.fontSize;
+    const mInstr    = measure(instr,    fs, AFFAIRS, false);
+    const mValue    = measure(subtitle, fs, AFFAIRS, false);
 
-    // ── SUBTITLE ───────────────────────────────────────────────
-    const instr  = 'Instrumento:';
-    const aff    = AFFAIRS;
+    const blockW    = Math.max(mInstr.width, mValue.width);
+    const blockH    = mInstr.ascent + mInstr.descent + 8 + mValue.ascent + mValue.descent;
+    const blockAsc  = mInstr.ascent;           // use cap-height for baseline snap
+    const row6Top   = rowY(6);
+    const baseline  = row6Top + blockAsc;      // keep "I" kissing the guide
 
-    const instrM = measureText(instr,    subtitlePositionFrame1.fontSize, aff, false);
-    const valM   = measureText(subtitle, subtitlePositionFrame1.fontSize, aff, false);
+    const subDims   = { width: blockW, height: blockH, ascent: blockAsc + 8 + mValue.ascent, descent: mValue.descent };
 
-    /* 1 ▸ measurements -------------------------------------------------- */
-    const capAscent = instrM.ascent;                       // cap-height of "I"
-    const subAscent = Math.max(instrM.ascent,  valM.ascent);
-    const subDesc   = Math.max(instrM.descent, valM.descent);
+    const fixSub = (oldPos: TextPosition) => {
+      const θ  = oldPos.rotation;
+      const sW = Math.abs(blockW * Math.cos(θ)) + Math.abs(blockH * Math.sin(θ));
+      const sH = Math.abs(blockW * Math.sin(θ)) + Math.abs(blockH * Math.cos(θ));
+      const cx = oldPos.x + (oldPos.boxW ?? oldPos.width) / 2;
+      const cy = (oldPos.baseline - oldPos.ascent) + (oldPos.boxH ?? oldPos.height) / 2;
+      return <TextPosition>{
+        ...oldPos,
+        x        : cx - sW / 2,
+        baseline : cy + subDims.ascent - sH / 2,
+        width    : blockW,
+        height   : blockH,
+        ascent   : subDims.ascent,
+        descent  : subDims.descent,
+        boxW     : sW,
+        boxH     : sH,
+      };
+    };
 
-    const subtitleWidth  = Math.max(instrM.width, valM.width);
-    const lineGap        = 8;
-    const subtitleHeight = subAscent + subDesc        // first line
-                         + lineGap
-                         + valM.ascent + valM.descent;
-
-    /* 2 ▸ baseline = top of row-7 + cap-height (keeps "I" on the guide) */
-    const row6Top     = rowY(6);                // top guide of the 7-th grid row
-    const subBaseline = row6Top + capAscent;
-
-    /* 3 ▸ update helper -------------------------------------------------- */
-    const updSubtitle = (p: TextPosition): TextPosition => ({
-      ...p,
-      baseline : subBaseline,   // stays locked to the guide
-      ascent   : subAscent,     // <- IMPORTANT: use the *tallest* ascent again
-      descent  : subDesc,
-      width    : subtitleWidth,
-      height   : subtitleHeight,
-    });
-
-    /* 4 ▸ apply to both frames ------------------------------------------ */
-    setSubtitlePositionFrame1(updSubtitle);
-    setSubtitlePositionFrame2(updSubtitle);
-  }
+    setSubtitlePositionFrame1(fixSub);
+    setSubtitlePositionFrame2(fixSub);
+  };
 
   // ─── DRAWING ROUTINES ────────────────────────────────────────────────────────────
   const drawCanvas = (progress: number = 0) => {
