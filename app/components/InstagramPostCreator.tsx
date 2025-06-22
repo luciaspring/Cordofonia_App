@@ -1456,28 +1456,25 @@ export default function InstagramPostCreator() {
     }
     scale = Math.max(0.1, scale);
 
-    const newW = refWidth * scale;
+    const newW = refWidth  * scale;
     const newH = refHeight * scale;
-    const newX = cx - newW/2;
-    const newBaseline = ref.baseline; // Keep baseline at same position
-    const newAscent = ref.ascent * scale;
-    const newDescent = ref.descent * scale;
-    
+
+    /* build the scaled position first … */
     let newPos: TextPosition = {
       ...position,
-      x: newX,
-      baseline: newBaseline,
-      ascent: newAscent,
-      descent: newDescent,
-      width: ref.width * scale,     // scale the actual glyph width
-      height: newH,
-      boxW: newW,
-      boxH: newH,
-      fontSize: ref.fontSize * scale
+      baseline : ref.baseline,          // keep baseline locked
+      ascent   : ref.ascent  * scale,
+      descent  : ref.descent * scale,
+      width    : ref.width  * scale,
+      height   : newH,
+      fontSize : ref.fontSize * scale
     };
 
-    /* one-step fix: update the "safe" square now, not later */
+    /* …then get its safe bounds */
     newPos = recalcSafeBox(newPos);
+
+    /* restore the original centre with the **safe** width */
+    newPos.x = cx - (newPos.boxW ?? newPos.width) / 2;
 
     if (textType === 'subtitle') {
       setSubtitlePositionFrame2(newPos);
@@ -1520,14 +1517,20 @@ export default function InstagramPostCreator() {
       const h = pos.height * scale;
       const newCenterX = cx + relCX * initialGroupBox.width * scale;
       const newCenterY = cy + relCY * initialGroupBox.height * scale;
-      return {
+      /* same immediate safe-box refresh for every member */
+      const next = recalcSafeBox({
         ...pos,
         x: newCenterX - w / 2,
         baseline: newCenterY + pos.ascent * scale - h / 2,
         width: w,
         height: h,
         fontSize: pos.fontSize * scale
-      };
+      });  // safe-box first
+
+      // re-centre with the new safe width
+      next.x = cx + relCX * initialGroupBox.width * scale
+               - (next.boxW ?? next.width) / 2;
+      return next;
     };
 
     setTitlePositionsFrame2(p =>
