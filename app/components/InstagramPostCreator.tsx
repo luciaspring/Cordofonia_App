@@ -752,39 +752,31 @@ export default function InstagramPostCreator() {
     }
   }
 
+  // ─── drawBoundingBox ─────────────────────────────────────────
   const drawBoundingBox = (ctx: CanvasRenderingContext2D, pos: TextPosition) => {
-    // Calculate top position from baseline and ascent
-    const topY = pos.baseline - pos.ascent;
-    const boxWidth = pos.boxW ?? pos.width;
-    const boxHeight = pos.boxH ?? pos.height;
-    const cx = pos.x + boxWidth / 2;
-    const cy = topY + boxHeight / 2;
+    const { cx, cy } = centerOfSafe(pos);          // ✔ rotation-aware centre
+    const w  = pos.boxW ?? pos.width;
+    const h  = pos.boxH ?? pos.height;
+    const hw = w / 2;
+    const hh = h / 2;
+
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(pos.rotation);
-    const hw = boxWidth / 2;
-    const hh = boxHeight / 2;
-    ctx.strokeStyle = 'rgba(0, 120, 255, 0.8)';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(-hw, -hh, boxWidth, boxHeight);
-    const handleSize = HANDLE_ICON        // only the icon uses this size
-    const corners = [
-      [-hw, -hh],
-      [hw, -hh],
-      [hw, hh],
-      [-hw, hh]
-    ];
-    corners.forEach(([x, y]) => {
-      ctx.fillStyle = 'white';
-      ctx.strokeStyle = 'rgba(0, 120, 255, 0.8)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.rect(x - handleSize / 2, y - handleSize / 2, handleSize, handleSize);
-      ctx.fill();
-      ctx.stroke();
+    ctx.strokeStyle = 'rgba(0,120,255,0.8)';
+    ctx.lineWidth   = 2;
+    ctx.strokeRect(-hw, -hh, w, h);
+
+    const hs = HANDLE_ICON;
+    [[-hw,-hh],[hw,-hh],[hw,hh],[-hw,hh]].forEach(([x,y])=>{
+      ctx.fillStyle   = '#fff';
+      ctx.strokeStyle = 'rgba(0,120,255,0.8)';
+      ctx.lineWidth   = 2;
+      ctx.fillRect (x-hs/2, y-hs/2, hs, hs);
+      ctx.strokeRect(x-hs/2, y-hs/2, hs, hs);
     });
     ctx.restore();
-  }
+  };
 
   const drawGroupBoundingBox = (ctx: CanvasRenderingContext2D, box: GroupBoundingBox) => {
     const cx = box.x + box.width / 2
@@ -867,83 +859,32 @@ export default function InstagramPostCreator() {
   }
 
   // ─── MOUSE & INTERACTION HANDLERS ──────────────────────────────────────────────
-  const getResizeHandle = (
-    x: number,
-    y: number,
-    position: TextPosition | GroupBoundingBox
-  ): string | null => {
-    const handleSize = HANDLE_DETECT      // much easier to hit
-    
-    // Calculate center based on type
-    let cx: number, cy: number, rot: number, width: number, height: number;
-    
-    if ('baseline' in position) {
-      // TextPosition - calculate center from baseline and ascent
-      const topY = position.baseline - position.ascent;
-      width = position.boxW ?? position.width;
-      height = position.boxH ?? position.height;
-      cx = position.x + width / 2;
-      cy = topY + height / 2;
-      rot = position.rotation;
-    } else {
-      // GroupBoundingBox - use y directly
-      cx = position.x + position.width / 2;
-      cy = position.y + position.height / 2;
-      rot = position.rotation;
-      width = position.width;
-      height = position.height;
+  const getResizeHandle = (x:number,y:number, p:TextPosition|GroupBoundingBox) => {
+    const hs = HANDLE_DETECT;
+
+    // TEXT block  → use real centre
+    if ('baseline' in p) {
+      const { cx, cy } = centerOfSafe(p);
+      return _handleAt(x,y,cx,cy,p.rotation,p.boxW??p.width,p.boxH??p.height,hs);
     }
-    
-    const dx = x - cx;
-    const dy = y - cy;
-    const ux = dx * Math.cos(-rot) - dy * Math.sin(-rot);
-    const uy = dx * Math.sin(-rot) + dy * Math.cos(-rot);
-    const hw = width / 2;
-    const hh = height / 2;
 
-    if (Math.abs(ux + hw) <= handleSize / 2 && Math.abs(uy + hh) <= handleSize / 2) return 'nw-resize';
-    if (Math.abs(ux - hw) <= handleSize / 2 && Math.abs(uy + hh) <= handleSize / 2) return 'ne-resize';
-    if (Math.abs(ux - hw) <= handleSize / 2 && Math.abs(uy - hh) <= handleSize / 2) return 'se-resize';
-    if (Math.abs(ux + hw) <= handleSize / 2 && Math.abs(uy - hh) <= handleSize / 2) return 'sw-resize';
+    // GROUP box (already has cx/cy in its own coords)
+    const cx = p.x + p.width /2;
+    const cy = p.y + p.height/2;
+    return _handleAt(x,y,cx,cy,p.rotation,p.width,p.height,hs);
+  };
 
-    if (Math.abs(ux) < hw && Math.abs(uy) < hh) return 'move';
-    return null;
-  }
-
-  const isPointNearRotationArea = (
-    x: number,
-    y: number,
-    position: TextPosition | GroupBoundingBox
-  ): boolean => {
-    const handleSize = HANDLE_DETECT;
+  const isPointNearRotationArea = (x:number,y:number, p:TextPosition|GroupBoundingBox) => {
+    const { cx, cy } = 'baseline' in p ? centerOfSafe(p)
+                                       : { cx: p.x+p.width/2, cy: p.y+p.height/2 };
     const rotArea = 20;                 // keep rotation ring generous
     
-    // Calculate center based on type
-    let cx: number, cy: number, rot: number, width: number, height: number;
-    
-    if ('baseline' in position) {
-      // TextPosition - calculate center from baseline and ascent
-      const topY = position.baseline - position.ascent;
-      width = position.boxW ?? position.width;
-      height = position.boxH ?? position.height;
-      cx = position.x + width / 2;
-      cy = topY + height / 2;
-      rot = position.rotation;
-    } else {
-      // GroupBoundingBox - use y directly
-      cx = position.x + position.width / 2;
-      cy = position.y + position.height / 2;
-      rot = position.rotation;
-      width = position.width;
-      height = position.height;
-    }
-    
     const dx = x - cx;
     const dy = y - cy;
-    const ux = dx * Math.cos(-rot) - dy * Math.sin(-rot);
-    const uy = dx * Math.sin(-rot) + dy * Math.cos(-rot);
-    const hw = width / 2;
-    const hh = height / 2;
+    const ux = dx * Math.cos(-p.rotation) - dy * Math.sin(-p.rotation);
+    const uy = dx * Math.sin(-p.rotation) + dy * Math.cos(-p.rotation);
+    const hw = p.width / 2;
+    const hh = p.height / 2;
     const corners = [
       { x: -hw, y: -hh },
       { x: hw, y: -hh },
@@ -952,10 +893,10 @@ export default function InstagramPostCreator() {
     ];
     for (const c of corners) {
       const dist = Math.hypot(ux - c.x, uy - c.y);
-      if (dist > handleSize / 2 && dist <= handleSize / 2 + rotArea) return true;
+      if (dist > HANDLE_DETECT / 2 && dist <= HANDLE_DETECT / 2 + rotArea) return true;
     }
     return false;
-  }
+  };
 
   const updateCursor = (canvas: HTMLCanvasElement, x: number, y: number) => {
     /* ── GROUP (when multiple items are selected) ── */
@@ -1326,25 +1267,23 @@ export default function InstagramPostCreator() {
     return inside;
   }
 
-  const getRotatedBoundingBox = (pos: TextPosition): Point[] => {
-    // Calculate top position from baseline and ascent
-    const topY = pos.baseline - pos.ascent;
-    const w = pos.boxW ?? pos.width;
-    const h = pos.boxH ?? pos.height;
-    const cx = pos.x + w / 2;
-    const cy = topY + h / 2;
-    const corners = [
-      { x: -w / 2, y: -h / 2 },
-      { x: w / 2, y: -h / 2 },
-      { x: w / 2, y: h / 2 },
-      { x: -w / 2, y: h / 2 }
+  const getRotatedBoundingBox = (p: TextPosition): Point[] => {
+    const { cx, cy } = centerOfSafe(p);
+    const w  = p.boxW ?? p.width;
+    const h  = p.boxH ?? p.height;
+    const hw = w / 2;
+    const hh = h / 2;
+
+    const cos = Math.cos(p.rotation);
+    const sin = Math.sin(p.rotation);
+
+    return [
+      { x: cx + (-hw)*cos - (-hh)*sin, y: cy + (-hw)*sin + (-hh)*cos }, // NW
+      { x: cx + ( hw)*cos - (-hh)*sin, y: cy + ( hw)*sin + (-hh)*cos }, // NE
+      { x: cx + ( hw)*cos - ( hh)*sin, y: cy + ( hw)*sin + ( hh)*cos }, // SE
+      { x: cx + (-hw)*cos - ( hh)*sin, y: cy + (-hw)*sin + ( hh)*cos }, // SW
     ];
-    return corners.map(c => {
-      const rx = c.x * Math.cos(pos.rotation) - c.y * Math.sin(pos.rotation);
-      const ry = c.x * Math.sin(pos.rotation) + c.y * Math.cos(pos.rotation);
-      return { x: rx + cx, y: ry + cy };
-    });
-  }
+  };
 
   const getRotatedGroupBoundingBox = (box: GroupBoundingBox): Point[] => {
     const cx = box.x + box.width / 2;
@@ -2350,3 +2289,34 @@ const centerOfSafe = (p: TextPosition) => {
     baselineOffset: dy * -1,                // same as above
   };
 }; 
+
+/**
+ * Hit-test for resize handles or move area.
+ * Returns a string for the handle ('nw-resize', 'ne-resize', etc.), 'move', or null.
+ */
+const _handleAt = (
+  x: number, y: number,
+  cx: number, cy: number,
+  rot: number,
+  w: number, h: number,
+  hs: number
+): string | null => {
+  // Transform point into the box's local (unrotated) space
+  const dx = x - cx;
+  const dy = y - cy;
+  const ux = dx * Math.cos(-rot) - dy * Math.sin(-rot);
+  const uy = dx * Math.sin(-rot) + dy * Math.cos(-rot);
+  const hw = w / 2;
+  const hh = h / 2;
+
+  // Check corners for resize handles
+  if (Math.abs(ux + hw) <= hs / 2 && Math.abs(uy + hh) <= hs / 2) return 'nw-resize';
+  if (Math.abs(ux - hw) <= hs / 2 && Math.abs(uy + hh) <= hs / 2) return 'ne-resize';
+  if (Math.abs(ux - hw) <= hs / 2 && Math.abs(uy - hh) <= hs / 2) return 'se-resize';
+  if (Math.abs(ux + hw) <= hs / 2 && Math.abs(uy - hh) <= hs / 2) return 'sw-resize';
+
+  // Check if inside the box for move
+  if (Math.abs(ux) < hw && Math.abs(uy) < hh) return 'move';
+
+  return null;
+};
