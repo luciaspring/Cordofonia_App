@@ -720,38 +720,36 @@ export default function InstagramPostCreator() {
     const sub1 = fromFrame === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2;
     const sub2 = toFrame   === 1 ? subtitlePositionFrame1 : subtitlePositionFrame2;
 
-    /* 1 ▸ interpolate position & rotation (moveT) */
-    const x        = sub1.x        + (sub2.x        - sub1.x)        * moveT;
-    const baseline = sub1.baseline + (sub2.baseline - sub1.baseline) * moveT;
-    const rot      = sub1.rotation + (sub2.rotation - sub1.rotation) * moveT;
+    /* 1 ─ interpolate MOVE values (before scaling) */
+    const xMove   = sub1.x        + (sub2.x        - sub1.x)        * moveT;
+    const baseMov = sub1.baseline + (sub2.baseline - sub1.baseline) * moveT;
+    const rot     = sub1.rotation + (sub2.rotation - sub1.rotation) * moveT;
 
-    /* 2 ▸ interpolate size (scaleT) */
-    const fontSize = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT;
-    const asc      = sub1.ascent   + (sub2.ascent   - sub1.ascent)   * scaleT;
-    const desc     = sub1.descent  + (sub2.descent  - sub1.descent)  * scaleT;
-    const width    = sub1.width    + (sub2.width    - sub1.width)    * scaleT;
-    const height   = sub1.height   + (sub2.height   - sub1.height)   * scaleT;
+    /* 2 ─ font size & ascent during SCALE */
+    const size    = sub1.fontSize + (sub2.fontSize - sub1.fontSize) * scaleT;
+    const asc     = sub1.ascent   + (sub2.ascent   - sub1.ascent)   * scaleT;
 
-    /* 3 ▸ centre of the block (same pivot used by drawStaticText / centreOf) */
-    const topY = baseline - asc;
-    const cx   = x + width  / 2;
-    const cy   = topY + height / 2;
-    const baseOffset = height / 2 - desc;      // baseline relative to centre
+    /* 3 ─ TOP-LEFT corner in world-space never moves  */
+    const topX = xMove  - sub1.ascent * Math.sin(rot);      // world X of cap-height
+    const topY = baseMov - sub1.ascent * Math.cos(rot);     // world Y of cap-height
 
-    /* 4 ▸ draw (with trembling) */
+    /* rebuild baseline from that fixed top-left */
+    const sx       = topX + asc * Math.sin(rot);            // current baseline-left X
+    const baseline = topY + asc * Math.cos(rot);            // current baseline
+
+    /* 4 ─ draw (with trembling) */
     const tremX = (Math.random() - 0.5) * tremblingIntensity;
     const tremY = (Math.random() - 0.5) * tremblingIntensity;
 
     ctx.save();
-    ctx.translate(cx + tremX, cy + tremY);
+    ctx.translate(sx + tremX, baseline + tremY);            // pivot = baseline-left
     ctx.rotate(rot);
-    ctx.font         = `${fontSize}px "${AFFAIRS}", sans-serif`;
+    ctx.font         = `${size}px "${AFFAIRS}", sans-serif`;
     ctx.fillStyle    = getContrastColor();
     ctx.textBaseline = 'alphabetic';
     ctx.textAlign    = 'left';
-
-    ctx.fillText('Instrumento:', -width / 2,  baseOffset);
-    ctx.fillText(subtitle,       -width / 2,  baseOffset + fontSize + 8);
+    ctx.fillText('Instrumento:', 0, 0);
+    ctx.fillText(subtitle,        0, size + 8);
     ctx.restore();
   }
 
