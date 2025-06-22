@@ -459,16 +459,22 @@ export default function InstagramPostCreator() {
 
     // ── TITLES ───────────────────────────────────────────────
     setTitlePositionsFrame1(prev =>
-      prev.map((pos, i) => {
-        const { width, height, ascent, descent } = measureText(titles[i], pos.fontSize, SUL_SANS, true)
-        return recalcSafeBox({ ...pos, width, height, ascent, descent })
+      prev.map((oldPos, i) => {
+        const centre  = centerOf(oldPos);                                 // remember ⊙
+        const m       = measureText(titles[i], oldPos.fontSize, SUL_SANS, true);
+        let next      = recalcSafeBox({ ...oldPos, ...m });
+        next          = withFixedCentre(next, centre.cx, centre.cy);      // 👈 NEW
+        return next;
       })
     )
 
     setTitlePositionsFrame2(prev =>
-      prev.map((pos, i) => {
-        const { width, height, ascent, descent } = measureText(titles[i], pos.fontSize, SUL_SANS, true)
-        return recalcSafeBox({ ...pos, width, height, ascent, descent })
+      prev.map((oldPos, i) => {
+        const centre  = centerOf(oldPos);
+        const m       = measureText(titles[i], oldPos.fontSize, SUL_SANS, true);
+        let next      = recalcSafeBox({ ...oldPos, ...m });
+        next          = withFixedCentre(next, centre.cx, centre.cy);      // 👈 NEW
+        return next;
       })
     )
 
@@ -505,8 +511,21 @@ export default function InstagramPostCreator() {
     });
 
     /* 4 ▸ apply to both frames ------------------------------------------ */
-    setSubtitlePositionFrame1(updSubtitle);
-    setSubtitlePositionFrame2(updSubtitle);
+    setSubtitlePositionFrame1(oldPos => {
+      const centre  = centerOf(oldPos);
+      const m       = measureText(subtitle, oldPos.fontSize, AFFAIRS, false);
+      let next      = recalcSafeBox({ ...oldPos, ...m });
+      next          = withFixedCentre(next, centre.cx, centre.cy);        // 👈 NEW
+      return next;
+    });
+
+    setSubtitlePositionFrame2(oldPos => {
+      const centre  = centerOf(oldPos);
+      const m       = measureText(subtitle, oldPos.fontSize, AFFAIRS, false);
+      let next      = recalcSafeBox({ ...oldPos, ...m });
+      next          = withFixedCentre(next, centre.cx, centre.cy);        // 👈 NEW
+      return next;
+    });
   }
 
   // ─── DRAWING ROUTINES ────────────────────────────────────────────────────────────
@@ -1456,28 +1475,37 @@ export default function InstagramPostCreator() {
     }
     scale = Math.max(0.1, scale);
 
-    const newW = refWidth * scale;
+    const newW = refWidth  * scale;
     const newH = refHeight * scale;
-    const newX = cx - newW/2;
-    const newBaseline = ref.baseline; // Keep baseline at same position
-    const newAscent = ref.ascent * scale;
-    const newDescent = ref.descent * scale;
-    
+
+    /*   A.  work out the exact glyph metrics for this font-size   */
+    const newFontSize = ref.fontSize * scale;                                // same
+    const sampleText  = textType === 'subtitle'
+      ? subtitle
+      : titles[textType === 'title1' ? 0 : 1];
+    const m = quickMeasure(
+      sampleText,
+      newFontSize,
+      textType === 'subtitle'                                               // 👈 NEW
+    );
+
+    /*   B.  preserve current BL-corner (x, baseline) but update everything else   */
     let newPos: TextPosition = {
       ...position,
-      x: newX,
-      baseline: newBaseline,
-      ascent: newAscent,
-      descent: newDescent,
-      width: ref.width * scale,     // scale the actual glyph width
-      height: newH,
-      boxW: newW,
-      boxH: newH,
-      fontSize: ref.fontSize * scale
+      fontSize : newFontSize,
+      width    : m.width,
+      ascent   : m.ascent,
+      descent  : m.descent,
+      height   : m.height,
     };
+    newPos = recalcSafeBox(newPos);                                          // existing
+    // (x & baseline stay unchanged → flush-left never drifts)                 // 👈 NEW
 
-    /* one-step fix: update the "safe" square now, not later */
+    /* …then get its safe bounds */
     newPos = recalcSafeBox(newPos);
+
+    /* restore the original centre with the **safe** width */
+    newPos = withFixedCentre(newPos, cx, cy);
 
     if (textType === 'subtitle') {
       setSubtitlePositionFrame2(newPos);
@@ -1516,18 +1544,30 @@ export default function InstagramPostCreator() {
       const centerY = topY + pos.height / 2;
       const relCX = (centerX - cx) / initialGroupBox.width;
       const relCY = (centerY - cy) / initialGroupBox.height;
-      const w = pos.width * scale;
-      const h = pos.height * scale;
+      
+      /* replace the block that calculates w / h / fontSize with an exact measure */
+      const newFontSize = pos.fontSize * scale;
+      const idx = titlePositionsFrame2.indexOf(pos);
+      const sample      = pos === subtitlePositionFrame2 ? subtitle
+                                                         : titles[idx];
+      const mm          = quickMeasure(sample, newFontSize,
+                                       selectedTexts.includes('subtitle'));   // 👈 NEW
+      const w  = mm.width;
+      const h  = mm.height;
       const newCenterX = cx + relCX * initialGroupBox.width * scale;
       const newCenterY = cy + relCY * initialGroupBox.height * scale;
-      return {
+      /* keep the rest (relCX / relCY maths) exactly the same,
+         but use mm.ascent / mm.descent for baseline maths */
+      return recalcSafeBox({
         ...pos,
-        x: newCenterX - w / 2,
-        baseline: newCenterY + pos.ascent * scale - h / 2,
-        width: w,
-        height: h,
-        fontSize: pos.fontSize * scale
-      };
+        fontSize : newFontSize,
+        width    : w,
+        height   : h,
+        ascent   : mm.ascent,
+        descent  : mm.descent,
+        x        : newCenterX - w / 2,
+        baseline : newCenterY + mm.ascent - h / 2,
+      });                                                                       // 👈 NEW
     };
 
     setTitlePositionsFrame2(p =>
@@ -2301,6 +2341,17 @@ const recalcSafeBox = (p: TextPosition): TextPosition => {
 
 const withSafeBox = (p: TextPosition) => recalcSafeBox(p)
 
+/** Keep the geometric centre at (cx, cy) even after the safe-box changes. */
+const withFixedCentre = (p: TextPosition, cx: number, cy: number): TextPosition => {
+  const w = p.boxW ?? p.width;
+  const h = p.boxH ?? p.height;
+  return {
+    ...p,
+    x        : cx - w / 2,
+    baseline : cy + h / 2 - p.descent,          // alphabetic baseline
+  };
+};
+
 // Utility: get geometric center and baseline offset for a TextPosition
 const centerOf = (p: TextPosition) => {
   const w = p.boxW ?? p.width
@@ -2312,4 +2363,16 @@ const centerOf = (p: TextPosition) => {
     // baseline (cap-height of line 1) relative to the centre of the block
     baselineOffset: p.ascent - h / 2
   }
-} 
+}
+
+// ─── 0.  QUICK MEASURE-HELPER  (add near other helpers) ────────────────────────
+const quickMeasure = (txt: string, fs: number, isSub = false) => {
+  const c  = document.createElement('canvas');
+  const ctx = c.getContext('2d')!;
+  ctx.font = `${isSub ? '' : 'bold '}${fs}px "${isSub ? AFFAIRS : SUL_SANS}", sans-serif`;
+  const m  = ctx.measureText(txt);
+  const asc = m.actualBoundingBoxAscent ?? fs * 0.9;
+  const desc = m.actualBoundingBoxDescent ?? fs * 0.1;
+  return { width: m.width, ascent: asc, descent: desc, height: asc + desc };
+};
+// ────────────────────────────────────────────────────────────────────────────────
