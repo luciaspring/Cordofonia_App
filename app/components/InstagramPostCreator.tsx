@@ -452,24 +452,21 @@ export default function InstagramPostCreator() {
 
     /* ───────────────────────────────────────────────── TITLES ──────────── */
     const fixCenter = (oldPos: TextPosition, dims: ReturnType<typeof measure>) => {
-      /* 1 ▸ save CURRENT geometric centre (before we overwrite width/height) */
-      const oldW = oldPos.boxW ?? oldPos.width;
-      const oldH = oldPos.boxH ?? oldPos.height;
-      const oldCX = oldPos.x + oldW / 2;
+      /* a) current vertical centre before the glyph change */
+      const oldH  = oldPos.boxH ?? oldPos.height;
       const oldCY = (oldPos.baseline - oldPos.ascent) + oldH / 2;
 
-      /* 2 ▸ safe-box after the glyphs changed                                    */
-      const θ = oldPos.rotation;
-      const sW = Math.abs(dims.width * Math.cos(θ)) + Math.abs(dims.height * Math.sin(θ));
-      const sH = Math.abs(dims.width * Math.sin(θ)) + Math.abs(dims.height * Math.cos(θ));
+      /* b) rotated safe-box after the glyphs changed        */
+      const θ  = oldPos.rotation;
+      const sW = Math.abs(dims.width  * Math.cos(θ)) + Math.abs(dims.height * Math.sin(θ));
+      const sH = Math.abs(dims.width  * Math.sin(θ)) + Math.abs(dims.height * Math.cos(θ));
 
-      /* 3 ▸ restore centre by adjusting x & baseline                            */
-      const newX        = oldCX - sW / 2;
+      /* c) new baseline that keeps the SAME vertical centre */
       const newBaseline = oldCY + dims.ascent - sH / 2;
 
+      /* d) return — x is untouched, baseline only tweaked in y-axis */
       return {
         ...oldPos,
-        x        : newX,
         baseline : newBaseline,
         width    : dims.width,
         height   : dims.height,
@@ -477,6 +474,7 @@ export default function InstagramPostCreator() {
         descent  : dims.descent,
         boxW     : sW,
         boxH     : sH,
+        // x is unchanged ➜ left-edge stays where you set it
       } as TextPosition;
     };
 
