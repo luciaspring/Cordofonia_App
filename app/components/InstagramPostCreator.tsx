@@ -692,17 +692,26 @@ export default function InstagramPostCreator() {
       const dynAscent = p1.ascent + (p2.ascent - p1.ascent) * scaleT
       const dynDescent = p1.descent + (p2.descent - p1.descent) * scaleT
 
+      // keep the rotated top-left corner locked while ascent grows
+      const ascStart = p1.ascent;                   // ascent when scaleT === 0
+      const dAsc     = dynAscent - ascStart;        // how much taller we are
+      const rot      = rotation;                    // already interpolated above
+
+      // shift baseline-left point by that delta, in the glyph's local axes
+      const sx       = x        + dAsc * Math.sin(rot);
+      const bl       = baseline + dAsc * Math.cos(rot);
+
       // 3) RANDOM TREMBLE
       const tremX = (Math.random() - 0.5) * tremblingIntensity
       const tremY = (Math.random() - 0.5) * tremblingIntensity
 
-      // 4) DRAW at geometric center
+      // 4) DRAW at geometric center using sx/bl instead of x/baseline
       const w  = dynW
       const h  = dynH
-      const topY = baseline - dynAscent
-      const cx   = x + w / 2
-      const cy   = topY + h / 2
-      const base = h / 2 - dynDescent
+      const topY = bl - dynAscent;
+      const cx   = sx + dynW / 2;
+      const cy   = topY + dynH / 2;
+      const base = dynH / 2 - dynDescent;
       ctx.save()
       ctx.translate(cx + tremX, cy + tremY)
       ctx.rotate(rotation)
